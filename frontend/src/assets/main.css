@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@import "tailwindcss-primeui";
+@import 'primeicons/primeicons.css';
+
+@theme {
+  --color-maroon-500: #670723;
+}
+
+
+
+#app {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
