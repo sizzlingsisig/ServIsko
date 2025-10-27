@@ -73,6 +73,19 @@
       <!-- customized cards of service categories added here -->
     </div>
   </section>
+
+  <section class="stats">
+    <svg
+      class="curve"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 1440 320"
+      preserveAspectRatio="none"
+    >
+      <path fill="#ffffff" d="M0,320 C480,160 960,160 1440,320 L1440,320 L0,320 Z" />
+    </svg>
+    <h2>Putting the Service in Iskolars ng Bayan</h2>
+    <!--three columns of stats-->
+  </section>
 </template>
 
 <style scoped>
@@ -221,7 +234,8 @@ p {
 
 .how-servisko-works,
 .featured-services,
-.service-categories {
+.service-categories,
+.stats {
   width: 100%;
   height: 100vh;
 }
