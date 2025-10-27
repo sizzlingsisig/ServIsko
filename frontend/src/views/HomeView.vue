@@ -1,31 +1,96 @@
 <script setup></script>
 
 <template>
-  <main>
-    <div
-      class="grid grid-cols-12 gap-4 grid-nogutter bg-surface-0 dark:bg-surface-950 text-surface-800 dark:text-surface-50"
-    >
-      <div class="col-span-12 md:col-span-6 p-12 text-center md:text-left flex items-center">
-        <section>
-          <span class="block text-6xl font-bold mb-1">Create the screens </span>
-          <div class="text-6xl text-primary font-bold mb-4">your visitors deserve to see</div>
-          <p class="mt-0 mb-6 text-surface-700 dark:text-surface-100 leading-normal">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-            incididunt ut labore et dolore magna aliqua.
-          </p>
+  <section class="hero">
+    <div class="content">
+      <h1>
+        Services by Students,<br />
+        <span>for Students</span>
+      </h1>
 
-          <Button label="Learn More" type="button" class="mr-4" raised></Button>
-          <Button label="Live Demo" type="button" outlined></Button>
-        </section>
-      </div>
-      <div class="col-span-12 md:col-span-6 overflow-hidden">
-        <img
-          src="https://cdn2.vectorstock.com/i/1000x1000/59/26/superhero-team-banners-set-vector-7135926.jpg"
-          alt="Random Image"
-          class="md:ml-auto block md:h-full"
-          style="clip-path: polygon(8% 0, 100% 0%, 100% 100%, 0 100%)"
-        />
+      <p>
+        ServIsko connects Miagao’s students and locals, making it easy to find, offer, and review
+        trusted services in one convenient platform.
+      </p>
+
+      <div class="buttons">
+        <Button label="Find Services" class="find" />
+        <Button label="Offer Services" class="offer" outlined />
       </div>
     </div>
-  </main>
+
+    <!-- Single smooth curved bottom -->
+    <svg
+      class="curve"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 1440 320"
+      preserveAspectRatio="none"
+    >
+      <path fill="#ffffff" d="M0,0V7.23C0,65.52,268.63,112.77,600,112.77S1200,65.52,1200,7.23V0Z" />
+    </svg>
+  </section>
 </template>
+
+<style scoped>
+.hero {
+  position: relative;
+  background-color: #6d0019;
+  color: white;
+  text-align: left;
+  padding: 8rem 2rem 12rem;
+  overflow: hidden;
+}
+
+.content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 4rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 1rem;
+}
+
+h1 span {
+  color: #f8dcdc;
+}
+
+p {
+  color: #f3e9e9;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  max-width: 600px;
+  margin-bottom: 2rem;
+}
+
+.buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.find {
+  background-color: white;
+  color: #6d0019;
+  border: none;
+  font-weight: 600;
+}
+
+.offer {
+  border: 2px solid white;
+  color: white;
+  font-weight: 600;
+}
+
+/* Single curved bottom */
+.curve {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 160px;
+  display: block;
+  pointer-events: none;
+}
+</style>
