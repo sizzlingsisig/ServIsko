@@ -6,26 +6,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-        Schema::create('user_profiles', function (Blueprint $table) {
+        Schema::create('provider_profiles', function (Blueprint $table) {
             $table->id();
-            $table->string('bio');
-            $table->string('contact_info');
-            $table->string('location');
-
+            $table->foreignId('user_id')->unique()->onDeleteCascade();
+            $table->string('title');
+            $table->json('skills')->default(json_encode([]));
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('user_profiles');
+        Schema::dropIfExists('provider_profiles');
     }
 };
