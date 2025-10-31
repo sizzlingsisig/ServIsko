@@ -37,7 +37,7 @@ const handleLogin = async () => {
     if (userRole === 'admin' || userRole === 'moderator') {
       router.push('/admin/dashboard')
     } else {
-      router.push('/dashboard')
+      router.push('/')
     }
   } catch (err) {
     // Error handled by axios interceptor, but show specific message if available

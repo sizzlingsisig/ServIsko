@@ -1,9 +1,25 @@
-<script setup>
-import { RouterLink, RouterView } from 'vue-router'
-</script>
-
 <template>
-  <RouterView />
+  <component :is="currentLayout">
+    <RouterView />
+  </component>
 </template>
 
-<style scoped></style>
+<script setup>
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import SideBarLayout from '@/layouts/SideBarLayout.vue'
+import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import BlankLayout from '@/layouts/BlankLayout.vue'
+
+const route = useRoute()
+
+const layoutComponents = {
+  SideBarLayout,
+  DefaultLayout,
+  BlankLayout,
+}
+
+const currentLayout = computed(() => {
+  return layoutComponents[route.meta.layout] || DefaultLayout
+})
+</script>

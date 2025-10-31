@@ -5,7 +5,6 @@ import AppMenu from './components/MenuBar.vue'
 <template>
   <AppMenu />
 
-  <!-- Main content area for router views -->
   <RouterView />
 </template>
 
