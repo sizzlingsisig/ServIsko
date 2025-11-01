@@ -2,47 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
+use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\LoginRequest;
+use App\Services\AuthService;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
+use App\Services\SeekerService;
+
 use Exception;
 
 class AuthController extends Controller
 {
-    //Registers new users
-    public function register(Request $request)
+    public function __construct(
+        private AuthService $authService,
+        private SeekerService $seekerService
+    ) {}
+
+    public function register(RegisterRequest $request, SeekerService $seekerService)
     {
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users|max:255',
-                'password' => 'required|min:8|confirmed',
-            ]);
+            $result = DB::transaction(function () use ($request) {
+                $result = $this->authService->register($request->validated());
+                $this->seekerService->createProfile($result['user']);
 
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-            ]);
-
-            $token = $user->createToken('auth_token')->plainTextToken;
+                $result['user']->assignRole('service-seeker');
+                return $result;
+            });
 
             return response()->json([
                 'success' => true,
                 'message' => 'Registration successful!',
                 'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
+                    'id' => $result['user']->id,
+                    'username' => $result['user']->username,
+                    'name' => $result['user']->name,
+                    'email' => $result['user']->email,
+                    'role' => 'service-seeker',
                 ],
-                'token' => $token,
+                'token' => $result['token'],
             ], 201);
-
-        } catch (ValidationException $e) {
-            throw $e;
 
         } catch (Exception $e) {
             Log::error('Registration error: ' . $e->getMessage(), [
@@ -58,9 +59,8 @@ class AuthController extends Controller
         }
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        // Simple rate limiting: 10 attempts per 5 minutes per IP
         $key = 'login:' . $request->ip();
 
         if (RateLimiter::tooManyAttempts($key, 10)) {
@@ -73,39 +73,24 @@ class AuthController extends Controller
         }
 
         try {
-            $validated = $request->validate([
-                'email' => 'required|email',
-                'password' => 'required',
-            ]);
+            $result = $this->authService->login($request->email, $request->password);
 
-            $user = User::where('email', $request->email)->first();
-
-            if (!$user || !Hash::check($request->password, $user->password)) {
-                RateLimiter::hit($key, 300); // 5 minutes
-
-                throw ValidationException::withMessages([
-                    'email' => ['The provided credentials are incorrect.'],
-                ]);
-            }
-
-            // Clear rate limit on successful login
             RateLimiter::clear($key);
-
-            // Create new token
-            $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'success' => true,
                 'message' => 'Login successful!',
                 'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
+                    'id' => $result['user']->id,
+                    'username' => $result['user']->username,
+                    'name' => $result['user']->name,
+                    'email' => $result['user']->email,
                 ],
-                'token' => $token,
+                'token' => $result['token'],
             ], 200);
 
         } catch (ValidationException $e) {
+            RateLimiter::hit($key, 300);
             throw $e;
 
         } catch (Exception $e) {
@@ -125,15 +110,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         try {
-            if (!$request->user()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User not authenticated.',
-                ], 401);
-            }
-
-            // Revoke current token
-            $request->user()->currentAccessToken()->delete();
+            $this->authService->logout($request->user());
 
             return response()->json([
                 'success' => true,
@@ -157,15 +134,7 @@ class AuthController extends Controller
     public function logoutAll(Request $request)
     {
         try {
-            if (!$request->user()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User not authenticated.',
-                ], 401);
-            }
-
-            // Revoke all tokens
-            $request->user()->tokens()->delete();
+            $this->authService->logoutAll($request->user());
 
             return response()->json([
                 'success' => true,

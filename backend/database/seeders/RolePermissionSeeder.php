@@ -52,7 +52,7 @@ class RolePermissionSeeder extends Seeder
             'view bookings',
         ]);
 
-        $serviceProvider = Role::create(['name' => 'service provider', 'guard_name' => 'sanctum']);
+        $serviceProvider = Role::create(['name' => 'service-provider', 'guard_name' => 'sanctum']);
         $serviceProvider->givePermissionTo([
             'create service',
             'edit service',
@@ -61,7 +61,7 @@ class RolePermissionSeeder extends Seeder
             'manage bookings',
         ]);
 
-        $serviceSeeker = Role::create(['name' => 'service seeker', 'guard_name' => 'sanctum']);
+        $serviceSeeker = Role::create(['name' => 'service-seeker', 'guard_name' => 'sanctum']);
         $serviceSeeker->givePermissionTo([
             'create booking',
             'cancel booking',

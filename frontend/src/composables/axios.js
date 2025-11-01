@@ -4,11 +4,7 @@ import { useAuthStore } from '@/stores/AuthStore'
 import { useToastStore } from '@/stores/toastStore'
 
 const instance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
-  headers: {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-  },
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
   timeout: 10000,
 })
 
@@ -21,6 +17,14 @@ instance.interceptors.request.use(
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
     }
+
+    // Don't force Content-Type for FormData or file uploads
+    if (!(config.data instanceof FormData)) {
+      config.headers['Content-Type'] = 'application/json'
+    }
+
+    config.headers['Accept'] = 'application/json'
+
     return config
   },
   (error) => Promise.reject(error),
@@ -33,7 +37,7 @@ instance.interceptors.response.use(
     const authStore = useAuthStore()
     const toastStore = useToastStore()
 
-    // Handle 401 Unauthorized - auto logout
+    // Handle 401 Unauthorized
     if (error.response?.status === 401) {
       authStore.clearUser()
       toastStore.showError('Session expired. Please login again.', 'Unauthorized')
@@ -68,7 +72,7 @@ instance.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // Let component handle other errors (400, 422, etc.)
+    // Let component handle other errors
     return Promise.reject(error)
   },
 )

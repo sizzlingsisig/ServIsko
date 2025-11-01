@@ -11,17 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-    Schema::create('posts', function (Blueprint $table) {
+    Schema::create('listings', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->foreignId('category_id')->nullable()->constrained()->onDelete('set null');
-        $table->foreignId('service_id')->nullable()->constrained()->onDelete('set null');
+        $table->foreignId('seeker_user_id')->constrained('users')->onDelete('cascade');
+        $table->foreignId('category_id')->nullable()->constrained('categories')->onDeleteCascade();
         $table->string('title');
         $table->text('description')->nullable();
-        $table->enum('post_type', ['offer', 'request']);
         $table->decimal('budget', 10, 2)->nullable();
         $table->enum('status', ['active', 'closed', 'expired'])->default('active');
         $table->timestamps();
+        $table->softDeletes();
         });
     }
 
@@ -30,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('posts');
+        Schema::dropIfExists('listings');
     }
 };

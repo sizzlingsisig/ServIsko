@@ -11,22 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('applications', function (Blueprint $table) {
+        Schema::create('categories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('listing_id')->constrained()->onDelete('cascade');
-            $table->foreignId('applicant_user_id')->constrained('users')->onDelete('cascade');
-            $table->text('message')->nullable();
-            $table->enum('status', ['pending', 'accepted', 'rejected'])->default('pending');
+            $table->string('name');
+            $table->text('description')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });
     }
+
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('applications');
+        Schema::dropIfExists('categories');
     }
 };

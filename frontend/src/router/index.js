@@ -54,12 +54,12 @@ const router = createRouter({
     //   component: () => import('@/views/MessagesView.vue'),
     //   meta: { layout: 'DefaultLayout', requiresAuth: true },
     // },
-    // {
-    //   path: '/dashboard/profile',
-    //   name: 'profile',
-    //   component: () => import('@/views/ProfileView.vue'),
-    //   meta: { layout: 'DefaultLayout', requiresAuth: true },
-    // },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/views/ProfileView.vue'),
+      meta: { layout: 'DefaultLayout', requiresAuth: true },
+    },
     // {
     //   path: '/dashboard/settings',
     //   name: 'settings',

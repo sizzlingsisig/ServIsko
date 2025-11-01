@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/AuthStore.js'
 import axios from '@/composables/axios'
@@ -17,6 +17,31 @@ const items = [
   { label: 'Messages', to: '/messages' },
 ]
 
+const userMenuItems = ref([
+  {
+    label: 'Profile',
+    icon: 'pi pi-user',
+    command: () => {
+      router.push('/profile')
+    },
+  },
+  {
+    label: 'Settings',
+    icon: 'pi pi-cog',
+    command: () => {
+      router.push('/settings')
+    },
+  },
+  {
+    separator: true,
+  },
+  {
+    label: 'Logout',
+    icon: 'pi pi-sign-out',
+    command: () => handleLogout(),
+  },
+])
+
 const handleMobileLogin = () => {
   router.push('/login')
   mobileMenuOpen.value = false
@@ -27,14 +52,9 @@ const handleMobileRegister = () => {
   mobileMenuOpen.value = false
 }
 
-const userMenuItems = [
-  { label: 'Profile', icon: 'pi pi-user', command: () => router.push('/profile') },
-  { label: 'Settings', icon: 'pi pi-cog', command: () => router.push('/settings') },
-  { separator: true },
-  { label: 'Logout', icon: 'pi pi-sign-out', command: () => handleLogout() },
-]
-
-const toggleUserMenu = (event) => userMenu.value.toggle(event)
+const toggleUserMenu = (event) => {
+  userMenu.value.toggle(event)
+}
 
 const handleLogout = async () => {
   try {
@@ -64,6 +84,21 @@ const isActiveRoute = (path) => {
 const isAuthenticated = () => {
   return authStore.isAuthenticated
 }
+
+// Hide menu on scroll
+const handleScroll = () => {
+  if (userMenu.value) {
+    userMenu.value.hide()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 </script>
 
 <template>
@@ -170,37 +205,22 @@ const isAuthenticated = () => {
               </svg>
             </button>
 
-            <!-- User Avatar -->
-            <div class="relative">
-              <button @click="toggleUserMenu">
-                <Avatar
-                  image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-                  shape="circle"
-                  size="normal"
-                  class="cursor-pointer ring-2 w-10 h-10 ring-text-200 dark:ring-text-700 hover:ring-primary-500 transition-all duration-200"
-                />
-              </button>
-              <Menu
-                ref="userMenu"
-                :model="userMenuItems"
-                popup
-                appendTo="body"
-                :popupOptions="{
-                  placement: 'bottom-end',
-                  flip: true,
-                  autoZIndex: true,
-                  viewportMargin: 8,
-                }"
-                class="bg-white shadow-lg rounded-md w-56"
-              >
-                <template #start>
-                  <div class="px-4 py-3 border-b border-text-200 dark:border-text-700">
-                    <p class="text-sm font-semibold text-text-900 dark:text-white">Amy Elsner</p>
-                    <p class="text-xs text-text-500 dark:text-text-400 mt-0.5">amy@example.com</p>
-                  </div>
-                </template>
-              </Menu>
-            </div>
+            <!-- User Avatar with Menu -->
+            <button
+              type="button"
+              @click="toggleUserMenu"
+              aria-haspopup="true"
+              aria-controls="overlay_menu"
+            >
+              <Avatar
+                image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
+                shape="circle"
+                size="normal"
+                class="cursor-pointer ring-2 w-10 h-10 ring-text-200 dark:ring-text-700 hover:ring-primary-500 transition-all duration-200"
+              />
+            </button>
+
+            <Menu ref="userMenu" id="overlay_menu" :model="userMenuItems" :popup="true" />
           </div>
         </div>
       </div>

@@ -13,11 +13,13 @@ return new class extends Migration
     {
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('post_id')->constrained()->onDelete('cascade');
+            $table->foreignId('listing_id')->constrained()->onDelete('cascade');
             $table->foreignId('reviewer_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('reviewed_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('reviewed_user_id')->constrained('users')->onDelete('cascade');
             $table->tinyInteger('rating')->unsigned();
+            $table->string('reviewer_type'); //change to enum soon
             $table->text('comment')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }

@@ -24,7 +24,7 @@ const requestOtp = async () => {
   loading.value = true
 
   try {
-    const response = await api.post('/api/forgot-password', {
+    const response = await api.post('/forgot-password', {
       email: email.value,
     })
 
@@ -48,7 +48,7 @@ const verifyOtp = async () => {
   loading.value = true
 
   try {
-    const response = await api.post('/api/verify-reset-otp', {
+    const response = await api.post('/verify-reset-otp', {
       email: email.value,
       otp: otp.value,
     })
@@ -73,7 +73,7 @@ const resetPassword = async () => {
     const token = sessionStorage.getItem('reset_token')
     const savedEmail = sessionStorage.getItem('reset_email')
 
-    await api.post('/api/reset-password', {
+    await api.post('/reset-password', {
       email: savedEmail,
       reset_token: token,
       password: password.value,
