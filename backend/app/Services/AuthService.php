@@ -6,7 +6,6 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-
 class AuthService
 {
     public function register(array $data)
@@ -17,6 +16,7 @@ class AuthService
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
+
 
         $token = $user->createToken('auth_token')->plainTextToken;
 

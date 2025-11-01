@@ -10,9 +10,11 @@ return new class extends Migration
     {
         Schema::create('provider_profiles', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->unique()->onDeleteCascade();
-            $table->string('title');
-            $table->json('skills')->default(json_encode([]));
+            $table->foreignId('user_id')
+                ->unique()
+                ->constrained('users')
+                ->onDeleteCascade();
+            $table->json('links')->default('[]');
             $table->timestamps();
         });
     }

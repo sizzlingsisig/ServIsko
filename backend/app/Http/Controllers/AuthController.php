@@ -9,16 +9,28 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
+use App\Services\SeekerService;
+
 use Exception;
 
 class AuthController extends Controller
 {
-    public function __construct(private AuthService $authService) {}
+    public function __construct(
+        private AuthService $authService,
+        private SeekerService $seekerService
+    ) {}
 
-    public function register(RegisterRequest $request)
+    public function register(RegisterRequest $request, UserProfileService $userProfileService)
     {
         try {
-            $result = $this->authService->register($request->validated());
+            $result = DB::transaction(function () use ($request) {
+                $result = $this->authService->register($request->validated());
+                $this->seekerService->createProfile($result['user']);
+
+                $result['user']->assignRole('service-seeker');
+                return $result;
+            });
 
             return response()->json([
                 'success' => true,
@@ -28,6 +40,7 @@ class AuthController extends Controller
                     'username' => $result['user']->username,
                     'name' => $result['user']->name,
                     'email' => $result['user']->email,
+                    'role' => 'service-seeker',
                 ],
                 'token' => $result['token'],
             ], 201);
