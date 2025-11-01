@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-    Schema::create('post_tags', function (Blueprint $table) {
+    Schema::create('listing_tags', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('post_id')->constrained()->onDelete('cascade');
+        $table->foreignId('listing_id')->constrained()->onDelete('cascade');
         $table->foreignId('tag_id')->constrained()->onDelete('cascade');
         $table->timestamps();
     });
@@ -23,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('post_tags');
+        Schema::dropIfExists('listing_tags');
     }
 };

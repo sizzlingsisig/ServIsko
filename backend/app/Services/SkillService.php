@@ -89,20 +89,19 @@ class SkillService
      * Delete skill
      */
     public function deleteSkill(int $id): void
-    {
-        $skill = Skill::findOrFail($id);
+{
+    $skill = Skill::findOrFail($id);
 
-        // Check if skill is being used
-        $providerCount = $skill->providerProfiles()->count();
-        if ($providerCount > 0) {
-            throw new Exception("Cannot delete skill. It is being used by {$providerCount} provider profile(s).");
-        }
+    $skillName = $skill->name;
 
-        $skillName = $skill->name;
-        $skill->delete();
+    // Remove from all provider profiles (detach from pivot table)
+    $skill->providerProfiles()->detach();
 
-        Log::info('Skill deleted', ['skill_id' => $id, 'name' => $skillName]);
-    }
+    // Delete skill
+    $skill->delete();
+
+    Log::info('Skill deleted', ['skill_id' => $id, 'name' => $skillName]);
+}
 
     /**
      * Bulk create skills

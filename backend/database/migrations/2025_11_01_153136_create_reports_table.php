@@ -14,9 +14,10 @@ return new class extends Migration
         Schema::create('reports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('reporter_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('reported_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->foreignId('post_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('reported_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('listing_id')->nullable()->onDelete('cascade');
             $table->text('reason');
+            $table->softDeletes();
             $table->timestamps();
     });
     }

@@ -1,28 +1,35 @@
 <?php
 
-namespace App\Http\Controllers\User;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Services\ProviderProfileService;
+use App\Services\SkillRequestService;
 use App\Http\Requests\UpdateProviderProfileRequest;
 use App\Http\Requests\AddProviderSkillRequest;
-use App\Models\Skill;
+use App\Http\Requests\RemoveProviderSkillRequest;
+use App\Http\Requests\UpdateProviderSkillRequest;
+use App\Http\Requests\RequestSkillRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
 class ProviderController extends Controller
 {
-    /**
-     * Get authenticated provider profile with skills
-     */
-    public function show(Request $request)
+    public function __construct(
+        private ProviderProfileService $profileService,
+        private SkillRequestService $skillRequestService
+    ) {}
+
+    public function show()
     {
         try {
-            $user = $request->user()->load('providerProfile.skills');
+            $user = auth()->user();
+            $data = $this->profileService->getProfileWithSkills($user);
 
             return response()->json([
                 'success' => true,
-                'data' => $user,
+                'data' => $data,
             ], 200);
 
         } catch (Exception $e) {
@@ -36,34 +43,16 @@ class ProviderController extends Controller
         }
     }
 
-    /**
-     * Update provider profile (title and links)
-     */
     public function updateProfile(UpdateProviderProfileRequest $request)
     {
         try {
-            $validated = $request->validated();
-            $user = $request->user();
-
-            // Ensure profile exists
-            if (!$user->providerProfile) {
-                $user->providerProfile()->create([
-                    'title' => null,
-                    'links' => [],
-                ]);
-            }
-
-            $user->providerProfile()->update([
-                'title' => $validated['title'] ?? null,
-                'links' => $validated['links'] ?? [],
-            ]);
-
-            Log::info('Provider profile updated', ['user_id' => $user->id]);
+            $user = auth()->user();
+            $this->profileService->updateProfile($user, $request->validated());
 
             return response()->json([
                 'success' => true,
                 'message' => 'Profile updated successfully!',
-                'data' => $user->load('providerProfile.skills'),
+                'data' => $this->profileService->getProfileWithSkills($user),
             ], 200);
 
         } catch (Exception $e) {
@@ -77,14 +66,95 @@ class ProviderController extends Controller
         }
     }
 
+    public function addLink(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'url' => 'required|url|max:2048',
+            ]);
 
-        /**
-     * Get all available skills
-     */
+            $user = auth()->user();
+            $this->profileService->addLink($user, $validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Link added successfully!',
+                'data' => $this->profileService->getProfileWithSkills($user),
+            ], 201);
+
+        } catch (Exception $e) {
+            Log::error('Add link error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to add link.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 422);
+        }
+    }
+
+    public function updateLink(Request $request, $linkId)
+    {
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'url' => 'required|url|max:2048',
+            ]);
+
+            $user = auth()->user();
+            $this->profileService->updateLink($user, $linkId, $validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Link updated successfully!',
+                'data' => $this->profileService->getProfileWithSkills($user),
+            ], 200);
+
+        } catch (Exception $e) {
+            Log::error('Update link error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 422);
+        }
+    }
+
+    public function removeLink(Request $request, $linkId)
+    {
+        try {
+            $user = auth()->user();
+            $this->profileService->removeLink($user, $linkId);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Link removed successfully!',
+                'data' => $this->profileService->getProfileWithSkills($user),
+            ], 200);
+
+        } catch (Exception $e) {
+            Log::error('Remove link error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 422);
+        }
+    }
+
+    // ← CHANGE: Remove GetSkillsRequest dependency
     public function getSkills(Request $request)
     {
         try {
-            $skills = Skill::ordered()->get();
+            $validated = $request->validate([
+                'search' => 'nullable|string|max:255',
+                'per_page' => 'nullable|integer|min:1|max:100',
+            ]);
+
+            $skills = $this->profileService->getAllSkills($validated);
 
             return response()->json([
                 'success' => true,
@@ -102,120 +172,15 @@ class ProviderController extends Controller
         }
     }
 
-    /**
-     * Add skill to provider profile
-     */
-    public function addSkill(AddProviderSkillRequest $request)
-    {
-        try {
-            $validated = $request->validated();
-            $user = $request->user();
-
-            // Ensure profile exists
-            if (!$user->providerProfile) {
-                $user->providerProfile()->create([
-                    'title' => null,
-                    'links' => [],
-                ]);
-            }
-
-            // Check if skill already attached
-            if ($user->providerProfile->skills()->where('skill_id', $validated['skill_id'])->exists()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'This skill is already added.',
-                ], 422);
-            }
-
-            // Attach skill
-            $user->providerProfile()->skills()->attach($validated['skill_id']);
-
-            Log::info('Skill added to provider profile', [
-                'user_id' => $user->id,
-                'skill_id' => $validated['skill_id'],
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Skill added successfully!',
-                'data' => $user->load('providerProfile.skills'),
-            ], 201);
-
-        } catch (Exception $e) {
-            Log::error('Add skill error: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to add skill.',
-                'error' => config('app.debug') ? $e->getMessage() : null,
-            ], 500);
-        }
-    }
-
-    /**
-     * Remove skill from provider profile
-     */
-    public function removeSkill(Request $request, $skillId)
-    {
-        try {
-            $user = $request->user();
-
-            if (!$user->providerProfile) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Provider profile not found.',
-                ], 404);
-            }
-
-            // Check if skill exists
-            if (!$user->providerProfile->skills()->where('skill_id', $skillId)->exists()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Skill not found in profile.',
-                ], 404);
-            }
-
-            // Detach skill
-            $user->providerProfile()->skills()->detach($skillId);
-
-            Log::info('Skill removed from provider profile', [
-                'user_id' => $user->id,
-                'skill_id' => $skillId,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Skill removed successfully!',
-                'data' => $user->load('providerProfile.skills'),
-            ], 200);
-
-        } catch (Exception $e) {
-            Log::error('Remove skill error: ' . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to remove skill.',
-                'error' => config('app.debug') ? $e->getMessage() : null,
-            ], 500);
-        }
-    }
-
-    /**
-     * Search skills
-     */
+    // ← CHANGE: Remove SearchSkillsRequest dependency
     public function searchSkills(Request $request)
     {
         try {
-            $search = $request->query('q', '');
+            $validated = $request->validate([
+                'q' => 'required|string|max:255',
+            ]);
 
-            if (empty($search)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Search query is required.',
-                ], 422);
-            }
-
-            $skills = Skill::search($search)->ordered()->get();
+            $skills = $this->profileService->searchSkills($validated['q']);
 
             return response()->json([
                 'success' => true,
@@ -228,6 +193,135 @@ class ProviderController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to search skills.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 422);
+        }
+    }
+
+    public function addSkill(AddProviderSkillRequest $request)
+    {
+        try {
+            $user = auth()->user();
+            $this->profileService->addSkill($user, $request->validated()['skill_id']);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Skill added successfully!',
+                'data' => $this->profileService->getProfileWithSkills($user),
+            ], 201);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Skill not found.',
+            ], 404);
+
+        } catch (Exception $e) {
+            Log::error('Add skill error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 422);
+        }
+    }
+
+    public function updateSkill(UpdateProviderSkillRequest $request, $skillId)
+    {
+        try {
+            $user = auth()->user();
+            $this->profileService->updateSkill($user, $skillId, $request->validated());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Skill updated successfully!',
+                'data' => $this->profileService->getProfileWithSkills($user),
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Skill not found.',
+            ], 404);
+
+        } catch (Exception $e) {
+            Log::error('Update skill error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 422);
+        }
+    }
+
+    public function removeSkill(RemoveProviderSkillRequest $request, $skillId)
+    {
+        try {
+            $user = auth()->user();
+            $this->profileService->removeSkill($user, $skillId);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Skill removed successfully!',
+                'data' => $this->profileService->getProfileWithSkills($user),
+            ], 200);
+
+        } catch (Exception $e) {
+            Log::error('Remove skill error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 422);
+        }
+    }
+
+    public function submitSkillRequest(RequestSkillRequest $request)
+    {
+        try {
+            $user = auth()->user();
+            $skillRequest = $this->skillRequestService->createRequest(
+                $user,
+                $request->validated()
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Skill request submitted successfully!',
+                'data' => $skillRequest,
+            ], 201);
+
+        } catch (Exception $e) {
+            Log::error('Submit skill request error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 422);
+        }
+    }
+
+    public function getMySkillRequests()
+    {
+        try {
+            $user = auth()->user();
+            $requests = $this->skillRequestService->getUserRequests($user);
+
+            return response()->json([
+                'success' => true,
+                'data' => $requests,
+            ], 200);
+
+        } catch (Exception $e) {
+            Log::error('Get skill requests error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch requests.',
                 'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }

@@ -21,7 +21,7 @@ class AuthController extends Controller
         private SeekerService $seekerService
     ) {}
 
-    public function register(RegisterRequest $request, UserProfileService $userProfileService)
+    public function register(RegisterRequest $request, SeekerService $seekerService)
     {
         try {
             $result = DB::transaction(function () use ($request) {

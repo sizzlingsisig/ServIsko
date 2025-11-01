@@ -3,21 +3,22 @@
 use App\Http\Controllers\ForgetPasswordController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\SeekerController;
+use App\Http\Controllers\ProviderController;
+use App\Http\Controllers\SkillRequestController;
+use App\Http\Controllers\Admin\SkillRequestController as AdminSkillRequestController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\SkillController;
 
-
-//Public Routes
+// Public Routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [ForgetPasswordController::class, 'forgotPassword']);
 Route::post('/verify-reset-otp', [ForgetPasswordController::class, 'verifyResetOtp']);
 Route::post('/reset-password', [ForgetPasswordController::class, 'resetPassword']);
 
-
-//Protected Routes (needs to be logged in)
+// Protected Routes (needs to be logged in)
 Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -35,9 +36,42 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/profile-picture', [SeekerController::class, 'getProfilePicture']);
         Route::delete('/', [SeekerController::class, 'destroy']);
     });
+
+    // Provider routes
+    Route::middleware('role:service-provider')->prefix('provider')->group(function () {
+        // Profile management
+        Route::prefix('profile')->group(function () {
+            Route::get('/', [ProviderController::class, 'show']);
+            Route::put('/', [ProviderController::class, 'updateProfile']);
+
+            // Links management
+            Route::prefix('links')->group(function () {
+                Route::post('/', [ProviderController::class, 'addLink']);
+                Route::put('/{linkId}', [ProviderController::class, 'updateLink']);
+                Route::delete('/{linkId}', [ProviderController::class, 'removeLink']);
+            });
+        });
+
+        // Skills management
+        Route::prefix('skills')->group(function () {
+            Route::get('/', [ProviderController::class, 'getSkills']);
+            Route::get('/search', [ProviderController::class, 'searchSkills']);
+            Route::post('/', [ProviderController::class, 'addSkill']);
+            Route::put('/{skillId}', [ProviderController::class, 'updateSkill']);
+            Route::delete('/{skillId}', [ProviderController::class, 'removeSkill']);
+        });
+
+        // Skill requests
+        Route::prefix('skill-requests')->group(function () {
+            Route::post('/', [ProviderController::class, 'submitSkillRequest']);
+            Route::get('/', [ProviderController::class, 'getMySkillRequests']);
+        });
+    });
+
+
 });
 
-//Admin routes (needs to be admin)
+// Admin routes (needs to be admin)
 Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(function () {
     // User management
     Route::prefix('users')->group(function () {
@@ -57,4 +91,13 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::put('/{id}', [SkillController::class, 'update']);
         Route::delete('/{id}', [SkillController::class, 'destroy']);
     });
+
+    // // Skill requests management
+    // Route::prefix('skill-requests')->group(function () {
+    //     Route::get('/', [AdminSkillRequestController::class, 'index']);
+    //     Route::get('/{id}', [AdminSkillRequestController::class, 'show']);
+    //     Route::post('/{id}/approve', [AdminSkillRequestController::class, 'approve']);
+    //     Route::post('/{id}/reject', [AdminSkillRequestController::class, 'reject']);
+    //     Route::get('/stats', [AdminSkillRequestController::class, 'stats']);
+    // });
 });
