@@ -20,7 +20,7 @@ const handleLogin = async () => {
   loading.value = true
 
   try {
-    const response = await api.post('/api/login', {
+    const response = await api.post('/login', {
       email: loginData.value.email,
       password: loginData.value.password,
     })
@@ -37,7 +37,7 @@ const handleLogin = async () => {
     if (userRole === 'admin' || userRole === 'moderator') {
       router.push('/admin/dashboard')
     } else {
-      router.push('/dashboard')
+      router.push('/')
     }
   } catch (err) {
     // Error handled by axios interceptor, but show specific message if available
