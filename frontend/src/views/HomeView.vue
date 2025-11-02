@@ -277,8 +277,6 @@ import CurvedCards from '@/layouts/components/CurvedCards.vue'
   </section>
 
   <section class="pb-0 bg-white text-center">
-    <h2 class="text-3xl font-bold mb-2 mt-15">Popular Service Categories</h2>
-    <p class="text-gray-600 mb-1">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
     <CurvedCards class="mb-[-80px] mt-[-20px]" />
   </section>
 
