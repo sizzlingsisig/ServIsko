@@ -38,4 +38,6 @@ class Skill extends Model
             'provider_profile_id'
         )->withTimestamps();
     }
+
+
 }

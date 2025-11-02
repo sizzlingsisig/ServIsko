@@ -99,30 +99,24 @@ class SeekerController extends Controller
     }
 
     /**
-     * Get profile picture
-     */
-    public function getProfilePicture(Request $request)
-    {
-        try {
-            $picture = $this->seekerService->getProfilePicture($request->user());
+ * Get profile picture
+ */
+public function getProfilePicture(Request $request)
+{
+    try {
+        $content = $this->seekerService->getProfilePicture($request->user());
+        $mimeType = $this->seekerService->getProfilePictureMimeType($request->user());
 
-            return response($picture['content'], 200)
-                ->header('Content-Type', $picture['mimeType']);
+        return response($content, 200)
+            ->header('Content-Type', $mimeType)
+            ->header('Content-Disposition', 'inline');
 
-        } catch (Exception $e) {
-            Log::error('Get profile picture error: ' . $e->getMessage());
-
-            if ($e->getMessage() === 'Profile picture not found') {
-                return response()->noContent();
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error' => config('app.debug') ? $e->getMessage() : null,
-            ], 500);
-        }
+    } catch (Exception $e) {
+        Log::error('Get profile picture error: ' . $e->getMessage());
+        return response()->noContent(204);
     }
+}
+
 
     /**
      * Delete profile picture

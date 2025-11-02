@@ -11,6 +11,8 @@ class SeekerService
     /**
      * Get seeker profile
      */
+    private $disk = 'public'; // Use public disk
+
     public function getProfile(User $user): array
     {
         return [
@@ -66,15 +68,14 @@ class SeekerService
     /**
      * Upload profile picture
      */
-    public function uploadProfilePicture(User $user, $file): array
+        public function uploadProfilePicture(User $user, $file): array
     {
         if (!$file) {
             throw new Exception('No file provided.');
         }
 
-        // Validate file
-        if ($file->getSize() > 10 * 1024 * 1024) { // 10MB limit
-            throw new Exception('Profile picture must be less than 5MB.');
+        if ($file->getSize() > 2 * 1024 * 1024) {
+            throw new Exception('Profile picture must be less than 2MB.');
         }
 
         $mimeType = $file->getMimeType();
@@ -84,37 +85,79 @@ class SeekerService
             throw new Exception('Only JPEG, PNG, GIF, and WebP images are allowed.');
         }
 
-        // Delete old profile picture if exists
-        $path = "profile_pictures/{$user->id}";
-        if (Storage::exists($path)) {
-            Storage::delete($path);
+        // Create directory if needed
+        if (!Storage::disk($this->disk)->exists('profile_pictures')) {
+            Storage::disk($this->disk)->makeDirectory('profile_pictures');
         }
 
-        // Store new profile picture
-        Storage::put($path, file_get_contents($file));
-
-        return $this->getProfile($user);
-    }
-
-    /**
-     * Get profile picture
-     */
-    public function getProfilePicture(User $user): array
-    {
-        $path = "profile_pictures/{$user->id}";
-
-        if (!Storage::exists($path)) {
-            throw new Exception('Profile picture not found.');
+        // Delete old file if exists
+        if ($user->profile && $user->profile->profile_picture) {
+            $oldPath = $user->profile->profile_picture;
+            if (Storage::disk($this->disk)->exists($oldPath)) {
+                Storage::disk($this->disk)->delete($oldPath);
+            }
         }
 
-        $content = Storage::get($path);
-        $mimeType = Storage::mimeType($path);
+        // Store new file
+        $extension = $file->getClientOriginalExtension();
+        $filename = "profile_pictures/{$user->id}.{$extension}";
 
-        return [
-            'content' => $content,
-            'mimeType' => $mimeType,
-        ];
+        Storage::disk($this->disk)->putFileAs('profile_pictures', $file, "{$user->id}.{$extension}");
+
+        \Log::info('Profile picture uploaded', [
+            'filename' => $filename,
+            'user_id' => $user->id,
+        ]);
+
+        // Ensure profile exists
+        $this->createProfile($user);
+
+        // Update user_profiles table with picture filename
+        $user->profile()->update(['profile_picture' => $filename]);
+
+        return $this->getProfile($user->fresh());
     }
+
+   /**
+ * Get profile picture content
+ */
+public function getProfilePicture(User $user)
+{
+    $user->refresh();
+
+    if (!$user->profile || !$user->profile->profile_picture) {
+        throw new Exception('Profile picture not found.');
+    }
+
+    $path = $user->profile->profile_picture;
+
+    if (!Storage::disk($this->disk)->exists($path)) {
+        throw new Exception('Profile picture not found.');
+    }
+
+    return Storage::disk($this->disk)->get($path);
+}
+
+/**
+ * Get profile picture mime type
+ */
+public function getProfilePictureMimeType(User $user): string
+{
+    $user->refresh();
+
+    if (!$user->profile || !$user->profile->profile_picture) {
+        throw new Exception('Profile picture not found.');
+    }
+
+    $path = $user->profile->profile_picture;
+
+    if (!Storage::disk($this->disk)->exists($path)) {
+        throw new Exception('Profile picture not found.');
+    }
+
+    return Storage::disk($this->disk)->mimeType($path) ?? 'image/jpeg';
+}
+
 
     /**
      * Delete profile picture

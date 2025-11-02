@@ -64,14 +64,14 @@ class UserService
     {
         // Delete user profile if exists
         if ($user->profile) {
-            $user->profile()->delete();
+            $user->profile->delete();
         }
 
         // Delete provider profile if exists
         if ($user->providerProfile) {
             // Detach all skills
             $user->providerProfile->skills()->detach();
-            $user->providerProfile()->delete();
+            $user->providerProfile->delete();
         }
 
         // Delete all tokens
@@ -85,16 +85,45 @@ class UserService
     }
 
     /**
-     * Get user basic info
+     * Get user basic info with eager loaded relationships
      */
     public function getUserInfo(User $user): array
     {
+        // Ensure relationships are loaded
+        if (!$user->relationLoaded('roles')) {
+            $user->load('roles');
+        }
+        if (!$user->relationLoaded('profile')) {
+            $user->load('profile');
+        }
+        if (!$user->relationLoaded('providerProfile')) {
+            $user->load('providerProfile.links', 'providerProfile.skills');
+        }
+
+        $providerProfile = $user->providerProfile;
+
         return [
             'id' => $user->id,
             'name' => $user->name,
             'username' => $user->username,
             'email' => $user->email,
-            'roles' => $user->roles()->pluck('name')->toArray(),
+            'email_verified_at' => $user->email_verified_at,
+            'roles' => $user->roles->pluck('name')->toArray(),
+            'profile' => $user->profile?->toArray(),
+            'provider_profile' => $providerProfile ? [
+                'id' => $providerProfile->id,
+                'bio' => $providerProfile->bio,
+                'location' => $providerProfile->location,
+                'rating' => $providerProfile->rating ?? 0,
+                'total_reviews' => $providerProfile->total_reviews ?? 0,
+                'is_verified' => $providerProfile->is_verified ?? false,
+                'links' => $providerProfile->links->toArray(),
+                'skills' => $providerProfile->skills->map(fn($skill) => [
+                    'id' => $skill->id,
+                    'name' => $skill->name,
+                    'description' => $skill->description,
+                ])->toArray(),
+            ] : null,
         ];
     }
 
@@ -103,7 +132,7 @@ class UserService
      */
     public function isEmailVerified(User $user): bool
     {
-        return !is_null($user->email_verified_at);
+        return $user->isEmailVerified();
     }
 
     /**
@@ -111,7 +140,7 @@ class UserService
      */
     public function verifyEmail(User $user): void
     {
-        if (!$user->email_verified_at) {
+        if (!$user->isEmailVerified()) {
             $user->update(['email_verified_at' => now()]);
         }
     }
