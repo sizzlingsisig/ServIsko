@@ -11,7 +11,6 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-
         // Create some skills first
         $skills = [
             ['name' => 'PHP', 'description' => 'Backend development with PHP'],
@@ -59,18 +58,27 @@ class UserSeeder extends Seeder
             'profile_picture' => null,
         ]);
 
-        $seekerProvider->providerProfile()->create([
-            'links' => [
-                'https://github.com/johndeveloper',
-                'https://portfolio.example.com',
+        $providerProfile = $seekerProvider->providerProfile()->create();
+
+        // Add links to provider profile
+        $providerProfile->links()->createMany([
+            [
+                'title' => 'GitHub',
+                'url' => 'https://github.com/johndeveloper',
+                'order' => 0,
+            ],
+            [
+                'title' => 'Portfolio',
+                'url' => 'https://portfolio.example.com',
+                'order' => 1,
             ],
         ]);
 
         // Attach skills to provider profile
-        $seekerProvider->providerProfile->skills()->attach([1, 2, 3]);
+        $providerProfile->skills()->attach([1, 2, 3]);
 
         // User 3: Admin + Seeker + Provider
-        $adminSeekerprovider = User::create([
+        $adminSeekerProvider = User::create([
             'name' => 'Admin User',
             'username' => 'admin_user',
             'email' => 'admin@example.com',
@@ -78,23 +86,36 @@ class UserSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
-        $adminSeekerprovider->assignRole(['admin', 'service-seeker', 'service-provider']);
+        $adminSeekerProvider->assignRole(['admin', 'service-seeker', 'service-provider']);
 
-        $adminSeekerprovider->profile()->create([
+        $adminSeekerProvider->profile()->create([
             'bio' => 'Platform admin, experienced developer, and passionate educator',
             'location' => 'Miagao, Western Visayas',
             'profile_picture' => null,
         ]);
 
-        $adminSeekerprovider->providerProfile()->create([
-            'links' => [
-                'https://github.com/admin',
-                'https://linkedin.com/in/admin',
-                'https://portfolio.example.com',
+        $adminProviderProfile = $adminSeekerProvider->providerProfile()->create();
+
+        // Add links to admin provider profile
+        $adminProviderProfile->links()->createMany([
+            [
+                'title' => 'GitHub',
+                'url' => 'https://github.com/admin',
+                'order' => 0,
+            ],
+            [
+                'title' => 'LinkedIn',
+                'url' => 'https://linkedin.com/in/admin',
+                'order' => 1,
+            ],
+            [
+                'title' => 'Portfolio',
+                'url' => 'https://portfolio.example.com',
+                'order' => 2,
             ],
         ]);
 
         // Attach all skills to admin provider profile
-        $adminSeekerprovider->providerProfile->skills()->attach([1, 2, 3, 4, 5]);
+        $adminProviderProfile->skills()->attach([1, 2, 3, 4, 5]);
     }
 }
