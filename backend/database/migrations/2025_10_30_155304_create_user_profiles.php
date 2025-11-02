@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->unique()->onDeleteCascade();
             $table->string('profile_picture')->nullable();
             $table->text('bio')->nullable();
+            $table->string('phone')->nullable();
             $table->string('location')->nullable();
             $table->timestamps();
         });

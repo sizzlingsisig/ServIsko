@@ -14,7 +14,6 @@ return new class extends Migration
                 ->unique()
                 ->constrained('users')
                 ->onDeleteCascade();
-            $table->json('links')->default('[]');
             $table->timestamps();
         });
     }

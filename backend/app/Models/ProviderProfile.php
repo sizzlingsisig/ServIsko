@@ -12,12 +12,6 @@ class ProviderProfile extends Model
 
     protected $fillable = [
         'user_id',
-        'title',
-        'links',
-    ];
-
-    protected $casts = [
-        'links' => 'array',
     ];
 
     protected $hidden = [
@@ -25,6 +19,12 @@ class ProviderProfile extends Model
         'created_at',
         'updated_at',
     ];
+
+    public function links()
+    {
+        return $this->hasMany(ProviderLink::class)->orderBy('order');
+    }
+
 
     public function user(): BelongsTo
     {
