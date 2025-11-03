@@ -13,7 +13,6 @@ class SkillRequest extends Model
         'user_id',
         'name',
         'description',
-        'reason',
         'status',
         'admin_notes',
         'reviewed_at',

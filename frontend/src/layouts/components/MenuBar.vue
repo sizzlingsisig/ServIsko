@@ -42,6 +42,39 @@ const userMenuItems = ref([
   },
 ])
 
+const profilePictureUrl = ref(null)
+const userProfile = ref(null)
+
+const loadUserProfile = async () => {
+  try {
+    const { data } = await axios.get('/user')
+    userProfile.value = data.data
+    await loadProfilePicture()
+  } catch (error) {
+    console.error('Failed to load user profile:', error)
+  }
+}
+
+const loadProfilePicture = async () => {
+  try {
+    const response = await axios.get('/seeker/profile-picture', { responseType: 'blob' })
+    if (response.data && response.data.size > 0) {
+      profilePictureUrl.value = URL.createObjectURL(response.data)
+    } else {
+      profilePictureUrl.value = null
+    }
+  } catch (error) {
+    profilePictureUrl.value = null
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll)
+  if (isAuthenticated()) {
+    loadUserProfile()
+  }
+})
+
 const handleMobileLogin = () => {
   router.push('/login')
   mobileMenuOpen.value = false
@@ -98,6 +131,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll)
+  if (profilePictureUrl.value) {
+    URL.revokeObjectURL(profilePictureUrl.value)
+  }
 })
 </script>
 
@@ -213,7 +249,7 @@ onUnmounted(() => {
               aria-controls="overlay_menu"
             >
               <Avatar
-                image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
+                :image="profilePictureUrl"
                 shape="circle"
                 size="normal"
                 class="cursor-pointer ring-2 w-10 h-10 ring-text-200 dark:ring-text-700 hover:ring-primary-500 transition-all duration-200"

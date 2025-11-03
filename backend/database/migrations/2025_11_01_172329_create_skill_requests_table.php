@@ -13,10 +13,10 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('name')->index();
             $table->text('description')->nullable();
-            $table->text('reason');
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending')->index();
             $table->text('admin_notes')->nullable();
             $table->softDeletes();
+            $table->timestamp('reviewed_at')->nullable();
             $table->timestamps();
 
             // Prevent duplicate pending requests for same skill from same user
