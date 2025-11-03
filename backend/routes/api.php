@@ -22,6 +22,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SkillController as AdminSkillController;
 use App\Http\Controllers\Admin\SkillRequestController as AdminSkillRequestController;
+use App\Http\Controllers\FileController;
 
 // Public Routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -45,6 +46,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/', [UserController::class, 'update']);
         Route::post('/change-password', [UserController::class, 'changePassword']);
         Route::delete('/', [UserController::class, 'destroy']);
+    });
+
+    // File uploads (per-user)
+    Route::prefix('files')->group(function () {
+        Route::get('/', [FileController::class, 'index']);
+        Route::post('/', [FileController::class, 'store']);
+        Route::get('/{id}/download', [FileController::class, 'download']);
+        Route::delete('/{id}', [FileController::class, 'destroy']);
     });
 
     // Seeker routes

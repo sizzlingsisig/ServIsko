@@ -10,6 +10,7 @@ import router from './router'
 // PrimeVue Setup
 import PrimeVue from 'primevue/config'
 import servisko from '@/composables/servisko.js'
+import Tooltip from 'primevue/tooltip'
 
 // FormKit Setup
 import { plugin as formKitPlugin, defaultConfig } from '@formkit/vue'
@@ -34,5 +35,8 @@ app.use(PrimeVue, {
 
 // Use FormKit with your custom Tailwind config
 app.use(formKitPlugin, defaultConfig(formKitConfig))
+
+// Register commonly used directives
+app.directive('tooltip', Tooltip)
 
 app.mount('#app')

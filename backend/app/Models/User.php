@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -12,6 +13,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\OneTimePasswords\Models\Concerns\HasOneTimePasswords;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\FileUpload;
 
 class User extends Authenticatable
 {
@@ -67,6 +69,14 @@ class User extends Authenticatable
 
     public function providerProfile(): HasOne{
         return $this->hasOne(ProviderProfile::class);
+    }
+
+    /**
+     * Files uploaded by this user.
+     */
+    public function fileUploads(): HasMany
+    {
+        return $this->hasMany(FileUpload::class);
     }
 
 

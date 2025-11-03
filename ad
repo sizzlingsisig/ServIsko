@@ -1,0 +1,178 @@
+[33mcommit d059be308845b2c19ffe1c236c4bed02e3896dc8[m[33m ([m[1;36mHEAD -> [m[1;32mSER-17-user-profile-page[m[33m, [m[1;31morigin/SER-17-user-profile-page[m[33m)[m
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Mon Nov 3 01:14:07 2025 +0800
+
+    feat: Add ProviderLinks component for managing portfolio links
+    
+    - Implemented functionality to fetch, add, edit, and delete portfolio links.
+    - Added UI elements for displaying links with icons based on type.
+    - Integrated loading states and error handling for API requests.
+    
+    feat: Create SkillsManagement component for skill management
+    
+    - Developed a skills management interface with pagination and search functionality.
+    - Enabled users to create, edit, and delete skills with appropriate dialogs.
+    - Included statistics display for skill categories.
+    
+    feat: Introduce Test component with profile picture management
+    
+    - Added profile picture upload and preview functionality.
+    - Implemented skill addition and deletion with confirmation dialogs.
+    - Enhanced user experience with loading states and error handling.
+
+[33mcommit 9c7bae04297555b048cd7ec00d7e8e337be9c411[m
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Sun Nov 2 16:32:19 2025 +0800
+
+    feat: Implement SeekerService for managing seeker profiles and profile pictures
+    
+    - Added SeekerService for handling profile retrieval, updates, and picture uploads.
+    - Created UpdateProfilePictureRequest for validating profile picture uploads.
+    - Removed old SeekerService implementation to streamline functionality.
+    - Updated migrations to include phone number in user profiles and adjusted provider profiles.
+    - Introduced provider links management with new migration and seeder adjustments.
+    - Refactored API routes for better organization and clarity, including user and provider routes.
+    - Enhanced user service functionalities for profile updates, password changes, and account deletions.
+
+[33mcommit 53cabe37063f43a0e55bc16c67588fbd924167e2[m
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Sun Nov 2 02:09:45 2025 +0800
+
+    feat: Add skill management and request functionality for service providers
+    
+    - Implemented GetSkillsRequest, RemoveProviderSkillRequest, RequestSkillRequest, UpdateProviderProfileRequest, and UpdateProviderSkillRequest for validation.
+    - Created Skill and SkillRequest models with necessary relationships and soft deletes.
+    - Developed ProviderProfileService for managing provider profiles and skills.
+    - Introduced SkillRequestService for handling skill requests, including creation, approval, and rejection.
+    - Added migrations for skills, skill requests, categories, tags, listings, applications, reviews, and listing_tags with soft deletes.
+    - Updated SkillService to handle skill deletion with provider profile checks.
+    - Enhanced API routes for provider skill and skill request management.
+    - Removed obsolete AuthTest and updated ExampleTest to cover new functionality.
+
+[33mcommit aaf9d0995035c642f3ed2b55bfbc303f4b4653dc[m
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Sun Nov 2 00:35:04 2025 +0800
+
+    Merge branch 'develop' of https://github.com/sizzlingsisig/ServIsko into SER-17-user-profile-page
+
+[33mcommit 53f8e49bf6321b2b3b920ecd294c26d00b879182[m
+Merge: 5a9d37e cd9f9d5
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Sun Nov 2 00:34:23 2025 +0800
+
+    Merge branch 'develop' of https://github.com/sizzlingsisig/ServIsko into SER-17-user-profile-page
+
+[33mcommit 5a9d37ea15f90e98365999002453805a90df16c0[m
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Sun Nov 2 00:33:14 2025 +0800
+
+    feat: Add UserSeeder for initial user data and roles setup
+    
+    feat: Update API routes for seeker and admin functionalities
+    
+    fix: Adjust Axios instance base URL and headers for API requests
+    
+    refactor: Enhance MenuBar component with user menu and scroll handling
+    
+    feat: Implement ProfileView for user profile management
+    
+    fix: Correct API endpoint usage in ForgotPassword and Login views
+    
+    feat: Create RegisterView with role selection for user registration
+
+[33mcommit cd9f9d5550f6a7930ad9fd55bf3185f5313e2f95[m
+Merge: 7efe12c d97d8b7
+Author: Sizzlingsisig <141430993+sizzlingsisig@users.noreply.github.com>
+Date:   Sun Nov 2 00:31:39 2025 +0800
+
+    Merge pull request #3 from sizzlingsisig/origin/posts
+    
+    necessary table creations for posts
+
+[33mcommit d97d8b79fb9731e2c41579c6b6388531438502b4[m[33m ([m[1;31morigin/origin/posts[m[33m)[m
+Author: Eryl Joseph Aspera <eaaspera1@up.edu.ph>
+Date:   Sun Nov 2 00:20:26 2025 +0800
+
+    necessary table creations for posts
+    
+    - createpoststable
+    -createapplicationstable
+    -create reviews table
+    -create post tags table
+    - create reports table
+    -create categories table
+    -createservice table
+    - create tags table
+
+[33mcommit 38f3de1bb9ef92e4731237644ef02f34ab789af3[m
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Fri Oct 31 13:35:51 2025 +0800
+
+    test
+
+[33mcommit 7efe12c977e4bfe70e3fa08a61f3c74dad0fec82[m
+Merge: cb07adf 8b19a55
+Author: Sizzlingsisig <141430993+sizzlingsisig@users.noreply.github.com>
+Date:   Fri Oct 31 13:34:31 2025 +0800
+
+    Merge pull request #2 from sizzlingsisig/SER-17-user-profile-page
+    
+    Ser 17 user profile page
+
+[33mcommit 8b19a55d9b6d0ab8246aee702832281bc268d426[m
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Fri Oct 31 13:32:35 2025 +0800
+
+    refactored auth setup
+
+[33mcommit eff9b949ec28dae5033d5eb7218f005b2b51aff0[m
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Fri Oct 31 00:08:52 2025 +0800
+
+    initial commit
+
+[33mcommit 0688f4e857a9e1889fb460ecaade325239b02a79[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmain[m[33m)[m
+Author: Sizzlingsisig <141430993+sizzlingsisig@users.noreply.github.com>
+Date:   Mon Oct 27 21:45:27 2025 +0800
+
+    Update README.md
+
+[33mcommit cb07adfec62cd972c2bd9817686720677848cc91[m
+Merge: 1934560 197fd87
+Author: Sizzlingsisig <141430993+sizzlingsisig@users.noreply.github.com>
+Date:   Mon Oct 27 20:43:33 2025 +0800
+
+    Merge pull request #1 from sizzlingsisig/main
+    
+    merge template with develop
+
+[33mcommit 197fd870528b31635c283ce0fe26794f0d42d8fe[m
+Author: Sizzlingsisig <141430993+sizzlingsisig@users.noreply.github.com>
+Date:   Sun Oct 26 23:50:55 2025 +0800
+
+    Update README.md
+
+[33mcommit 1dc68b18ddd16691dbd76c2f71e2bd992f8ea28b[m
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Sun Oct 26 23:00:10 2025 +0800
+
+    Merge branch 'main' of https://github.com/sizzlingsisig/ServIsko
+
+[33mcommit 3a31840071520bb298168ae203edaf8279e1f6e6[m
+Merge: 659876c 1934560
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Sun Oct 26 22:59:50 2025 +0800
+
+    Merge branch 'main' of https://github.com/sizzlingsisig/ServIsko
+
+[33mcommit 659876cc38b5b84108e42e385300732d1388d72b[m
+Author: Sizzlingsisig <herniachristianjoseph@gmail.com>
+Date:   Sun Oct 26 22:38:10 2025 +0800
+
+    initial commit
+
+[33mcommit 193456013cbf25b66aaf28f1d07d7dd48276a8e1[m
+Author: Sizzlingsisig <141430993+sizzlingsisig@users.noreply.github.com>
+Date:   Tue Sep 23 22:14:49 2025 +0800
+
+    Initial commit

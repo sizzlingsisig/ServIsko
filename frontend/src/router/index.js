@@ -4,7 +4,6 @@ import { useAuthStore } from '@/stores/AuthStore.js'
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // Home page (landing + dashboard - accessible with or without auth)
     {
       path: '/',
       name: 'home',
@@ -30,43 +29,24 @@ const router = createRouter({
       component: () => import('@/views/ForgotPasswordView.vue'),
       meta: { layout: 'SideBarLayout', requiresAuth: false },
     },
-    // {
-    //   path: '/dashboard/about',
-    //   name: 'about',
-    //   component: () => import('@/views/AboutView.vue'),
-    //   meta: { layout: 'DefaultLayout', requiresAuth: true },
-    // },
-    // {
-    //   path: '/dashboard/listings',
-    //   name: 'listings',
-    //   component: () => import('@/views/ListingsView.vue'),
-    //   meta: { layout: 'DefaultLayout', requiresAuth: true },
-    // },
-    // {
-    //   path: '/dashboard/providers',
-    //   name: 'providers',
-    //   component: () => import('@/views/ProvidersView.vue'),
-    //   meta: { layout: 'DefaultLayout', requiresAuth: true },
-    // },
-    // {
-    //   path: '/dashboard/messages',
-    //   name: 'messages',
-    //   component: () => import('@/views/MessagesView.vue'),
-    //   meta: { layout: 'DefaultLayout', requiresAuth: true },
-    // },
+
+    // File uploads page
+    {
+      path: '/files',
+      name: 'files',
+      component: () => import('@/views/FileUpload.vue'),
+      meta: { layout: 'DefaultLayout', requiresAuth: true },
+    },
+
+    // Profile page
     {
       path: '/profile',
       name: 'profile',
       component: () => import('@/views/Profile/ProfileView.vue'),
       meta: { layout: 'ProfileLayout', requiresAuth: true },
     },
-    // {
-    //   path: '/dashboard/settings',
-    //   name: 'settings',
-    //   component: () => import('@/views/SettingsView.vue'),
-    //   meta: { layout: 'DefaultLayout', requiresAuth: true },
-    // },
-    // 404 catch-all route
+
+    // Not Found
     {
       path: '/:catchAll(.*)',
       name: 'NotFound',
@@ -77,7 +57,7 @@ const router = createRouter({
 })
 
 // Global navigation guard
-router.beforeEach((to, from) => {
+router.beforeEach((to) => {
   const authStore = useAuthStore()
 
   // Redirect authenticated users away from auth pages
@@ -86,6 +66,11 @@ router.beforeEach((to, from) => {
     authStore.isAuthenticated
   ) {
     return { name: 'home' }
+  }
+
+  // Protect routes that require authentication
+  if (to.meta?.requiresAuth && !authStore.isAuthenticated) {
+    return { name: 'login', query: { redirect: to.fullPath } }
   }
 })
 
