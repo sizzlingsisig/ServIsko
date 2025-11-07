@@ -13,6 +13,7 @@ import ProfileCardHeader from '@/views/Profile/Components/ProfileCardHeader.vue'
 // State
 const flags = reactive({
   isProvider: false,
+  isSeeker: true,
   isEditingDetails: false,
   showCreateSkillDialog: false,
   showSkillNotFoundDialog: false,
@@ -479,7 +480,7 @@ onMounted(() => {
                 </div>
               </div>
 
-              <div v-if="!flags.isEditingDetails && flags.isProvider" class="flex justify-end">
+              <div v-if="!flags.isEditingDetails && flags.isSeeker" class="flex justify-end">
                 <Button
                   icon="pi pi-pencil"
                   label="Edit Info"
@@ -491,7 +492,7 @@ onMounted(() => {
               </div>
 
               <!-- Edit Form -->
-              <div v-if="flags.isEditingDetails && flags.isProvider" class="space-y-4">
+              <div v-if="flags.isEditingDetails && flags.isSeeker" class="space-y-4">
                 <div class="field">
                   <label for="bio" class="block text-xs font-medium text-gray-700 mb-2">Bio</label>
                   <Textarea
@@ -550,7 +551,7 @@ onMounted(() => {
               </div>
 
               <!-- Display Mode -->
-              <div v-else-if="flags.isProvider" class="space-y-4">
+              <div v-else-if="flags.isSeeker" class="space-y-4">
                 <div>
                   <label class="block text-xs font-medium text-gray-700 mb-1">Bio</label>
                   <Textarea v-model="profile.bio" rows="2" class="w-full text-sm" readonly />
