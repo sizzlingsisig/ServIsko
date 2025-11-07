@@ -4,7 +4,7 @@ import CurvedCards from '@/layouts/components/CurvedCards.vue'
 
 <template>
   <section
-    class="relative bg-[#6d0019] text-left px-8 pt-32 pb-32 overflow-hidden h-[65vh] flex items-center justify-start"
+    class="relative bg-[#6d0019] text-left px-8 pt-32 pb-32 overflow-hidden h-[65vh] flex items-center justify-start z-[0]"
   >
     <div class="max-w-[800px]">
       <h1 class="text-6xl text-white font-extrabold leading-tight mb-4 -mt-[120px]">
@@ -34,7 +34,7 @@ import CurvedCards from '@/layouts/components/CurvedCards.vue'
   </section>
 
   <section
-    class="bg-white text-center px-8 py-20 -mt-[100px] min-h-[35vh] flex items-center justify-center z-[3]"
+    class="bg-white text-center px-8 mt py-20 -mt-[100px] min-h-[35vh] flex items-center justify-center z-[3]"
   >
     <div class="max-w-7xl mx-auto w-full">
       <h2 class="text-3xl font-bold mb-1 text-[#2a2a2a] mt-3 text-center">
@@ -44,7 +44,7 @@ import CurvedCards from '@/layouts/components/CurvedCards.vue'
         Lorem ipsum dolor sit amet, consectetur adipiscing elitiiiii
       </p>
 
-      <div class="bg-gray-100 p-8 rounded-2xl">
+      <div class="rounded-2xl">
         <div class="flex gap-4 w-full">
           <input
             type="text"
@@ -57,7 +57,7 @@ import CurvedCards from '@/layouts/components/CurvedCards.vue'
     </div>
   </section>
 
-  <section class="bg-[#f9f9f9] text-center px-4 md:px-8 py-12 md:py-20 w-full">
+  <section class="bg-white text-center px-4 md:px-8 py-12 md:py-20 w-full">
     <div class="max-w-[700px] mx-auto mb-8 md:mb-12 text-center">
       <h2 class="text-2xl md:text-3xl font-bold mb-2 text-[#2a2a2a]">Why Choose ServIsko?</h2>
       <p class="text-sm md:text-base text-[#555]">
@@ -70,7 +70,7 @@ import CurvedCards from '@/layouts/components/CurvedCards.vue'
           v-animateonscroll="{
             enterClass: 'animate-enter fade-in-10 zoom-in-50 animate-duration-1000',
           }"
-          class="flex flex-col bg-white text-[#680723] border-[#680723] border-2 shadow-lg justify-center items-center w-full sm:max-w-80 rounded-2xl p-6 md:p-8 gap-4 transition-all duration-300 hover:scale-110 hover:bg-[#680723] hover:text-white"
+          class="flex flex-col bg-white text-[#680723] border-[#680723] border-2 shadow-lg justify-center items-center w-full sm:max-w-80 rounded-2xl p-6 md:p-8 gap-4 transition-all duration-300 hover:scale-105 hover:-translate-y-2 hover:shadow-xl"
         >
           <div
             class="rounded-full border-2 border-[#680723] w-12 h-12 flex items-center justify-center"
@@ -86,7 +86,7 @@ import CurvedCards from '@/layouts/components/CurvedCards.vue'
           v-animateonscroll="{
             enterClass: 'animate-enter fade-in-10 zoom-in-75 animate-duration-1000',
           }"
-          class="flex flex-col bg-white text-[#680723] border-[#680723] border-2 shadow-lg justify-center items-center w-full sm:max-w-80 rounded-2xl p-6 md:p-8 gap-4 transition-all duration-300 hover:scale-110 hover:bg-[#680723] hover:text-white"
+          class="flex flex-col bg-white text-[#680723] border-[#680723] border-2 shadow-lg justify-center items-center w-full sm:max-w-80 rounded-2xl p-6 md:p-8 gap-4 transition-all duration-300 hover:scale-105 hover:-translate-y-2 hover:shadow-xl"
         >
           <div
             class="rounded-full border-2 border-[#680723] w-12 h-12 flex items-center justify-center"
@@ -102,7 +102,7 @@ import CurvedCards from '@/layouts/components/CurvedCards.vue'
           v-animateonscroll="{
             enterClass: 'animate-enter fade-in-10 zoom-in-50 animate-duration-1000',
           }"
-          class="flex flex-col bg-white text-[#680723] border-[#680723] border-2 shadow-lg justify-center items-center w-full sm:max-w-80 rounded-2xl p-6 md:p-8 gap-4 transition-all duration-300 hover:scale-110 hover:bg-[#680723] hover:text-white hover:border-white"
+          class="flex flex-col bg-white text-[#680723] border-[#680723] border-2 shadow-lg justify-center items-center w-full sm:max-w-80 rounded-2xl p-6 md:p-8 gap-4 transition-all duration-300 hover:scale-105 hover:-translate-y-2 hover:shadow-xl"
         >
           <div
             class="rounded-full border-2 border-[#680723] w-12 h-12 flex items-center justify-center"
