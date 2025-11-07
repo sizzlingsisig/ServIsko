@@ -1,17 +1,20 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '@/composables/axios'
 import { useToastStore } from '@/stores/toastStore'
 import { useAuthStore } from '@/stores/AuthStore'
 
 const toastStore = useToastStore()
 const authStore = useAuthStore()
+const router = useRouter()
 
 // Reactive state
 const files = ref([])
 const loading = ref(false)
 const uploading = ref(false)
 const dragActive = ref(false)
+const isAuthorized = ref(false)
 
 // File input refs
 const fileInput = ref(null)
@@ -176,14 +179,31 @@ const getFileIcon = (mimeType) => {
   return 'pi pi-file'
 }
 
-// Load files on component mount
-onMounted(() => {
-  fetchFiles()
+// Ensure only providers can access; fetch files after check
+onMounted(async () => {
+  try {
+    let user = authStore.getUser?.() || authStore.user
+    if (!user || !user.roles) {
+      const { data } = await api.get('/user')
+      user = data.data
+      if (authStore.setUser) authStore.setUser(user)
+    }
+    const roles = Array.isArray(user?.roles) ? user.roles : []
+    if (roles.includes('service-provider')) {
+      isAuthorized.value = true
+      await fetchFiles()
+    } else {
+      toastStore.showError('This page is for service providers only.')
+      router.replace({ name: 'profile' })
+    }
+  } catch (e) {
+    router.replace({ name: 'login' })
+  }
 })
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 py-8">
+  <div v-if="isAuthorized" class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
       <div class="mb-4 text-center">

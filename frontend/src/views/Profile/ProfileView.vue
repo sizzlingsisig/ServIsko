@@ -676,6 +676,18 @@ onMounted(() => {
               <div v-if="provider.links.length === 0" class="text-center py-4 text-gray-500">
                 <p class="text-sm">No links added</p>
               </div>
+              <!-- Verification / Upload Button -->
+              <div class="pt-2 mt-2 border-t border-blue-200">
+                <p class="text-xs text-gray-600 mb-2">
+                  Complete provider verification by uploading your documents.
+                </p>
+                <Button
+                  icon="pi pi-id-card"
+                  label="Verify / Upload Documents"
+                  class="w-full bg-white text-primary-500"
+                  @click="$router.push({ name: 'files' })"
+                />
+              </div>
             </div>
           </template>
         </Card>

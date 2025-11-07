@@ -48,8 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/', [UserController::class, 'destroy']);
     });
 
-    // File uploads (per-user)
-    Route::prefix('files')->group(function () {
+    // File uploads (per-user, providers only)
+    Route::middleware('role:service-provider')->prefix('files')->group(function () {
         Route::get('/', [FileController::class, 'index']);
         Route::post('/', [FileController::class, 'store']);
         Route::get('/{id}/download', [FileController::class, 'download']);

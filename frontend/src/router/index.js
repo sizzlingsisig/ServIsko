@@ -35,7 +35,7 @@ const router = createRouter({
       path: '/files',
       name: 'files',
       component: () => import('@/views/FileUpload.vue'),
-      meta: { layout: 'DefaultLayout', requiresAuth: true },
+      meta: { layout: 'DefaultLayout', requiresAuth: true, requiresRole: 'service-provider' },
     },
 
     // Profile page
@@ -71,6 +71,16 @@ router.beforeEach((to) => {
   // Protect routes that require authentication
   if (to.meta?.requiresAuth && !authStore.isAuthenticated) {
     return { name: 'login', query: { redirect: to.fullPath } }
+  }
+
+  // Optional role-based protection (lightweight): if user roles are available in store
+  // and route specifies a required role, block navigation when role is missing.
+  if (to.meta?.requiresRole) {
+    const user = authStore.user
+    const roles = Array.isArray(user?.roles) ? user.roles : null
+    if (roles && !roles.includes(to.meta.requiresRole)) {
+      return { name: 'profile' }
+    }
   }
 })
 
