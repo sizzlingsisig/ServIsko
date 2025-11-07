@@ -15,36 +15,25 @@ const activeStep = ref(1)
 // Loading state
 const loading = ref(false)
 
-// Selected role
-const selectedRole = ref('')
-
 // Form data
 const fullName = ref('')
+const username = ref('')
 const email = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
 
-// Select role
-const selectRole = (role) => {
-  selectedRole.value = role
-}
-
-// Handle register
-const handleRegister = async () => {
-  if (!selectedRole.value) {
-    toastStore.showWarning('Please select a role')
-    return
-  }
-
+// Handle register (Step 1 - account creation with role selection)
+const handleRegister = async (role) => {
   loading.value = true
 
   try {
-    const response = await api.post('/api/register', {
+    const response = await api.post('/register', {
       name: fullName.value,
+      username: username.value,
       email: email.value,
       password: password.value,
       password_confirmation: passwordConfirm.value,
-      role: selectedRole.value,
+      role: role,
     })
 
     // Store auth data using AuthStore
@@ -52,13 +41,11 @@ const handleRegister = async () => {
     authStore.setUser(response.data.user)
 
     // Show success toast
-    toastStore.showSuccess(`Welcome to ServISKO, ${fullName.value}!`)
+    toastStore.showSuccess(`Welcome to ServISKO as a ${role}!`)
 
     // Move to success step
-    activeStep.value = 3
+    activeStep.value = 2
   } catch (err) {
-    // Error handled globally by axios interceptor
-    // But we can add specific validation error handling here
     if (err.response?.data?.errors) {
       const validationErrors = Object.values(err.response.data.errors).flat()
       toastStore.showError(validationErrors.join(', '), 'Validation Error')
@@ -72,43 +59,29 @@ const handleRegister = async () => {
 const goToDashboard = () => {
   router.push('/dashboard')
 }
+
+// Prevent navigation to step 2 if step 1 is not completed
+const preventNavigation = (callback) => {
+  if (activeStep.value === 1) {
+    // Don't allow navigation away from step 1
+    return
+  }
+  callback()
+}
 </script>
 
 <template>
   <div class="flex items-center justify-center p-8 bg-gray-50 min-h-screen">
     <div class="w-full max-w-4xl">
-      <!-- Stepper -->
       <div class="w-full">
-        <Stepper v-model:value="activeStep" class="w-full">
+        <Stepper v-model:value="activeStep" class="w-full" linear>
           <!-- Step List -->
           <StepList>
             <Step v-slot="{ activateCallback, value, a11yAttrs }" asChild :value="1">
               <div class="flex flex-row flex-auto gap-2" v-bind="a11yAttrs.root">
                 <button
                   class="bg-transparent border-0 inline-flex flex-col gap-2"
-                  @click="activateCallback"
-                  v-bind="a11yAttrs.header"
-                >
-                  <span
-                    :class="[
-                      'rounded-full border-2 w-12 h-12 inline-flex items-center justify-center',
-                      {
-                        'bg-primary text-primary-contrast border-primary': value <= activeStep,
-                        'border-surface-200 dark:border-surface-700': value > activeStep,
-                      },
-                    ]"
-                  >
-                    <i class="pi pi-users" />
-                  </span>
-                </button>
-                <Divider />
-              </div>
-            </Step>
-            <Step v-slot="{ activateCallback, value, a11yAttrs }" asChild :value="2">
-              <div class="flex flex-row flex-auto gap-2 pl-2" v-bind="a11yAttrs.root">
-                <button
-                  class="bg-transparent border-0 inline-flex flex-col gap-2"
-                  @click="activateCallback"
+                  @click="preventNavigation(activateCallback)"
                   v-bind="a11yAttrs.header"
                 >
                   <span
@@ -126,12 +99,13 @@ const goToDashboard = () => {
                 <Divider />
               </div>
             </Step>
-            <Step v-slot="{ activateCallback, value, a11yAttrs }" asChild :value="3">
+            <Step v-slot="{ activateCallback, value, a11yAttrs }" asChild :value="2">
               <div class="flex flex-row pl-2" v-bind="a11yAttrs.root">
                 <button
                   class="bg-transparent border-0 inline-flex flex-col gap-2"
-                  @click="activateCallback"
+                  @click="preventNavigation(activateCallback)"
                   v-bind="a11yAttrs.header"
+                  :disabled="activeStep < 2"
                 >
                   <span
                     :class="[
@@ -151,101 +125,17 @@ const goToDashboard = () => {
 
           <!-- Step Panels -->
           <StepPanels class="bg-transparent">
-            <!-- Step 1: Choose Role -->
+            <!-- Step 1: Account Creation with Role Selection -->
             <StepPanel v-slot="{ activateCallback }" :value="1">
-              <div class="flex flex-col gap-2 mx-auto" style="min-height: 16rem; max-width: 40rem">
-                <div class="text-center mt-4 mb-4 text-2xl font-semibold">
-                  Join as a service seeker or provider
-                </div>
-                <div class="text-center text-gray-600 mb-6">
-                  Choose how you want to get started with ServISKO
-                </div>
-
-                <!-- Role Selection Buttons -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <!-- Service Seeker -->
-                  <button
-                    type="button"
-                    @click="selectRole('service seeker')"
-                    :class="[
-                      'relative p-8 border-2 rounded-lg transition-all cursor-pointer group bg-white',
-                      selectedRole === 'service seeker'
-                        ? 'border-primary-600 bg-primary-50'
-                        : 'border-gray-200 hover:border-primary-400 hover:shadow-md',
-                    ]"
-                  >
-                    <div
-                      v-if="selectedRole === 'service seeker'"
-                      class="absolute top-4 right-4 w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center"
-                    >
-                      <i class="pi pi-check text-white text-xs"></i>
-                    </div>
-                    <div class="flex flex-col items-center text-center">
-                      <div
-                        class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-primary-200 transition-colors"
-                      >
-                        <i class="pi pi-search text-3xl text-primary-600"></i>
-                      </div>
-                      <h4 class="text-lg font-semibold mb-2 text-gray-900">I'm a service seeker</h4>
-                      <p class="text-sm text-gray-600">Looking for skilled service providers</p>
-                    </div>
-                  </button>
-
-                  <!-- Service Provider -->
-                  <button
-                    type="button"
-                    @click="selectRole('service provider')"
-                    :class="[
-                      'relative p-8 border-2 rounded-lg transition-all cursor-pointer group bg-white',
-                      selectedRole === 'service provider'
-                        ? 'border-primary-600 bg-primary-50'
-                        : 'border-gray-200 hover:border-primary-400 hover:shadow-md',
-                    ]"
-                  >
-                    <div
-                      v-if="selectedRole === 'service provider'"
-                      class="absolute top-4 right-4 w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center"
-                    >
-                      <i class="pi pi-check text-white text-xs"></i>
-                    </div>
-                    <div class="flex flex-col items-center text-center">
-                      <div
-                        class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-primary-200 transition-colors"
-                      >
-                        <i class="pi pi-briefcase text-3xl text-primary-600"></i>
-                      </div>
-                      <h4 class="text-lg font-semibold mb-2 text-gray-900">
-                        I'm a service provider
-                      </h4>
-                      <p class="text-sm text-gray-600">Ready to offer my skills and services</p>
-                    </div>
-                  </button>
-                </div>
-              </div>
-              <div class="flex pt-6 justify-end">
-                <Button
-                  label="Next"
-                  icon="pi pi-arrow-right"
-                  iconPos="right"
-                  @click="activateCallback(2)"
-                  :disabled="!selectedRole"
-                />
-              </div>
-            </StepPanel>
-
-            <!-- Step 2: User Information -->
-            <StepPanel v-slot="{ activateCallback }" :value="2">
               <div class="flex flex-col gap-2 mx-auto" style="min-height: 16rem; max-width: 36rem">
-                <div class="text-center mt-4 mb-4 text-2xl font-semibold">
-                  Tell us about yourself
-                </div>
+                <div class="text-center mt-4 mb-4 text-2xl font-semibold">Create your account</div>
                 <div class="text-center text-gray-600 mb-6">
-                  You're joining as a <strong class="text-primary-600">{{ selectedRole }}</strong>
+                  Get started with ServISKO in just a few steps
                 </div>
 
                 <FormKit
                   type="form"
-                  @submit="handleRegister"
+                  @submit="() => {}"
                   :actions="false"
                   :incomplete-message="false"
                 >
@@ -266,6 +156,24 @@ const goToDashboard = () => {
                       outer-class="!max-w-full"
                     />
 
+                    <!-- Username -->
+                    <FormKit
+                      type="text"
+                      v-model="username"
+                      name="username"
+                      label="Username"
+                      placeholder="johndoe123"
+                      validation="required|length:3|matches:/^[a-zA-Z0-9_-]+$/"
+                      validation-visibility="blur"
+                      :validation-messages="{
+                        required: 'Username is required.',
+                        length: 'Username must be at least 3 characters long.',
+                        matches:
+                          'Username can only contain letters, numbers, underscores, and hyphens.',
+                      }"
+                      outer-class="!max-w-full"
+                    />
+
                     <!-- Email -->
                     <FormKit
                       type="email"
@@ -282,7 +190,7 @@ const goToDashboard = () => {
                       outer-class="!max-w-full"
                     />
 
-                    <!-- Passwords - Side by Side -->
+                    <!-- Passwords -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormKit
                         type="password"
@@ -314,29 +222,61 @@ const goToDashboard = () => {
                         outer-class="!max-w-full"
                       />
                     </div>
-                  </div>
 
-                  <div class="flex pt-6 justify-between">
-                    <Button
-                      label="Back"
-                      severity="secondary"
-                      icon="pi pi-arrow-left"
-                      @click="activateCallback(1)"
-                    />
-                    <Button
-                      type="submit"
-                      label="Create Account"
-                      icon="pi pi-user-plus"
-                      :loading="loading"
-                      :disabled="loading"
-                    />
+                    <!-- Role Selection -->
+                    <div class="mt-4">
+                      <label class="text-sm font-medium text-gray-700 mb-3 block"
+                        >How would you like to use ServISKO?</label
+                      >
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Service Seeker -->
+                        <button
+                          type="button"
+                          @click="handleRegister('service seeker')"
+                          class="relative p-6 border-2 rounded-lg transition-all cursor-pointer group bg-white border-gray-200 hover:border-primary-400 hover:shadow-md"
+                          :disabled="loading"
+                        >
+                          <div class="flex flex-col items-center text-center">
+                            <div
+                              class="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-primary-200 transition-colors"
+                            >
+                              <i class="pi pi-search text-2xl text-primary-600"></i>
+                            </div>
+                            <h4 class="text-base font-semibold mb-1 text-gray-900">
+                              I'm looking for services
+                            </h4>
+                            <p class="text-xs text-gray-600">Find skilled professionals</p>
+                          </div>
+                        </button>
+
+                        <!-- Service Provider -->
+                        <button
+                          type="button"
+                          @click="handleRegister('service provider')"
+                          class="relative p-6 border-2 rounded-lg transition-all cursor-pointer group bg-white border-gray-200 hover:border-primary-400 hover:shadow-md"
+                          :disabled="loading"
+                        >
+                          <div class="flex flex-col items-center text-center">
+                            <div
+                              class="w-14 h-14 bg-primary-100 rounded-full flex items-center justify-center mb-3 group-hover:bg-primary-200 transition-colors"
+                            >
+                              <i class="pi pi-briefcase text-2xl text-primary-600"></i>
+                            </div>
+                            <h4 class="text-base font-semibold mb-1 text-gray-900">
+                              I want to offer services
+                            </h4>
+                            <p class="text-xs text-gray-600">Share your skills with others</p>
+                          </div>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </FormKit>
               </div>
             </StepPanel>
 
-            <!-- Step 3: Success -->
-            <StepPanel :value="3">
+            <!-- Step 2: Success -->
+            <StepPanel :value="2">
               <div
                 class="flex flex-col gap-2 mx-auto text-center"
                 style="min-height: 16rem; max-width: 32rem"
@@ -347,17 +287,9 @@ const goToDashboard = () => {
                   >
                     <i class="pi pi-check text-5xl text-green-600"></i>
                   </div>
-                  <h3 class="text-2xl font-semibold mb-3 text-gray-900">
-                    Account created successfully!
-                  </h3>
-                  <p class="text-gray-600 mb-2">
-                    Welcome to ServISKO, <strong>{{ fullName }}</strong
-                    >!
-                  </p>
-                  <p class="text-gray-600">
-                    You're all set as a <strong class="text-primary-600">{{ selectedRole }}</strong
-                    >.
-                  </p>
+                  <h3 class="text-2xl font-semibold mb-3 text-gray-900">You're all set!</h3>
+                  <p class="text-gray-600 mb-2">Your account has been created successfully.</p>
+                  <p class="text-gray-600">You're ready to explore ServISKO.</p>
                 </div>
               </div>
               <div class="flex pt-6 justify-center">
@@ -429,7 +361,12 @@ const goToDashboard = () => {
   transition: all 0.2s ease;
 }
 
-button[type='button']:hover {
+button[type='button']:hover:not(:disabled) {
   transform: translateY(-2px);
+}
+
+button[type='button']:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>

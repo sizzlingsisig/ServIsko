@@ -3,7 +3,9 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -21,11 +23,17 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
+
+    protected $guard_name = 'sanctum';
+
     protected $fillable = [
         'name',
         'email',
+        'username',
         'password',
     ];
+
+
 
     /**
      * The attributes that should be hidden for serialization.
@@ -35,6 +43,9 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'created_at',
+        'updated_at',
+        'deleted_at'
     ];
 
     /**
@@ -65,4 +76,13 @@ class User extends Authenticatable
     {
         return $this->hasMany(Application::class);
     }
+    public function profile(): HasOne{
+        return $this->hasOne(UserProfile::class);
+    }
+
+    public function providerProfile(): HasOne{
+        return $this->hasOne(ProviderProfile::class);
+    }
+
+
 }
