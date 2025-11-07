@@ -24,7 +24,7 @@ import CurvedCards from '@/layouts/components/CurvedCards.vue'
     </div>
 
     <svg
-      class="absolute bottom-0 left-0 w-full h-[250px] block pointer-events-none z-0"
+      class="absolute bottom-0 left-0 w-full h-[300px] block pointer-events-none z-0"
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 1440 320"
       preserveAspectRatio="none"
