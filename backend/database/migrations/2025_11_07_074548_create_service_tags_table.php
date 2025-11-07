@@ -11,18 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-    Schema::create('listing_tags', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('listing_id')->constrained()->onDelete('cascade');
-        $table->foreignId('tag_id')->constrained()->onDelete('cascade');
-        $table->timestamps();
-    });
+        Schema::create('service_tags', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('service_id')->constrained()->onDelete('cascade');
+            $table->foreignId('tag_id')->constrained()->onDelete('cascade');
+            $table->timestamps();
+        });
     }
+
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('listing_tags');
+        Schema::dropIfExists('service_tags');
     }
 };

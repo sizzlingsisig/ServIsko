@@ -11,6 +11,7 @@ class SkillRequest extends Model
 
     protected $fillable = [
         'user_id',
+        'reviewer_id',
         'name',
         'description',
         'status',

@@ -75,9 +75,7 @@ class SkillRequestController extends Controller
         }
     }
 
-    /**
-     * Approve a skill request
-     */
+
     public function approve(ApproveSkillRequestRequest $request, $id)
     {
         try {
@@ -85,7 +83,8 @@ class SkillRequestController extends Controller
 
             $approved = $this->skillRequestService->approveRequest(
                 $skillRequest,
-                $request->validated()
+                $request->validated(),
+                auth()->user()->id
             );
 
             Log::info('Skill request approved', [
@@ -125,9 +124,10 @@ class SkillRequestController extends Controller
             $skillRequest = $this->skillRequestService->getRequestById($id);
 
             $rejected = $this->skillRequestService->rejectRequest(
-                $skillRequest,
-                $request->validated()['reason'] ?? null
-            );
+            $skillRequest,
+            $request->validated()['reason'] ?? null,
+            auth()->user()->id // pass reviewer_id
+        );
 
             Log::info('Skill request rejected', [
                 'request_id' => $id,

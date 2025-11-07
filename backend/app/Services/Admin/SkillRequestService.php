@@ -9,9 +9,7 @@ use Exception;
 
 class SkillRequestService
 {
-    /**
-     * Get all skill requests with filters, search, and sorting
-     */
+    //Get all request with filters search and sorting
     public function getAllRequests(array $filters = [])
     {
         $query = SkillRequest::with('user');
@@ -51,19 +49,16 @@ class SkillRequestService
         return $query->paginate($perPage);
     }
 
-    /**
-     * Get skill request by ID
-     */
+    // Get specific skill request by ID
     public function getRequestById(int $id): SkillRequest
     {
         return SkillRequest::with('user')->findOrFail($id);
     }
 
-    /**
-     * Approve a skill request
-     */
-    public function approveRequest(SkillRequest $skillRequest, array $data): SkillRequest
+    // Approve a skill request
+    public function approveRequest(SkillRequest $skillRequest, array $data, int $reviewer_id): SkillRequest
     {
+
         // Check if already processed
         if ($skillRequest->status !== 'pending') {
             throw new Exception("This request has already been {$skillRequest->status}.");
@@ -93,19 +88,20 @@ class SkillRequestService
         }
 
         // Update request status
-        $skillRequest->update([
+         $skillRequest->update([
             'status' => 'approved',
             'reviewed_at' => Carbon::now(),
+            'reviewer_id' => $reviewer_id,
+            'admin_notes' => $data['notes'] ?? null,
         ]);
 
         return $skillRequest->fresh();
     }
 
-    /**
-     * Reject a skill request
-     */
-    public function rejectRequest(SkillRequest $skillRequest, ?string $reason = null): SkillRequest
+    // Reject a skill request
+    public function rejectRequest(SkillRequest $skillRequest, ?string $reason, int $reviewerId): SkillRequest
     {
+
         // Check if already processed
         if ($skillRequest->status !== 'pending') {
             throw new Exception("This request has already been {$skillRequest->status}.");
@@ -114,14 +110,14 @@ class SkillRequestService
         $skillRequest->update([
             'status' => 'rejected',
             'reviewed_at' => Carbon::now(),
+            'reviewer_id' => $reviewerId,
+            'admin_notes' => $reason,
         ]);
 
         return $skillRequest->fresh();
     }
 
-    /**
-     * Get statistics on skill requests
-     */
+    // Get statistics about skill requests
     public function getStats(string $dateRange = 'all'): array
     {
         $query = SkillRequest::query();

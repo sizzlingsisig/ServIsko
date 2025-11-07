@@ -11,28 +11,25 @@ class Listing extends Model
 
     // Columns that can be mass assigned
     protected $fillable = [
-        'creator_user_id',
+        'seeker_user_id',
         'category_id',
-        'assigned_user_id',
+        'hired_user_id',
         'title',
         'description',
         'budget',
         'status',
-        'is_active',
     ];
 
-    // Relationships
-
     // The user who created the listing
-    public function creator()
+    public function seeker()
     {
-        return $this->belongsTo(User::class, 'creator_user_id');
+        return $this->belongsTo(User::class, 'seeker_user_id');
     }
 
-    // The user assigned to the listing (e.g. freelancer or provider)
-    public function assignedUser()
+    // The user assigned to the listing
+    public function hiredUser()
     {
-        return $this->belongsTo(User::class, 'assigned_user_id');
+        return $this->belongsTo(User::class, 'hired_user_id');
     }
 
     // Listing belongs to a category
@@ -58,4 +55,6 @@ class Listing extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+
 }

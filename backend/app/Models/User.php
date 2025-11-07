@@ -66,10 +66,11 @@ class User extends Authenticatable
      */
 
     // A user can have many listings
-    public function listings()
+        public function listings()
     {
-        return $this->hasMany(Listing::class);
+        return $this->hasMany(Listing::class, 'seeker_user_id');
     }
+
 
     // A user can have many applications
     public function applications()
@@ -84,5 +85,8 @@ class User extends Authenticatable
         return $this->hasOne(ProviderProfile::class);
     }
 
-
+    public function hiredListings()
+    {
+        return $this->hasMany(Listing::class, 'hired_user_id');
+    }
 }
