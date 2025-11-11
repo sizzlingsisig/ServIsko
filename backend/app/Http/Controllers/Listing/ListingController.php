@@ -24,13 +24,13 @@ class ListingController extends Controller
      * Get all listings for the authenticated user
      * GET /api/listings
      */
-    public function index()
+     public function index(FilterListingRequest $request)
     {
         try {
-            $listings = auth()->user()
-                ->listings()
-                ->with(['seeker', 'category', 'tags', 'hiredUser'])
-                ->get();
+            $listings = $this->listingService->getUserListings(
+                auth()->id(),
+                $request->validated()
+            );
 
             return response()->json([
                 'success' => true,

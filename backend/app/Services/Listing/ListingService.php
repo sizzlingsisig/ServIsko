@@ -9,6 +9,41 @@ use Exception;
 class ListingService
 {
     /**
+     * Get filtered listings for a user
+     */
+    public function getUserListings(int $userId, array $filters = [])
+    {
+        $query = Listing::where('seeker_user_id', $userId)
+            ->with(['seeker', 'category', 'tags', 'hiredUser']);
+
+        return $this->applyFilters($query, $filters);
+    }
+
+    /**
+     * Apply filters to listing query
+     */
+    private function applyFilters($query, array $filters)
+    {
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (isset($filters['category_id'])) {
+            $query->where('category_id', $filters['category_id']);
+        }
+
+        if (isset($filters['has_hired_user'])) {
+            $filters['has_hired_user']
+                ? $query->whereNotNull('hired_user_id')
+                : $query->whereNull('hired_user_id');
+        }
+
+        $perPage = $filters['per_page'] ?? 15;
+
+        return $query->paginate($perPage);
+    }
+
+    /**
      * Create a new listing with tags
      */
     public function createListing(array $data, int $userId): Listing
@@ -22,11 +57,11 @@ class ListingService
             'status' => 'active',
         ]);
 
-        if (!empty($data['tags'])) {
-            $this->syncTags($listing, $data['tags']);
+        if (!empty($data['tag_ids'])) {
+            $listing->tags()->sync($data['tag_ids']);
         }
 
-        return $listing;
+        return $listing->fresh()->load(['tags', 'category']);
     }
 
     /**
@@ -36,11 +71,11 @@ class ListingService
     {
         $listing->update($data);
 
-        if (isset($data['tags'])) {
-            $this->syncTags($listing, $data['tags']);
+        if (isset($data['tag_ids'])) {
+            $listing->tags()->sync($data['tag_ids']);
         }
 
-        return $listing;
+        return $listing->fresh()->load(['tags', 'category']);
     }
 
     /**
@@ -49,7 +84,7 @@ class ListingService
      */
     public function addTag(Listing $listing, int $tagId): Listing
     {
-        $tag = Tag::where('id', $tagId)->first();
+        $tag = Tag::find($tagId);
 
         if (!$tag) {
             throw new Exception('Tag not found.');
@@ -59,7 +94,7 @@ class ListingService
             throw new Exception('This tag is already added to this listing.');
         }
 
-        $listing->tags()->syncWithoutDetaching([$tagId]);
+        $listing->tags()->attach($tagId);
 
         return $listing->fresh()->load('tags');
     }
@@ -70,7 +105,7 @@ class ListingService
      */
     public function removeTag(Listing $listing, int $tagId): Listing
     {
-        $tag = Tag::where('id', $tagId)->first();
+        $tag = Tag::find($tagId);
 
         if (!$tag) {
             throw new Exception('Tag not found.');
@@ -82,28 +117,10 @@ class ListingService
     }
 
     /**
-     * Sync tags - normalize and attach to listing
-     */
-    public function syncTags(Listing $listing, array $tagNames): void
-    {
-        $tagIds = collect($tagNames)->map(function ($tagName) {
-            $normalized = strtolower(trim($tagName));
-
-            return Tag::firstOrCreate(
-                ['name' => $normalized],
-                ['name' => $normalized]
-            )->id;
-        });
-
-        $listing->tags()->sync($tagIds);
-    }
-
-    /**
-     * Delete a listing
+     * Delete a listing (soft delete)
      */
     public function deleteListing(Listing $listing): void
     {
-        $listing->tags()->detach();
         $listing->delete();
     }
 }
