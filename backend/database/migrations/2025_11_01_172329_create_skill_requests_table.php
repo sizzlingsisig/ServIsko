@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('skill_requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('reviewer_id')->constrained('users')->onDelete('set null');
             $table->string('name')->index();
             $table->text('description')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending')->index();

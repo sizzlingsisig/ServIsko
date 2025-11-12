@@ -11,21 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('categories', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->text('description')->nullable();
-            $table->softDeletes();
-            $table->timestamps();
-        });
+    Schema::create('listing_tags', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('listing_id')->constrained()->onDelete('cascade');
+        $table->foreignId('tag_id')->constrained()->onDelete('cascade');
+        $table->timestamps();
+        $table->softDeletes();
+    });
     }
-
-
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::dropIfExists('categories');
+        Schema::dropIfExists('listing_tags');
     }
 };

@@ -13,8 +13,9 @@ return new class extends Migration
     {
     Schema::create('listings', function (Blueprint $table) {
         $table->id();
-        $table->foreignId('seeker_user_id')->constrained('users')->onDelete('cascade');
+        $table->foreignId('seeker_user_id')->constrained('users')->onDeleteCascade();
         $table->foreignId('category_id')->nullable()->constrained('categories')->onDeleteCascade();
+        $table->foreignId('hired_user_id')->nullable()->constrained('users')->onDeleteCascade();
         $table->string('title');
         $table->text('description')->nullable();
         $table->decimal('budget', 10, 2)->nullable();

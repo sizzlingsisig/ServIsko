@@ -57,7 +57,7 @@ const handleRegister = async (role) => {
 
 // Navigate to dashboard
 const goToDashboard = () => {
-  router.push('/dashboard')
+  router.push('/')
 }
 
 // Prevent navigation to step 2 if step 1 is not completed

@@ -30,6 +30,14 @@ const router = createRouter({
       meta: { layout: 'SideBarLayout', requiresAuth: false },
     },
 
+    // Public listings route
+    {
+      path: '/listings',
+      name: 'listings',
+      component: () => import('@/views/ListingsView.vue'),
+      meta: { layout: 'DefaultLayout', requiresAuth: false },
+    },
+
     // File uploads page
     {
       path: '/files',
