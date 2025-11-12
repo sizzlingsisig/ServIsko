@@ -36,14 +36,23 @@ const router = createRouter({
     //   component: () => import('@/views/AboutView.vue'),
     //   meta: { layout: 'DefaultLayout', requiresAuth: true },
     // },
+    // Dashboard listings route (optional, can be removed if not needed)
     // {
     //   path: '/dashboard/listings',
-    //   name: 'listings',
+    //   name: 'dashboard-listings',
     //   component: () => import('@/views/ListingsView.vue'),
     //   meta: { layout: 'DefaultLayout', requiresAuth: true },
     // },
+
+    // Public listings route (for /listings)
+    {
+      path: '/listings',
+      name: 'listings',
+      component: () => import('@/views/ListingsView.vue'),
+      meta: { layout: 'DefaultLayout', requiresAuth: false },
+    },
     // {
-    //   path: '/dashboard/providers',
+    //   path: '/providers',
     //   name: 'providers',
     //   component: () => import('@/views/ProvidersView.vue'),
     //   meta: { layout: 'DefaultLayout', requiresAuth: true },
