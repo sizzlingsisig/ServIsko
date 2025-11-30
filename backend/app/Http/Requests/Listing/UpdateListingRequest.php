@@ -21,6 +21,7 @@ class UpdateListingRequest extends FormRequest
             'status' => 'sometimes|in:active,closed,expired',
             'tags' => 'nullable|array|max:10',
             'tags.*' => 'string|min:2|max:50',
+            'expires_at' => 'nullable|date|after:now',
         ];
     }
 
@@ -34,6 +35,8 @@ class UpdateListingRequest extends FormRequest
             'tags.max' => 'You can add a maximum of 10 tags.',
             'tags.*.min' => 'Each tag must be at least 2 characters.',
             'tags.*.max' => 'Each tag cannot exceed 50 characters.',
+            'expires_at.date' => 'Expiry date must be a valid date.',
+            'expires_at.after' => 'Expiry date must be a future date.',
         ];
     }
 }

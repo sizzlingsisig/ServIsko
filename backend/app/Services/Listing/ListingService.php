@@ -13,8 +13,14 @@ class ListingService
      */
     public function getUserListings(int $userId, array $filters = [])
     {
-        $query = Listing::where('seeker_user_id', $userId)
-            ->with(['seeker', 'category', 'tags', 'hiredUser']);
+        $query = Listing::where('seeker_user_id', $userId);
+
+        // Apply active scope to filter out expired listings by default
+        if (!($filters['include_expired'] ?? false)) {
+            $query->active();
+        }
+
+        $query->with(['seeker', 'category', 'tags', 'hiredUser']);
 
         return $this->applyFilters($query, $filters);
     }
@@ -38,6 +44,27 @@ class ListingService
                 : $query->whereNull('hired_user_id');
         }
 
+        // Filter by tag
+        if (isset($filters['tag_id'])) {
+            $query->whereHas('tags', function($q) use ($filters) {
+                $q->where('tags.id', $filters['tag_id']);
+            });
+        }
+
+        // Filter by date range
+        if (isset($filters['created_from'])) {
+            $query->where('created_at', '>=', $filters['created_from']);
+        }
+
+        if (isset($filters['created_to'])) {
+            $query->where('created_at', '<=', $filters['created_to']);
+        }
+
+        // Apply sorting
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        $sortOrder = $filters['sort_order'] ?? 'desc';
+        $query->orderBy($sortBy, $sortOrder);
+
         $perPage = $filters['per_page'] ?? 15;
 
         return $query->paginate($perPage);
@@ -55,10 +82,16 @@ class ListingService
             'budget' => $data['budget'] ?? null,
             'category_id' => $data['category_id'] ?? null,
             'status' => 'active',
+            'expires_at' => $data['expires_at'] ?? null,
         ]);
 
         if (!empty($data['tag_ids'])) {
             $listing->tags()->sync($data['tag_ids']);
+        }
+
+        // Handle tag names (if using tag names instead of IDs)
+        if (!empty($data['tags'])) {
+            $this->syncTagsByName($listing, $data['tags']);
         }
 
         return $listing->fresh()->load(['tags', 'category']);
@@ -69,10 +102,42 @@ class ListingService
      */
     public function updateListing(Listing $listing, array $data): Listing
     {
-        $listing->update($data);
+        // Build update array
+        $updateData = [];
+
+        if (isset($data['title'])) {
+            $updateData['title'] = $data['title'];
+        }
+
+        if (isset($data['description'])) {
+            $updateData['description'] = $data['description'];
+        }
+
+        if (isset($data['budget'])) {
+            $updateData['budget'] = $data['budget'];
+        }
+
+        if (isset($data['category_id'])) {
+            $updateData['category_id'] = $data['category_id'];
+        }
+
+        if (isset($data['status'])) {
+            $updateData['status'] = $data['status'];
+        }
+
+        if (isset($data['expires_at'])) {
+            $updateData['expires_at'] = $data['expires_at'];
+        }
+
+        $listing->update($updateData);
 
         if (isset($data['tag_ids'])) {
             $listing->tags()->sync($data['tag_ids']);
+        }
+
+        // Handle tag names (if using tag names instead of IDs)
+        if (isset($data['tags'])) {
+            $this->syncTagsByName($listing, $data['tags']);
         }
 
         return $listing->fresh()->load(['tags', 'category']);
@@ -122,5 +187,20 @@ class ListingService
     public function deleteListing(Listing $listing): void
     {
         $listing->delete();
+    }
+
+    /**
+     * Sync tags by name (creates tags if they don't exist)
+     */
+    protected function syncTagsByName(Listing $listing, array $tagNames): void
+    {
+        $tagIds = [];
+
+        foreach ($tagNames as $tagName) {
+            $tag = Tag::firstOrCreate(['name' => trim($tagName)]);
+            $tagIds[] = $tag->id;
+        }
+
+        $listing->tags()->sync($tagIds);
     }
 }
