@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Listing;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Listing\StoreListingRequest;
 use App\Http\Requests\Listing\UpdateListingRequest;
+use App\Http\Requests\Listing\FilterListingRequest;
 use App\Models\Listing;
 use App\Services\Listing\ListingService;
 use Illuminate\Support\Facades\DB;
@@ -24,7 +25,7 @@ class ListingController extends Controller
      * Get all listings for the authenticated user
      * GET /api/listings
      */
-     public function index(FilterListingRequest $request)
+    public function index(FilterListingRequest $request)
     {
         try {
             $listings = $this->listingService->getUserListings(
@@ -65,7 +66,9 @@ class ListingController extends Controller
                 ], 404);
             }
 
+            // Add expiry status to response
             $listing->load(['seeker', 'category', 'tags', 'hiredUser', 'applications']);
+            $listing->is_expired = $listing->isExpired();
 
             return response()->json([
                 'success' => true,

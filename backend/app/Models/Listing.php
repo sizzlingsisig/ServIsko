@@ -18,6 +18,13 @@ class Listing extends Model
         'description',
         'budget',
         'status',
+        'expires_at',
+    ];
+
+    // Cast attributes to native types
+    protected $casts = [
+        'expires_at' => 'datetime',
+        'budget' => 'decimal:2',
     ];
 
     // The user who created the listing
@@ -56,5 +63,24 @@ class Listing extends Model
         return $this->hasMany(Review::class);
     }
 
+    // Check if listing has expired
+    public function isExpired()
+    {
+        return $this->expires_at && $this->expires_at->isPast();
+    }
 
+    // Scope to get only active (non-expired) listings
+    public function scopeActive($query)
+    {
+        return $query->where(function($q) {
+            $q->whereNull('expires_at')
+              ->orWhere('expires_at', '>', now());
+        });
+    }
+
+    // Scope to get only expired listings
+    public function scopeExpired($query)
+    {
+        return $query->where('expires_at', '<=', now());
+    }
 }
