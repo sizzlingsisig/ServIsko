@@ -135,9 +135,22 @@ const addCustomTag = () => {
 
 // Open modal and fetch categories + tags
 const openAddModal = async () => {
-  await Promise.all([loadCategories(), loadTags()])
-  activeStep.value = 1
+  // Show modal immediately
   showAddModal.value = true
+  activeStep.value = 1
+
+  // Load categories and tags in parallel with independent error handling
+  const categoriesPromise = loadCategories().catch((err) => {
+    console.error('Categories load failed:', err)
+    categories.value = []
+  })
+
+  const tagsPromise = loadTags().catch((err) => {
+    console.error('Tags load failed:', err)
+    tags.value = []
+  })
+
+  await Promise.all([categoriesPromise, tagsPromise])
 }
 
 // Navigation in stepper with validation

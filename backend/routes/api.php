@@ -28,6 +28,7 @@ use App\Http\Controllers\Provider\ProfileController as ProviderProfileController
 use App\Http\Controllers\Provider\LinkController as ProviderLinkController;
 use App\Http\Controllers\Provider\SkillController as ProviderSkillController;
 use App\Http\Controllers\Provider\SkillRequestController as ProviderSkillRequestController;
+use App\Http\Controllers\Provider\ServiceController as ProviderServiceController;
 
 // ========================================================================
 // SEEKER LISTING/APPLICATION CONTROLLERS
@@ -38,7 +39,7 @@ use App\Http\Controllers\Listing\ListingController;
 // ========================================================================
 // CATEGORY CONTROLLERS
 // ========================================================================
-use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\User\CategoryController as UserCategoryController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\CategoryRequestController as AdminCategoryRequestController;
 
@@ -52,6 +53,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SkillController as AdminSkillController;
 use App\Http\Controllers\Admin\SkillRequestController as AdminSkillRequestController;
+use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -67,11 +69,14 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [ForgetPasswordController::class, 'forgotPassword']);
 Route::post('/verify-reset-otp', [ForgetPasswordController::class, 'verifyResetOtp']);
 Route::post('/reset-password', [ForgetPasswordController::class, 'resetPassword']);
+
+// Public listing routes (browse marketplace)
 Route::get('/listings', [ListingController::class, 'index']);
+Route::get('/listings/{id}', [ListingController::class, 'show']);
 
 // Public category routes
-Route::get('/categories', [CategoryController::class, 'index']);
-Route::get('/categories/{id}', [CategoryController::class, 'show']);
+Route::get('/categories', [UserCategoryController::class, 'index']);
+Route::get('/categories/{id}', [UserCategoryController::class, 'show']);
 
 // ========================================================================
 // PROTECTED ROUTES (Requires Authentication)
@@ -98,6 +103,19 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ====================================================================
+    // AUTHENTICATED LISTING ROUTES (User's own listings)
+    // ====================================================================
+    Route::get('/my-listings', [ListingController::class, 'myListings']);
+    Route::post('/listings', [ListingController::class, 'store']);
+    Route::put('/listings/{id}', [ListingController::class, 'update']);
+    Route::patch('/listings/{id}', [ListingController::class, 'update']);
+    Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
+
+    // Tag management on listings
+    Route::post('/listings/{id}/tags/{tagId}', [ListingController::class, 'addTag']);
+    Route::delete('/listings/{id}/tags/{tagId}', [ListingController::class, 'removeTag']);
+
+    // ====================================================================
     // SEEKER ROUTES
     // ====================================================================
     Route::prefix('seeker')->group(function () {
@@ -107,17 +125,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/profile-picture', [SeekerController::class, 'uploadProfilePicture']);
         Route::get('/profile-picture', [SeekerController::class, 'getProfilePicture']);
         Route::delete('/profile-picture', [SeekerController::class, 'deleteProfilePicture']);
-
-        // Listings (Seeker side)
-        Route::get('/listings', [ListingController::class, 'index']);
-        Route::post('/listings', [ListingController::class, 'store']);
-        Route::get('/listings/{id}', [ListingController::class, 'show']);
-        Route::patch('/listings/{id}', [ListingController::class, 'update']);
-        Route::delete('/listings/{id}', [ListingController::class, 'destroy']);
-
-        // Tag management on listings
-        Route::post('/listings/{id}/tags/{tagId}', [ListingController::class, 'addTag']);
-        Route::delete('/listings/{id}/tags/{tagId}', [ListingController::class, 'removeTag']);
 
         // Review applications for listings
         Route::get('/listings/{listingId}/applications', [SeekerApplicationController::class, 'index']);
@@ -142,14 +149,18 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('profile')->group(function () {
             Route::get('/', [ProviderProfileController::class, 'show']);
             Route::get('/stats', [ProviderProfileController::class, 'stats']);
+        });
 
-            // Links management
-            Route::prefix('links')->group(function () {
-                Route::get('/', [ProviderLinkController::class, 'index']);
-                Route::post('/', [ProviderLinkController::class, 'store']);
-                Route::put('/{linkId}', [ProviderLinkController::class, 'update']);
-                Route::delete('/{linkId}', [ProviderLinkController::class, 'destroy']);
-            });
+        Route::apiResource('services', ProviderServiceController::class);
+        Route::post('services/{service}/tags', [ProviderServiceController::class, 'addTags']);
+        Route::delete('services/{service}/tags', [ProviderServiceController::class, 'removeTags']);
+
+        // Links management
+        Route::prefix('links')->group(function () {
+            Route::get('/', [ProviderLinkController::class, 'index']);
+            Route::post('/', [ProviderLinkController::class, 'store']);
+            Route::put('/{linkId}', [ProviderLinkController::class, 'update']);
+            Route::delete('/{linkId}', [ProviderLinkController::class, 'destroy']);
         });
 
         // Skills management
@@ -194,6 +205,17 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
         Route::delete('/{listingId}/force', [AdminListingController::class, 'forceDelete']);
         Route::post('/{listingId}/restore', [AdminListingController::class, 'restore']);
     });
+
+    // ====================================================================
+    // ADMIN SERVICE ROUTES
+    // ====================================================================
+    Route::get('services', [AdminServiceController::class, 'index']);
+    Route::get('services/{service}', [AdminServiceController::class, 'show']);
+    Route::delete('services/{service}', [AdminServiceController::class, 'destroy']);
+
+    // Service moderation
+    Route::post('services/{service}/suspend', [AdminServiceController::class, 'suspend']);
+    Route::post('services/{service}/reactivate', [AdminServiceController::class, 'reactivate']);
 
     // ====================================================================
     // ADMIN APPLICATION ROUTES

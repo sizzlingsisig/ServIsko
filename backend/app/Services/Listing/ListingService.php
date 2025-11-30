@@ -9,6 +9,17 @@ use Exception;
 class ListingService
 {
     /**
+     * Get all active listings (public browsing)
+     */
+    public function getAllListings(array $filters = [])
+    {
+        $query = Listing::with(['seeker', 'category', 'tags'])
+            ->where('status', 'active'); // Only show active listings publicly
+
+        return $this->applyFilters($query, $filters);
+    }
+
+    /**
      * Get filtered listings for a user
      */
     public function getUserListings(int $userId, array $filters = [])
@@ -32,11 +43,35 @@ class ListingService
             $query->where('category_id', $filters['category_id']);
         }
 
+        if (isset($filters['search'])) {
+            $query->where(function($q) use ($filters) {
+                $q->where('title', 'ilike', "%{$filters['search']}%")
+                  ->orWhere('description', 'ilike', "%{$filters['search']}%");
+            });
+        }
+
+        if (isset($filters['min_budget'])) {
+            $query->where('budget', '>=', $filters['min_budget']);
+        }
+
+        if (isset($filters['max_budget'])) {
+            $query->where('budget', '<=', $filters['max_budget']);
+        }
+
+        if (isset($filters['tags']) && is_array($filters['tags'])) {
+            $query->whereHas('tags', function($q) use ($filters) {
+                $q->whereIn('tags.id', $filters['tags']);
+            });
+        }
+
         if (isset($filters['has_hired_user'])) {
             $filters['has_hired_user']
                 ? $query->whereNotNull('hired_user_id')
                 : $query->whereNull('hired_user_id');
         }
+
+        // Order by newest first
+        $query->orderBy('created_at', 'desc');
 
         $perPage = $filters['per_page'] ?? 15;
 

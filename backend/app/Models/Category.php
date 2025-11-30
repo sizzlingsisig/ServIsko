@@ -20,6 +20,11 @@ class Category extends Model
         return $this->hasMany(Listing::class);
     }
 
+    public function services()
+    {
+        return $this->hasMany(Service::class);
+    }
+
     /**
      * Get all category requests related to this category
      */

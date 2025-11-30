@@ -6,6 +6,8 @@ export const useListingsStore = defineStore('listings', () => {
   // State
   const listings = ref([])
   const total = ref(0)
+  const currentPage = ref(1)
+  const perPage = ref(15)
   const loading = ref(false)
   const error = ref(null)
 
@@ -19,40 +21,29 @@ export const useListingsStore = defineStore('listings', () => {
       loading.value = true
       error.value = null
 
-      // Build query parameters
+      // Simple query parameters - no filters for now
       const queryParams = {
         page: params.page || 1,
-        per_page: params.per_page || 12,
-        search: params.search || undefined,
-        sort_by: params.sort_by || 'newest',
+        per_page: params.per_page || 15,
       }
 
-      // Add filters if provided
-      if (params.categories && params.categories.length > 0) {
-        queryParams.categories = params.categories.join(',')
+      const response = await axios.get('/listings', { params: queryParams })
+
+      // Handle Laravel response structure:
+      // { success: true, data: { current_page: 1, data: [...], total: 7, per_page: 15 } }
+      if (response.data.success) {
+        const paginatedData = response.data.data
+
+        // Extract the actual listings array from paginatedData.data
+        listings.value = paginatedData.data || []
+        total.value = paginatedData.total || 0
+        currentPage.value = paginatedData.current_page || 1
+        perPage.value = paginatedData.per_page || 15
+      } else {
+        // Fallback
+        listings.value = []
+        total.value = 0
       }
-
-      if (params.min_budget !== undefined && params.min_budget > 0) {
-        queryParams.min_budget = params.min_budget
-      }
-
-      if (params.max_budget !== undefined && params.max_budget > 0) {
-        queryParams.max_budget = params.max_budget
-      }
-
-      if (params.min_rating !== undefined && params.min_rating > 0) {
-        queryParams.min_rating = params.min_rating
-      }
-
-      // Remove undefined values
-      Object.keys(queryParams).forEach(
-        (key) => queryParams[key] === undefined && delete queryParams[key],
-      )
-
-      const { data } = await axios.get('/listings', { params: queryParams })
-
-      listings.value = data.data || []
-      total.value = data.total || 0
     } catch (err) {
       console.error('Error fetching listings:', err)
       error.value = err.response?.data?.message || 'Failed to fetch listings'
@@ -65,8 +56,12 @@ export const useListingsStore = defineStore('listings', () => {
 
   const getListingById = async (id) => {
     try {
-      const { data } = await axios.get(`/listings/${id}`)
-      return data.data
+      const response = await axios.get(`/listings/${id}`)
+      // Handle { success: true, data: {...} }
+      if (response.data.success) {
+        return response.data.data
+      }
+      return response.data.data
     } catch (err) {
       console.error('Error fetching listing:', err)
       throw err
@@ -76,8 +71,15 @@ export const useListingsStore = defineStore('listings', () => {
   const createListing = async (payload) => {
     try {
       loading.value = true
-      const { data } = await axios.post('/listings', payload)
-      const created = data.data
+      const response = await axios.post('/listings', payload)
+
+      // Handle { success: true, message: "...", data: {...} }
+      let created = null
+      if (response.data.success) {
+        created = response.data.data
+      } else {
+        created = response.data.data
+      }
 
       if (created) {
         // Prepend so user sees it immediately
@@ -103,6 +105,8 @@ export const useListingsStore = defineStore('listings', () => {
     // State
     listings,
     total,
+    currentPage,
+    perPage,
     loading,
     error,
 
