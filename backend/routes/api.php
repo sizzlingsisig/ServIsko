@@ -29,7 +29,7 @@ use App\Http\Controllers\Provider\LinkController as ProviderLinkController;
 use App\Http\Controllers\Provider\SkillController as ProviderSkillController;
 use App\Http\Controllers\Provider\SkillRequestController as ProviderSkillRequestController;
 use App\Http\Controllers\Provider\ServiceController as ProviderServiceController;
-
+use App\Http\Controllers\Provider\PublicProviderController;
 // ========================================================================
 // SEEKER LISTING/APPLICATION CONTROLLERS
 // ========================================================================
@@ -78,6 +78,10 @@ Route::get('/listings/{id}', [ListingController::class, 'show']);
 Route::get('/categories', [PublicCategoryController::class, 'index']);
 Route::get('/categories/{id}', [PublicCategoryController::class, 'show']);
 
+
+// Public provider routes
+Route::get('/providers', [PublicProviderController::class, 'index']);
+Route::get('/providers/{id}', [PublicProviderController::class, 'show']);
 // ========================================================================
 // PROTECTED ROUTES (Requires Authentication)
 // ========================================================================
