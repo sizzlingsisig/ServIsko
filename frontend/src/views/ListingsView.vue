@@ -6,20 +6,14 @@ import InputText from 'primevue/inputtext'
 import Paginator from 'primevue/paginator'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
-// Add these imports at top of ListingsView.vue (near other primevue imports)
 import Dialog from 'primevue/dialog'
-// InputTextarea caused import resolution errors in this environment; use native textarea instead
-import Dropdown from 'primevue/dropdown'
-// DataView components removed — not used and causing import resolution errors
 import ServiceCard from '@/components/ServiceCard.vue'
 import FilterSidebar from '@/components/FilterSidebar.vue'
 import { useToastStore } from '@/stores/toastStore'
-import api from '@/composables/axios' // axios instance (if not already imported)
+import api from '@/composables/axios'
 
 const listingsStore = useListingsStore()
 const toastStore = useToastStore()
-
-// State
 const layout = ref('grid')
 const searchQuery = ref('')
 const loading = ref(false)
@@ -30,8 +24,8 @@ const itemsPerPage = ref(12)
 const filters = reactive({
   categories: [],
   minBudget: 0,
-  maxBudget: 5000,
-  minRating: 0,
+  maxBudget: 10000,
+  minRating: 5,
   sortBy: 'newest',
 })
 
@@ -43,20 +37,16 @@ const activeStep = ref(1)
 const newTitle = ref('')
 const newDescription = ref('')
 const newBudget = ref(null)
-const newCategoryId = ref(null)
+const newCategoryIds = ref([]) // multi-select for categories
 const categories = ref([])
 
 const tags = ref([]) // fetched from backend
-const selectedTag = ref(null) // currently selected tag name (string)
+const selectedTags = ref([]) // multi-select for tags
 const customTagInput = ref('') // allow user to type a custom tag
 
 // Computed
 const paginatedListings = computed(() => {
   return listingsStore.listings
-})
-
-const displayView = computed(() => {
-  return layout.value === 'grid' ? 'grid' : 'list'
 })
 
 // Methods
@@ -122,7 +112,7 @@ const loadTags = async () => {
     let res
     try {
       res = await api.get('/tags')
-    } catch (e) {
+    } catch {
       res = await api.get('/admin/tags')
     }
     const data = res.data
@@ -133,14 +123,13 @@ const loadTags = async () => {
   }
 }
 
-// Tag helpers: select a single tag (radio-style) or add a custom tag
-const selectTag = (tagName) => {
-  selectedTag.value = tagName
-}
+// Tag helpers: add a custom tag
 const addCustomTag = () => {
   const t = (customTagInput.value || '').trim()
   if (!t) return
-  selectedTag.value = t
+  if (!selectedTags.value.includes(t)) {
+    selectedTags.value.push(t)
+  }
   customTagInput.value = ''
 }
 
@@ -154,15 +143,18 @@ const openAddModal = async () => {
 // Navigation in stepper with validation
 const goNext = () => {
   // Step 1: Title required
-  if (activeStep.value === 1 && (!newTitle.value || newTitle.value.trim() === '')) {
-    toastStore.showError('Title is required')
-    return
-  }
-  // Step 2: Category and Tag required
-  if (activeStep.value === 2 && (!newCategoryId.value || !selectedTag.value)) {
-    toastStore.showError('Category and Tag are required')
-    return
-  }
+  // if (activeStep.value === 1 && (!newTitle.value || newTitle.value.trim() === '')) {
+  //   toastStore.showError('Title is required')
+  //   return
+  // }
+  // // Step 2: At least one category and one tag required
+  // if (
+  //   activeStep.value === 2 &&
+  //   (newCategoryIds.value.length === 0 || selectedTags.value.length === 0)
+  // ) {
+  //   toastStore.showError('At least one category and one tag are required')
+  //   return
+  // }
   if (activeStep.value < 3) activeStep.value++
 }
 const goBack = () => {
@@ -181,13 +173,13 @@ const submitListing = async () => {
     title: newTitle.value,
     description: newDescription.value || null,
     budget: newBudget.value ?? null,
-    category_id: newCategoryId.value ?? null,
-    tags: selectedTag.value ? [selectedTag.value] : null,
+    category_ids: newCategoryIds.value.length > 0 ? newCategoryIds.value : null,
+    tags: selectedTags.value.length > 0 ? selectedTags.value : null,
   }
 
   try {
     // Use store action (preferred)
-    const created = await listingsStore.createListing(payload)
+    await listingsStore.createListing(payload)
     toastStore.showSuccess('Listing created successfully')
     showAddModal.value = false
 
@@ -195,9 +187,9 @@ const submitListing = async () => {
     newTitle.value = ''
     newDescription.value = ''
     newBudget.value = null
-    newCategoryId.value = null
-    newTags.value = []
-    tagInput.value = ''
+    newCategoryIds.value = []
+    selectedTags.value = []
+    customTagInput.value = ''
 
     // Refresh listing list (if you prefer to refetch instead of relying on store append)
     await loadListings()
@@ -238,7 +230,7 @@ onMounted(() => {
     <div class="max-w-7xl mx-auto px-4 py-8">
       <div class="flex gap-6">
         <!-- Left Sidebar - Filters -->
-        <div class="w-56 flex-shrink-0">
+        <div class="w-75 flex-shrink-0">
           <FilterSidebar :filters="filters" @update="handleFilterChange" />
         </div>
 
@@ -264,17 +256,10 @@ onMounted(() => {
                   <option value="price_high">Price: High to Low</option>
                   <option value="rating">Top Rated</option>
                 </select>
-                <!-- Add Listing button -->
-                <Button
-                  class="ml-4 bg-[#10b981] hover:bg-[#0ea77a] text-white"
-                  icon="pi pi-plus"
-                  label="+ Add Listing"
-                  @click="openAddModal"
-                />
               </div>
 
               <!-- View Toggle Buttons -->
-              <div class="flex gap-2 ml-4">
+              <div class="flex gap-1">
                 <button
                   @click="layout = 'grid'"
                   :class="[
@@ -298,6 +283,13 @@ onMounted(() => {
                   <i class="pi pi-list"></i>
                 </button>
               </div>
+              <!-- Add Listing button -->
+              <Button
+                class="bg-[#10b981] hover:bg-[#0ea77a] text-white"
+                icon="pi pi-plus"
+                label="Add Listing"
+                @click="openAddModal"
+              />
             </div>
           </div>
 
@@ -353,193 +345,162 @@ onMounted(() => {
       v-model:visible="showAddModal"
       :modal="true"
       header="Create a Listing"
-      :style="{ width: '720px' }"
-      draggable
+      header-style="background-color: #6d0019; color: white;"
+      :style="{ width: '800px' }"
     >
-      <div class="p-4">
-        <Stepper v-model:value="activeStep" class="w-full" linear>
-          <StepList>
-            <Step v-slot="{ activateCallback, value, a11yAttrs }" asChild :value="1">
-              <div class="flex items-center gap-2" v-bind="a11yAttrs.root">
-                <button
-                  class="bg-transparent border-0 inline-flex flex-col items-center gap-1"
-                  @click="activateCallback"
-                  v-bind="a11yAttrs.header"
-                >
-                  <span
-                    :class="[
-                      'rounded-full border-2 w-10 h-10 inline-flex items-center justify-center',
-                      { 'bg-[#6d0019] text-white': value <= activeStep },
-                    ]"
-                  >
-                    <i class="pi pi-info"></i>
-                  </span>
-                  <span class="text-xs text-gray-600 mt-1">About</span>
-                </button>
-                <Divider />
+      <div class="p-6">
+        <!-- Custom Stepper Header -->
+        <div class="mb-8">
+          <div class="flex items-center justify-between gap-4">
+            <!-- Step 1 -->
+            <div class="flex flex-col items-center flex-1">
+              <div
+                :class="[
+                  'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold border-2 mb-2',
+                  activeStep >= 1 ? 'bg-[#6d0019] border-[#6d0019]' : 'bg-gray-300 border-gray-300',
+                ]"
+              >
+                1
               </div>
-            </Step>
-            <Step v-slot="{ activateCallback, value, a11yAttrs }" asChild :value="2">
-              <div class="flex items-center gap-2" v-bind="a11yAttrs.root">
-                <button
-                  class="bg-transparent border-0 inline-flex flex-col items-center gap-1"
-                  @click="activateCallback"
-                  v-bind="a11yAttrs.header"
-                >
-                  <span
-                    :class="[
-                      'rounded-full border-2 w-10 h-10 inline-flex items-center justify-center',
-                      { 'bg-[#6d0019] text-white': value <= activeStep },
-                    ]"
-                  >
-                    <i class="pi pi-tags"></i>
-                  </span>
-                  <span class="text-xs text-gray-600 mt-1">Category & Tags</span>
-                </button>
-                <Divider />
-              </div>
-            </Step>
-            <Step v-slot="{ activateCallback, value, a11yAttrs }" asChild :value="3">
-              <div class="flex items-center gap-2" v-bind="a11yAttrs.root">
-                <button
-                  class="bg-transparent border-0 inline-flex flex-col items-center gap-1"
-                  @click="activateCallback"
-                  v-bind="a11yAttrs.header"
-                >
-                  <span
-                    :class="[
-                      'rounded-full border-2 w-10 h-10 inline-flex items-center justify-center',
-                      { 'bg-[#6d0019] text-white': value <= activeStep },
-                    ]"
-                  >
-                    <i class="pi pi-wallet"></i>
-                  </span>
-                  <span class="text-xs text-gray-600 mt-1">Pricing</span>
-                </button>
-              </div>
-            </Step>
-          </StepList>
+              <span class="text-sm font-semibold text-gray-800">About</span>
+            </div>
 
-          <StepPanels class="bg-transparent">
-            <!-- Step 1: About -->
-            <StepPanel :value="1">
-              <div class="space-y-4">
-                <label class="font-semibold">Title <span class="text-red-500">*</span></label>
-                <InputText
-                  v-model="newTitle"
-                  placeholder="Service title e.g. 'English Tutor - Academic Support'"
-                  class="w-full"
-                />
+            <!-- Line 1 -->
+            <div
+              :class="['flex-1 h-1 mb-8', activeStep > 1 ? 'bg-[#6d0019]' : 'bg-gray-300']"
+            ></div>
 
-                <label class="font-semibold">Description</label>
-                <textarea
-                  v-model="newDescription"
-                  rows="4"
-                  class="w-full border rounded px-3 py-2"
-                  placeholder="Describe your service..."
-                ></textarea>
-
-                <div class="flex justify-end gap-2 mt-4">
-                  <Button label="Next" class="bg-[#6d0019] text-white" @click="goNext" />
-                </div>
+            <!-- Step 2 -->
+            <div class="flex flex-col items-center flex-1">
+              <div
+                :class="[
+                  'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold border-2 mb-2',
+                  activeStep >= 2 ? 'bg-[#6d0019] border-[#6d0019]' : 'bg-gray-300 border-gray-300',
+                ]"
+              >
+                2
               </div>
-            </StepPanel>
-            <!-- Step 2: Category & Tags -->
-            <StepPanel :value="2">
-              <div class="space-y-4">
-                <div>
-                  <label class="font-semibold">Category <span class="text-red-500">*</span></label>
-                  <Dropdown
-                    v-model="newCategoryId"
-                    :options="categories"
-                    option-label="name"
-                    option-value="id"
-                    placeholder="Select category"
-                    class="w-full"
+              <span class="text-sm font-semibold text-gray-800">Category & Tags</span>
+            </div>
+
+            <!-- Line 2 -->
+            <div
+              :class="['flex-1 h-1 mb-8', activeStep > 2 ? 'bg-[#6d0019]' : 'bg-gray-300']"
+            ></div>
+
+            <!-- Step 3 -->
+            <div class="flex flex-col items-center flex-1">
+              <div
+                :class="[
+                  'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold border-2 mb-2',
+                  activeStep >= 3 ? 'bg-[#6d0019] border-[#6d0019]' : 'bg-gray-300 border-gray-300',
+                ]"
+              >
+                3
+              </div>
+              <span class="text-sm font-semibold text-gray-800">Pricing</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="min-h-75 mb-8">
+          <!-- Step 1: About -->
+          <div v-if="activeStep === 1" class="space-y-4">
+            <label class="font-semibold">Title <span class="text-red-500">*</span></label>
+            <InputText
+              v-model="newTitle"
+              placeholder="Service title e.g. 'English Tutor - Academic Support'"
+              class="w-full"
+            />
+
+            <label class="font-semibold">Description</label>
+            <textarea
+              v-model="newDescription"
+              rows="8"
+              class="w-full border rounded px-3 py-2"
+              placeholder="Describe your service..."
+            ></textarea>
+          </div>
+
+          <!-- Step 2: Category & Tags -->
+          <div v-if="activeStep === 2" class="space-y-4">
+            <div>
+              <label class="font-semibold">Categories <span class="text-red-500">*</span></label>
+              <div class="flex flex-wrap gap-2 mt-2">
+                <label
+                  v-for="cat in categories"
+                  :key="cat.id"
+                  class="flex items-center gap-2 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    :value="cat.id"
+                    v-model="newCategoryIds"
+                    class="accent-[#6d0019] w-4 h-4"
                   />
-                </div>
-
-                <div>
-                  <label class="font-semibold"
-                    >Choose a tag <span class="text-red-500">*</span></label
-                  >
-                  <div class="flex flex-wrap gap-2 mt-2">
-                    <button
-                      v-for="(t, idx) in tags"
-                      :key="t.id ?? idx"
-                      :class="[
-                        'px-3 py-1 rounded-full border',
-                        selectedTag === (t.name ?? t)
-                          ? 'bg-[#6d0019] text-white border-[#6d0019]'
-                          : 'bg-gray-100 text-gray-700',
-                      ]"
-                      type="button"
-                      @click="selectTag(t.name ?? t)"
-                    >
-                      {{ t.name ?? t }}
-                    </button>
-                  </div>
-
-                  <div class="mt-3 flex gap-2 items-center">
-                    <InputText
-                      v-model="customTagInput"
-                      placeholder="Type a custom tag"
-                      class="flex-1"
-                    />
-                    <Button label="Use" icon="pi pi-check" @click="addCustomTag" />
-                  </div>
-
-                  <p class="text-sm text-gray-500 mt-2">
-                    Tip: selecting a tag will set it as the primary tag for this listing.
-                  </p>
-                </div>
-
-                <div class="flex justify-between mt-4">
-                  <Button label="Back" class="bg-gray-200" @click="goBack" />
-                  <Button label="Next" class="bg-[#6d0019] text-white" @click="goNext" />
-                </div>
+                  <span class="text-gray-800">{{ cat.name }}</span>
+                </label>
               </div>
-            </StepPanel>
+            </div>
 
-            <!-- Step 3: Pricing -->
-            <StepPanel :value="3">
-              <div class="space-y-4">
-                <label class="font-semibold">Budget (₱)</label>
-                <InputText
-                  v-model="newBudget"
-                  placeholder="Enter budget (numbers only)"
-                  class="w-40"
-                />
-                <label class="font-semibold">Service Frequency</label>
-                <div class="flex gap-2 mt-2">
-                  <button class="px-3 py-1 rounded-full bg-gray-100">One-time</button>
-                  <button class="px-3 py-1 rounded-full bg-gray-100">Weekly</button>
-                  <button class="px-3 py-1 rounded-full bg-gray-100">Bi-weekly</button>
-                </div>
-
-                <div class="flex justify-between mt-4">
-                  <Button label="Back" class="bg-gray-200" @click="goBack" />
-                  <Button
-                    label="Create Listing"
-                    class="bg-[#6d0019] text-white"
-                    @click="submitListing"
-                    newTitle.value=""
-                    newDescription.value=""
-                    newBudget.value="null"
-                    newCategoryId.value="null"
-                    selectedTag.value="null"
-                    customTagInput.value=""
+            <div>
+              <label class="font-semibold">Tags <span class="text-red-500">*</span></label>
+              <div class="flex flex-wrap gap-2 mt-2">
+                <label
+                  v-for="(t, idx) in tags"
+                  :key="t.id ?? idx"
+                  class="flex items-center gap-2 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    :value="t.name ?? t"
+                    v-model="selectedTags"
+                    class="accent-[#6d0019] w-4 h-4"
                   />
-                </div>
+                  <span class="text-gray-800">{{ t.name ?? t }}</span>
+                </label>
               </div>
-            </StepPanel>
-          </StepPanels>
-        </Stepper>
+
+              <div class="mt-3 flex gap-2 items-center">
+                <InputText
+                  v-model="customTagInput"
+                  placeholder="Type a custom tag"
+                  class="flex-1"
+                />
+                <Button label="Add" icon="pi pi-check" @click="addCustomTag" />
+              </div>
+
+              <p class="text-sm text-gray-500 mt-2">
+                Tip: You can select multiple tags or add your own.
+              </p>
+            </div>
+          </div>
+
+          <!-- Step 3: Pricing -->
+          <div v-if="activeStep === 3" class="space-y-4">
+            <label class="font-semibold">Budget (₱)</label>
+            <InputText v-model="newBudget" placeholder="Enter budget (numbers only)" class="w-40" />
+            <InputText v-model="newFrequency" placeholder="Frequency" class="w-40" />
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between items-center">
+          <Button
+            :label="activeStep === 1 ? 'Cancel' : '← Back'"
+            :class="activeStep === 1 ? 'bg-gray-300 text-gray-700' : 'bg-gray-200 text-gray-700'"
+            @click="activeStep === 1 ? (showAddModal = false) : goBack()"
+          />
+          <Button
+            :label="activeStep === 3 ? 'Create Listing →' : 'Next →'"
+            class="bg-[#6d0019] text-white"
+            @click="activeStep === 3 ? submitListing() : goNext()"
+          />
+        </div>
       </div>
     </Dialog>
   </div>
 </template>
 
-<style scoped>
-/* Add any component-specific styles here */
-</style>
+<style scoped></style>
