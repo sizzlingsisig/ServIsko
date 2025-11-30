@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -66,7 +67,7 @@ class User extends Authenticatable
      */
 
     // A user can have many listings
-        public function listings()
+        public function listings(): HasMany
     {
         return $this->hasMany(Listing::class, 'seeker_user_id');
     }
@@ -85,8 +86,13 @@ class User extends Authenticatable
         return $this->hasOne(ProviderProfile::class);
     }
 
-    public function hiredListings()
+    public function hiredListings(): HasMany
     {
         return $this->hasMany(Listing::class, 'hired_user_id');
+    }
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class, 'provider_id');
     }
 }

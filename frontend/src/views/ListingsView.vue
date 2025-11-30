@@ -6,7 +6,7 @@ import Paginator from 'primevue/paginator'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import Dialog from 'primevue/dialog'
-import ServiceCard from '@/components/ServiceCard.vue'
+import ListingCard from '@/components/ListingCard.vue'
 import FilterSidebar from '@/components/FilterSidebar.vue'
 import { useToastStore } from '@/stores/toastStore'
 import api from '@/composables/axios'
@@ -303,7 +303,7 @@ const submitListing = async () => {
             v-else-if="layout === 'grid'"
             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            <ServiceCard
+            <ListingCard
               v-for="service in paginatedListings"
               :key="service.id"
               :service="service"
@@ -311,7 +311,7 @@ const submitListing = async () => {
             />
           </div>
           <div v-else class="space-y-4">
-            <ServiceCard
+            <ListingCard
               v-for="service in paginatedListings"
               :key="service.id"
               :service="service"

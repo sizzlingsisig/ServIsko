@@ -59,12 +59,19 @@ const router = createRouter({
       props: true,
     },
 
-    // {
-    //   path: '/providers',
-    //   name: 'providers',
-    //   component: () => import('@/views/ProvidersView.vue'),
-    //   meta: { layout: 'DefaultLayout', requiresAuth: true },
-    // },
+    {
+      path: '/providers',
+      name: 'providers',
+      component: () => import('@/views/ProvidersView.vue'),
+      meta: { layout: 'DefaultLayout', requiresAuth: false },
+    },
+    {
+      path: '/providers/:id',
+      name: 'provider-details',
+      component: () => import('@/views/ProviderDetailsView.vue'),
+      meta: { layout: 'DefaultLayout', requiresAuth: false },
+      props: true,
+    },
     // {
     //   path: '/dashboard/messages',
     //   name: 'messages',
