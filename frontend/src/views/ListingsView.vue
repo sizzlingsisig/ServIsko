@@ -1,6 +1,5 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useListingsStore } from '@/stores/ListingsStore'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Paginator from 'primevue/paginator'
@@ -11,69 +10,81 @@ import ServiceCard from '@/components/ServiceCard.vue'
 import FilterSidebar from '@/components/FilterSidebar.vue'
 import { useToastStore } from '@/stores/toastStore'
 import api from '@/composables/axios'
+import { useAuthStore } from '@/stores/AuthStore' // Adjust path as needed
 
-const listingsStore = useListingsStore()
+const authStore = useAuthStore()
+
 const toastStore = useToastStore()
 const layout = ref('grid')
-const searchQuery = ref('')
 const loading = ref(false)
 const totalRecords = ref(0)
 const currentPage = ref(1)
 const itemsPerPage = ref(12)
 
 const filters = reactive({
-  categories: [],
+  category: null,
+  search: '',
   minBudget: 0,
   maxBudget: 10000,
   minRating: 5,
-  sortBy: 'newest',
+  sort_by: 'newest',
 })
 
-// Add near other state items
 const showAddModal = ref(false)
 const activeStep = ref(1)
-
-// Form fields for new listing
 const newTitle = ref('')
 const newDescription = ref('')
 const newBudget = ref(null)
-const newCategoryIds = ref([]) // multi-select for categories
+const newCategoryIds = ref([])
 const categories = ref([])
+const tags = ref([])
+const selectedTags = ref([])
+const customTagInput = ref('')
 
-const tags = ref([]) // fetched from backend
-const selectedTags = ref([]) // multi-select for tags
-const customTagInput = ref('') // allow user to type a custom tag
+const listings = ref([])
 
-// Computed
-const paginatedListings = computed(() => {
-  return listingsStore.listings
-})
+const paginatedListings = computed(() => listings.value)
 
-// Methods
 const loadListings = async () => {
   try {
     loading.value = true
-    await listingsStore.fetchListings({
-      page: currentPage.value,
-      per_page: itemsPerPage.value,
-      search: searchQuery.value,
-      categories: filters.categories,
-      min_budget: filters.minBudget,
-      max_budget: filters.maxBudget,
-      min_rating: filters.minRating,
-      sort_by: filters.sortBy,
-    })
-    totalRecords.value = listingsStore.total
+   const params = {
+  category: filters.category,
+  search: filters.search,
+  minBudget: filters.minBudget,
+  maxBudget: filters.maxBudget,
+  minRating: filters.minRating,
+  sort_by: filters.sort_by,
+  page: currentPage.value,
+  per_page: itemsPerPage.value,
+}
+    // Show query params each call
+    console.log('API Query Params:', params)
+
+    const response = await api.get('/listings', { params })
+    if (response.data.success && response.data.data) {
+      const paginatedData = response.data.data
+      listings.value = paginatedData.data || []
+      totalRecords.value = paginatedData.total || 0
+      // Show listings result each call
+      console.log('Listings response:', listings.value)
+    } else {
+      listings.value = []
+      totalRecords.value = 0
+      toastStore.showError('No listings found', 'Error')
+    }
   } catch (error) {
     console.error('Failed to load listings:', error)
     toastStore.showError('Failed to load listings', 'Error')
+    listings.value = []
+    totalRecords.value = 0
   } finally {
     loading.value = false
   }
 }
 
 const handleSearch = (value) => {
-  searchQuery.value = value
+  filters.search = value
   currentPage.value = 1
   loadListings()
 }
@@ -90,23 +101,25 @@ const handlePageChange = (event) => {
 }
 
 const handleSortChange = (sortBy) => {
-  filters.sortBy = sortBy
+  filters.sort_by = sortBy
   currentPage.value = 1
   loadListings()
 }
 
-// Load categories for dropdown
 const loadCategories = async () => {
   try {
     const { data } = await api.get('/categories')
-    categories.value = data.data ?? data
+    categories.value = data.data ?? []
   } catch (err) {
-    console.error('Failed to load categories', err)
     categories.value = []
   }
 }
 
-// Load tags (try public /tags, fallback to /admin/tags)
+onMounted(() => {
+  loadCategories()
+  loadListings()
+})
+
 const loadTags = async () => {
   try {
     let res
@@ -118,12 +131,10 @@ const loadTags = async () => {
     const data = res.data
     tags.value = data.data ?? data
   } catch (err) {
-    console.error('Failed to load tags', err)
     tags.value = []
   }
 }
 
-// Tag helpers: add a custom tag
 const addCustomTag = () => {
   const t = (customTagInput.value || '').trim()
   if (!t) return
@@ -133,42 +144,27 @@ const addCustomTag = () => {
   customTagInput.value = ''
 }
 
-// Open modal and fetch categories + tags
 const openAddModal = async () => {
-  await Promise.all([loadCategories(), loadTags()])
-  activeStep.value = 1
+  if (!authStore.isAuthenticated) {
+    toastStore.showError('You must be logged in to add a listing')
+    return
+  }
   showAddModal.value = true
+  activeStep.value = 1
+  await Promise.all([
+    loadCategories().catch(() => { categories.value = [] }),
+    loadTags().catch(() => { tags.value = [] })
+  ])
 }
 
-// Navigation in stepper with validation
-const goNext = () => {
-  // Step 1: Title required
-  // if (activeStep.value === 1 && (!newTitle.value || newTitle.value.trim() === '')) {
-  //   toastStore.showError('Title is required')
-  //   return
-  // }
-  // // Step 2: At least one category and one tag required
-  // if (
-  //   activeStep.value === 2 &&
-  //   (newCategoryIds.value.length === 0 || selectedTags.value.length === 0)
-  // ) {
-  //   toastStore.showError('At least one category and one tag are required')
-  //   return
-  // }
-  if (activeStep.value < 3) activeStep.value++
-}
-const goBack = () => {
-  if (activeStep.value > 1) activeStep.value--
-}
+const goNext = () => { if (activeStep.value < 3) activeStep.value++ }
+const goBack = () => { if (activeStep.value > 1) activeStep.value-- }
 
-// finish and submit
 const submitListing = async () => {
-  // Validate required field(s)
   if (!newTitle.value || newTitle.value.trim() === '') {
     toastStore.showError('Please enter a title for your listing')
     return
   }
-
   const payload = {
     title: newTitle.value,
     description: newDescription.value || null,
@@ -176,33 +172,27 @@ const submitListing = async () => {
     category_ids: newCategoryIds.value.length > 0 ? newCategoryIds.value : null,
     tags: selectedTags.value.length > 0 ? selectedTags.value : null,
   }
-
   try {
-    // Use store action (preferred)
-    await listingsStore.createListing(payload)
-    toastStore.showSuccess('Listing created successfully')
-    showAddModal.value = false
-
-    // Reset form
-    newTitle.value = ''
-    newDescription.value = ''
-    newBudget.value = null
-    newCategoryIds.value = []
-    selectedTags.value = []
-    customTagInput.value = ''
-
-    // Refresh listing list (if you prefer to refetch instead of relying on store append)
-    await loadListings()
+    const response = await api.post('/listings', payload)
+    if (response.data.success) {
+      toastStore.showSuccess('Listing created successfully')
+      showAddModal.value = false
+      newTitle.value = ''
+      newDescription.value = ''
+      newBudget.value = null
+      newCategoryIds.value = []
+      selectedTags.value = []
+      customTagInput.value = ''
+      await loadListings()
+    } else {
+      const msg = response.data.message || 'Failed to create listing'
+      toastStore.showError(msg, 'Error')
+    }
   } catch (err) {
     const msg = err.response?.data?.message || err.message || 'Failed to create listing'
     toastStore.showError(msg, 'Error')
   }
 }
-
-// Lifecycle
-onMounted(() => {
-  loadListings()
-})
 </script>
 
 <template>
@@ -215,13 +205,13 @@ onMounted(() => {
           <IconField icon-position="left" class="flex-1">
             <InputIcon class="pi pi-search"></InputIcon>
             <InputText
-              v-model="searchQuery"
+              v-model="filters.search"
               placeholder="Search for services..."
               class="w-full"
               @input="handleSearch($event.target.value)"
             />
           </IconField>
-          <button class="bg-black hover:bg-[#] text-white px-4 py-2 rounded">Search</button>
+          <button class="bg-black text-white px-4 py-2 rounded" @click="handleSearch(filters.search)">Search</button>
         </div>
       </div>
     </section>
@@ -231,7 +221,11 @@ onMounted(() => {
       <div class="flex gap-6">
         <!-- Left Sidebar - Filters -->
         <div class="w-75 flex-shrink-0">
-          <FilterSidebar :filters="filters" @update="handleFilterChange" />
+          <FilterSidebar
+            :filters="filters"
+            :categories="categories"
+            @update="handleFilterChange"
+          />
         </div>
 
         <!-- Right Content Area -->
@@ -239,14 +233,17 @@ onMounted(() => {
           <!-- View Controls and Pagination Info -->
           <div class="flex items-center justify-between mb-6">
             <div class="text-gray-600">
-              Showing 1-{{ itemsPerPage }} of {{ totalRecords }} services
+              Showing
+              {{ totalRecords === 0 ? 0 : ((currentPage - 1) * itemsPerPage + 1) }}
+              -
+              {{ Math.min(currentPage * itemsPerPage, totalRecords) }}
+              of {{ totalRecords }} services
             </div>
-
             <div class="flex items-center gap-4">
               <div class="flex items-center gap-2">
                 <label class="text-sm text-gray-600">Sort by:</label>
                 <select
-                  :value="filters.sortBy"
+                  :value="filters.sort_by"
                   @change="handleSortChange($event.target.value)"
                   class="px-3 py-2 border border-gray-300 rounded-lg text-sm"
                 >
@@ -257,8 +254,6 @@ onMounted(() => {
                   <option value="rating">Top Rated</option>
                 </select>
               </div>
-
-              <!-- View Toggle Buttons -->
               <div class="flex gap-1">
                 <button
                   @click="layout = 'grid'"
@@ -283,27 +278,27 @@ onMounted(() => {
                   <i class="pi pi-list"></i>
                 </button>
               </div>
-              <!-- Add Listing button -->
-              <Button
-                class="bg-[#10b981] hover:bg-[#0ea77a] text-white"
-                icon="pi pi-plus"
-                label="Add Listing"
-                @click="openAddModal"
-              />
+          <Button
+  v-if="authStore.isAuthenticated"
+  class="bg-[#10b981] hover:bg-[#0ea77a] text-white"
+  icon="pi pi-plus"
+  label="Add Listing"
+  @click="openAddModal"
+/>
+<span v-else class="text-gray-400 text-sm font-semibold select-none flex items-center gap-2">
+  <i class="pi pi-lock"></i>
+  Only logged-in users can add listings
+</span>
             </div>
           </div>
-
           <!-- Services Grid/List -->
           <div v-if="loading" class="flex items-center justify-center py-12">
             <i class="pi pi-spin pi-spinner text-4xl text-[#6d0019]"></i>
           </div>
-
           <div v-else-if="paginatedListings.length === 0" class="text-center py-12">
             <i class="pi pi-inbox text-5xl text-gray-300 mb-4 block"></i>
             <p class="text-gray-600 text-lg">No services found. Try adjusting your filters.</p>
           </div>
-
-          <!-- Grid Layout -->
           <div
             v-else-if="layout === 'grid'"
             class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -315,8 +310,6 @@ onMounted(() => {
               layout="grid"
             />
           </div>
-
-          <!-- List Layout -->
           <div v-else class="space-y-4">
             <ServiceCard
               v-for="service in paginatedListings"
@@ -325,12 +318,11 @@ onMounted(() => {
               layout="list"
             />
           </div>
-
-          <!-- Pagination -->
           <div class="mt-8 flex justify-center">
             <Paginator
               :rows="itemsPerPage"
               :total-records="totalRecords"
+              :first="(currentPage - 1) * itemsPerPage"
               :rows-per-page-options="[12, 24, 36]"
               @page="handlePageChange"
               class="flex justify-center"
@@ -339,7 +331,6 @@ onMounted(() => {
         </div>
       </div>
     </div>
-
     <!-- Add Listing Modal -->
     <Dialog
       v-model:visible="showAddModal"
@@ -352,7 +343,6 @@ onMounted(() => {
         <!-- Custom Stepper Header -->
         <div class="mb-8">
           <div class="flex items-center justify-between gap-4">
-            <!-- Step 1 -->
             <div class="flex flex-col items-center flex-1">
               <div
                 :class="[
@@ -364,13 +354,9 @@ onMounted(() => {
               </div>
               <span class="text-sm font-semibold text-gray-800">About</span>
             </div>
-
-            <!-- Line 1 -->
             <div
               :class="['flex-1 h-1 mb-8', activeStep > 1 ? 'bg-[#6d0019]' : 'bg-gray-300']"
             ></div>
-
-            <!-- Step 2 -->
             <div class="flex flex-col items-center flex-1">
               <div
                 :class="[
@@ -382,13 +368,9 @@ onMounted(() => {
               </div>
               <span class="text-sm font-semibold text-gray-800">Category & Tags</span>
             </div>
-
-            <!-- Line 2 -->
             <div
               :class="['flex-1 h-1 mb-8', activeStep > 2 ? 'bg-[#6d0019]' : 'bg-gray-300']"
             ></div>
-
-            <!-- Step 3 -->
             <div class="flex flex-col items-center flex-1">
               <div
                 :class="[
@@ -402,10 +384,7 @@ onMounted(() => {
             </div>
           </div>
         </div>
-
-        <!-- Content Area -->
         <div class="min-h-75 mb-8">
-          <!-- Step 1: About -->
           <div v-if="activeStep === 1" class="space-y-4">
             <label class="font-semibold">Title <span class="text-red-500">*</span></label>
             <InputText
@@ -413,7 +392,6 @@ onMounted(() => {
               placeholder="Service title e.g. 'English Tutor - Academic Support'"
               class="w-full"
             />
-
             <label class="font-semibold">Description</label>
             <textarea
               v-model="newDescription"
@@ -422,8 +400,6 @@ onMounted(() => {
               placeholder="Describe your service..."
             ></textarea>
           </div>
-
-          <!-- Step 2: Category & Tags -->
           <div v-if="activeStep === 2" class="space-y-4">
             <div>
               <label class="font-semibold">Categories <span class="text-red-500">*</span></label>
@@ -443,7 +419,6 @@ onMounted(() => {
                 </label>
               </div>
             </div>
-
             <div>
               <label class="font-semibold">Tags <span class="text-red-500">*</span></label>
               <div class="flex flex-wrap gap-2 mt-2">
@@ -461,7 +436,6 @@ onMounted(() => {
                   <span class="text-gray-800">{{ t.name ?? t }}</span>
                 </label>
               </div>
-
               <div class="mt-3 flex gap-2 items-center">
                 <InputText
                   v-model="customTagInput"
@@ -470,22 +444,17 @@ onMounted(() => {
                 />
                 <Button label="Add" icon="pi pi-check" @click="addCustomTag" />
               </div>
-
               <p class="text-sm text-gray-500 mt-2">
                 Tip: You can select multiple tags or add your own.
               </p>
             </div>
           </div>
-
-          <!-- Step 3: Pricing -->
           <div v-if="activeStep === 3" class="space-y-4">
             <label class="font-semibold">Budget (₱)</label>
             <InputText v-model="newBudget" placeholder="Enter budget (numbers only)" class="w-40" />
             <InputText v-model="newFrequency" placeholder="Frequency" class="w-40" />
           </div>
         </div>
-
-        <!-- Navigation Buttons -->
         <div class="flex justify-between items-center">
           <Button
             :label="activeStep === 1 ? 'Cancel' : '← Back'"
@@ -503,4 +472,6 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+/* Add any global styles here if needed */
+</style>

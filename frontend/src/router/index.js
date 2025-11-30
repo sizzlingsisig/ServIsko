@@ -51,6 +51,14 @@ const router = createRouter({
       component: () => import('@/views/ListingsView.vue'),
       meta: { layout: 'DefaultLayout', requiresAuth: false },
     },
+    {
+      path: '/listings/:id',
+      name: 'listing-details',
+      component: () => import('@/views/ListingDetailsView.vue'),
+      meta: { layout: 'DefaultLayout', requiresAuth: false },
+      props: true,
+    },
+
     // {
     //   path: '/providers',
     //   name: 'providers',

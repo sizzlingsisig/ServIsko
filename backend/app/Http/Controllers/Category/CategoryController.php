@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\User;
+namespace App\Http\Controllers\Category;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
@@ -10,15 +10,13 @@ use Illuminate\Support\Facades\Log;
 class CategoryController extends Controller
 {
     /**
-     * Get all active categories (public)
+     * Get all categories (not deleted)
      * GET /categories
      */
     public function index()
     {
         try {
-            $categories = Category::active()
-                ->orderBy('name')
-                ->get();
+            $categories = Category::orderBy('name')->get();
 
             return response()->json([
                 'success' => true,
@@ -36,13 +34,13 @@ class CategoryController extends Controller
     }
 
     /**
-     * Get specific category (public)
+     * Get specific category (not deleted)
      * GET /categories/{id}
      */
     public function show($id)
     {
         try {
-            $category = Category::active()->find($id);
+            $category = Category::find($id);
 
             if (!$category) {
                 return response()->json([

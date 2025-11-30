@@ -48,7 +48,8 @@ class Listing extends Model
     // Many-to-many with tags
     public function tags()
     {
-        return $this->belongsToMany(Tag::class, 'listing_tags');
+        return $this->belongsToMany(Tag::class, 'listing_tags')
+            ->withTimestamps();
     }
 
     // One listing can have many applications

@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 
 const props = defineProps({
   service: {
@@ -9,220 +10,149 @@ const props = defineProps({
   layout: {
     type: String,
     default: 'grid',
-    validator: (value) => ['grid', 'list'].includes(value),
+    validator: (v) => ['grid', 'list'].includes(v),
   },
 })
 
-const emit = defineEmits(['click', 'contact'])
+const router = useRouter()
 
-const displayRating = computed(() => {
-  const rating = props.service.rating || 0
-  return (Math.round(rating * 10) / 10).toFixed(1)
+const title = computed(() => props.service.title || 'Untitled Service')
+const description = computed(() => props.service.description || 'No description available')
+const budget = computed(() => {
+  const amt = props.service.budget
+  return amt ? `₱${parseFloat(amt).toLocaleString()}/hr` : 'TBD'
 })
+const category = computed(() => props.service.category?.name || 'Uncategorized')
+const seeker = computed(() => props.service.seeker?.name || 'Unknown Provider')
+const tags = computed(() => props.service.tags || [])
 
-const reviewCount = computed(() => {
-  return props.service.reviews_count || 0
-})
+const createdAt = computed(() => props.service.created_at ? formatDate(props.service.created_at) : null)
+const expiresAt = computed(() =>
+  props.service.expires_at ? formatDate(props.service.expires_at) : null
+)
+const isExpired = computed(() => !!props.service.is_expired)
 
-const isGridLayout = computed(() => props.layout === 'grid')
+function formatDate(dateStr) {
+  // Use vanilla JS Date formatting
+  const date = new Date(dateStr)
+  // "Nov 10, 2025 14:30"
+  return `${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} ${date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+}
+
+const viewDetails = (evt) => {
+  evt?.stopPropagation?.()
+  router.push(`/listings/${props.service.id}`)
+}
 </script>
 
 <template>
-  <!-- Grid Layout -->
+  <!-- Grid Card -->
   <div
-    v-if="isGridLayout"
-    class="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden cursor-pointer"
-    @click="emit('click')"
+    v-if="layout === 'grid'"
+    class="bg-white rounded-lg border border-gray-300 hover:border-primary-500 shadow-sm hover:shadow-md cursor-pointer flex flex-col h-[400px]"
+    @click="viewDetails"
   >
-    <!-- Service Image -->
-    <div class="relative h-48 bg-gray-200 overflow-hidden">
-      <img
-        v-if="service.image"
-        :src="service.image"
-        :alt="service.title"
-        class="w-full h-full object-cover hover:scale-105 transition"
-      />
-      <div
-        v-else
-        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#6d0019] to-[#8b0028]"
-      >
-        <i class="pi pi-image text-gray-300 text-4xl"></i>
+    <div class="p-6 flex flex-col flex-1 overflow-hidden">
+      <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 leading-snug" tabindex="0">
+        {{ title }}
+      </h3>
+      <div class="flex gap-2 text-xs text-gray-500 mb-1">
+        <span>Created: <strong>{{ createdAt }}</strong></span>
+        <span v-if="expiresAt">
+          <span>&bull; Expires: <strong>{{ expiresAt }}</strong></span>
+        </span>
+        <span v-else>
+          <span>&bull; No Expiry</span>
+        </span>
+        <span v-if="isExpired" class="text-[#b91c1c] font-bold ml-2"><i class="pi pi-clock"></i> Expired</span>
       </div>
-
-      <!-- Rating Badge -->
-      <div
-        class="absolute top-3 right-3 bg-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1"
-      >
-        <span class="text-[#6d0019]">{{ displayRating }}</span>
-        <i class="pi pi-star-fill text-yellow-400 text-xs"></i>
-      </div>
-    </div>
-
-    <!-- Content -->
-    <div class="p-4">
-      <!-- Service Title -->
-      <h3 class="font-bold text-lg mb-2 line-clamp-2 text-gray-800">{{ service.title }}</h3>
-
-      <!-- Description -->
-      <p class="text-gray-600 text-sm line-clamp-2 mb-3">{{ service.description }}</p>
-
-      <!-- Provider Info -->
-      <div class="flex items-center gap-3 mb-4 pb-4 border-b border-gray-200">
-        <img
-          v-if="service.provider_profile?.user?.profile_picture"
-          :src="service.provider_profile.user.profile_picture"
-          :alt="service.provider_profile.user.name"
-          class="w-8 h-8 rounded-full object-cover"
-        />
-        <div
-          v-else
-          class="w-8 h-8 rounded-full bg-[#6d0019] flex items-center justify-center text-white text-xs"
-        >
-          {{ service.provider_profile?.user?.name?.charAt(0) || 'P' }}
+      <p class="text-gray-600 flex-1 mb-3 line-clamp-3" tabindex="0">{{ description }}</p>
+      <div class="flex justify-between items-center mb-3">
+        <div class="flex items-center gap-3">
+          <div class="w-7 h-7 rounded-full bg-gray-800 text-white flex items-center justify-center text-sm font-bold" :aria-label="`Provider: ${seeker}`">{{ seeker.charAt(0).toUpperCase() }}</div>
+          <span class="text-sm text-gray-700 max-w-[160px] truncate" tabindex="0">{{ seeker }}</span>
         </div>
-        <div class="flex-1 min-w-0">
-          <p class="font-semibold text-sm text-gray-800 truncate">
-            {{ service.provider_profile?.user?.name || 'Unknown Provider' }}
-          </p>
-          <p class="text-xs text-gray-500">
-            <i class="pi pi-map-marker text-xs"></i>
-            {{ service.provider_profile?.user?.profile?.location || 'Location not set' }}
-          </p>
+        <div class="flex items-center gap-2 text-sm" aria-label="Rating">
+          <i class="pi pi-star-fill text-yellow-400"></i>
+          <span class="font-semibold">4.1</span>
+          <span class="text-gray-500 text-xs">(4.1)</span>
         </div>
       </div>
-
-      <!-- Price and Category -->
-      <div class="flex items-center justify-between mb-4">
-        <div>
-          <p class="text-2xl font-bold text-[#6d0019]">
-            ₱{{ service.price_per_hour || 'TBD' }}<span class="text-sm">/hr</span>
-          </p>
-        </div>
-        <span
-          v-if="service.category"
-          class="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded-full"
-        >
-          {{ service.category }}
+      <div class="flex flex-wrap gap-2 mb-4">
+        <span v-for="tag in [category]" :key="tag" class="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ tag }}</span>
+        <span v-for="tag in tags" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs px-2 py-1 rounded">
+          {{ tag.name ?? tag }}
         </span>
       </div>
-
-      <!-- Rating and Reviews -->
-      <div class="flex items-center justify-between text-sm mb-4">
-        <div class="flex items-center gap-1 text-gray-600">
-          <i class="pi pi-star-fill text-yellow-400 text-xs"></i>
-          <span>{{ reviewCount }} reviews</span>
-        </div>
+      <div class="flex gap-3">
+        <button @click.stop="viewDetails" class="flex-1 flex items-center justify-center gap-2 border border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white rounded-md px-4 py-2 text-sm font-semibold transition-colors" tabindex="0" aria-label="View Details">
+          <i class="pi pi-info-circle"></i> View Details
+        </button>
       </div>
-
-      <!-- CTA Button -->
-      <button
-        class="w-full bg-[#6d0019] text-white py-2 rounded-lg font-semibold hover:bg-[#8b0028] transition"
-        @click.stop="emit('contact')"
-      >
-        View Details
-      </button>
     </div>
+    <div class="bg-primary-500 text-white px-6 py-3 text-center text-lg font-bold select-none" aria-label="Service price">{{ budget }}</div>
   </div>
-
-  <!-- List Layout -->
+  <!-- List Card -->
   <div
     v-else
-    class="bg-white rounded-lg shadow hover:shadow-lg transition p-4 flex gap-4 cursor-pointer"
-    @click="emit('click')"
+    class="bg-white rounded-lg border border-gray-300 hover:border-primary-500 shadow-sm hover:shadow-md cursor-pointer flex h-[180px] min-h-[180px]"
+    @click="viewDetails"
   >
-    <!-- Service Image -->
-    <div class="h-32 w-32 flex-shrink-0 bg-gray-200 rounded-lg overflow-hidden">
-      <img
-        v-if="service.image"
-        :src="service.image"
-        :alt="service.title"
-        class="w-full h-full object-cover"
-      />
-      <div
-        v-else
-        class="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#6d0019] to-[#8b0028]"
-      >
-        <i class="pi pi-image text-gray-300 text-3xl"></i>
+    <div class="flex-1 flex flex-col justify-between p-5">
+      <div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-1 leading-snug" tabindex="0">{{ title }}</h3>
+        <div class="flex gap-2 text-xs text-gray-500 mb-1">
+          <span>Created: <strong>{{ createdAt }}</strong></span>
+          <span v-if="expiresAt">
+            <span>&bull; Expires: <strong>{{ expiresAt }}</strong></span>
+          </span>
+          <span v-else>
+            <span>&bull; No Expiry</span>
+          </span>
+          <span v-if="isExpired" class="text-[#b91c1c] font-bold ml-2"><i class="pi pi-clock"></i> Expired</span>
+        </div>
+        <p class="text-gray-600 mb-2 line-clamp-2" tabindex="0">{{ description }}</p>
+      </div>
+      <div>
+        <div class="flex justify-between items-center mb-2">
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-full bg-gray-800 text-white flex items-center justify-center text-sm font-bold" :aria-label="`Provider: ${seeker}`">{{ seeker.charAt(0).toUpperCase() }}</div>
+            <span class="text-sm text-gray-700 max-w-[140px] truncate" tabindex="0">{{ seeker }}</span>
+          </div>
+          <div class="flex items-center gap-2 text-sm" aria-label="Rating">
+            <i class="pi pi-star-fill text-yellow-400"></i>
+            <span class="font-semibold">4.1</span>
+            <span class="text-gray-500 text-xs">(4.1)</span>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <span v-for="tag in [category]" :key="tag" class="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ tag }}</span>
+          <span v-for="tag in tags" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs px-2 py-1 rounded">
+            {{ tag.name ?? tag }}
+          </span>
+        </div>
       </div>
     </div>
-
-    <!-- Content -->
-    <div class="flex-1 flex flex-col justify-between">
-      <div>
-        <!-- Title and Rating -->
-        <div class="flex items-start justify-between mb-2">
-          <div class="flex-1">
-            <h3 class="font-bold text-lg text-gray-800 mb-1">{{ service.title }}</h3>
-            <p class="text-gray-600 text-sm line-clamp-2">{{ service.description }}</p>
-          </div>
-          <div class="flex items-center gap-1 ml-4 flex-shrink-0">
-            <i class="pi pi-star-fill text-yellow-400 text-sm"></i>
-            <span class="font-semibold text-gray-800">{{ displayRating }}</span>
-            <span class="text-gray-500 text-sm">({{ reviewCount }})</span>
-          </div>
+    <div class="w-[180px] flex flex-col h-full border-l border-gray-200">
+      <div class="bg-primary-500 text-white px-6 py-3 flex items-center justify-center text-lg font-bold select-none min-h-[64px]" style="flex: 0 0 auto">{{ budget }}</div>
+      <div class="flex-1 flex items-end">
+        <div class="w-full p-5">
+          <button @click.stop="viewDetails" class="w-full flex items-center justify-center gap-2 border border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white rounded-md px-3 py-2 text-sm font-semibold transition-colors" tabindex="0" aria-label="View Details">
+            <i class="pi pi-info-circle"></i> View Details
+          </button>
         </div>
-
-        <!-- Provider Info and Tags -->
-        <div class="flex items-center gap-4 mb-3 text-sm">
-          <div class="flex items-center gap-2">
-            <img
-              v-if="service.provider_profile?.user?.profile_picture"
-              :src="service.provider_profile.user.profile_picture"
-              :alt="service.provider_profile.user.name"
-              class="w-6 h-6 rounded-full object-cover"
-            />
-            <div
-              v-else
-              class="w-6 h-6 rounded-full bg-[#6d0019] flex items-center justify-center text-white text-xs"
-            >
-              {{ service.provider_profile?.user?.name?.charAt(0) || 'P' }}
-            </div>
-            <span class="text-gray-700 font-semibold">
-              {{ service.provider_profile?.user?.name || 'Unknown Provider' }}
-            </span>
-          </div>
-
-          <div class="flex items-center gap-1 text-gray-500">
-            <i class="pi pi-map-marker text-xs"></i>
-            {{ service.provider_profile?.user?.profile?.location || 'Location not set' }}
-          </div>
-
-          <div v-if="service.category" class="text-gray-600 bg-gray-100 px-2 py-1 rounded">
-            {{ service.category }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Bottom section with price and button -->
-      <div class="flex items-center justify-between pt-3 border-t border-gray-100">
-        <div>
-          <p class="text-xl font-bold text-[#6d0019]">
-            ₱{{ service.price_per_hour || 'TBD' }}<span class="text-sm">/hr</span>
-          </p>
-        </div>
-        <button
-          class="bg-[#6d0019] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#8b0028] transition"
-          @click.stop="emit('contact')"
-        >
-          Contact
-        </button>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.line-clamp-2 {
+.line-clamp-1, .line-clamp-2, .line-clamp-3 {
   display: -webkit-box;
-  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-
-.line-clamp-1 {
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
+.line-clamp-1 { -webkit-line-clamp: 1; }
+.line-clamp-2 { -webkit-line-clamp: 2; }
+.line-clamp-3 { -webkit-line-clamp: 3; }
 </style>

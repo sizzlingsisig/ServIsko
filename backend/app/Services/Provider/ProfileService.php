@@ -28,6 +28,7 @@ class ProfileService
                                        ->select('skills.id', 'skills.name', 'skills.description')
                                        ->get()
                                        ->toArray(),
+            'services' => $user->services()->get()->toArray(),
             'user' => $user->only('id', 'name', 'email', 'username'),
         ];
     }
