@@ -23,55 +23,6 @@ class ListingController extends Controller
      * Get seeker's own listings
      * GET /seeker/listings
      */
-    public function index(FilterListingRequest $request): JsonResponse
-    {
-        try {
-            $listings = $this->listingService->getUserListings(auth()->id(), $request->validated());
-            return response()->json(['success' => true, 'data' => $listings]);
-        } catch (Exception $e) {
-            Log::error('Failed to fetch user listings', [
-                'error' => $e->getMessage(),
-                'user_id' => auth()->id()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch your listings.',
-                'error' => config('app.debug') ? $e->getMessage() : null,
-            ], 500);
-        }
-    }
-
-    /**
-     * Create a new listing
-     * POST /seeker/listings
-     */
-    public function store(StoreListingRequest $request): JsonResponse
-    {
-        try {
-            $listing = DB::transaction(fn() =>
-                $this->listingService->createListing($request->validated(), auth()->id())
-            );
-            Log::info('Listing created', [
-                'listing_id' => $listing->id,
-                'seeker_user_id' => auth()->id()
-            ]);
-            return response()->json([
-                'success' => true,
-                'message' => 'Listing created successfully.',
-                'data' => $listing->load(['tags', 'category']),
-            ], 201);
-        } catch (Exception $e) {
-            Log::error('Failed to create listing', [
-                'error' => $e->getMessage(),
-                'user_id' => auth()->id()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create listing.',
-                'error' => config('app.debug') ? $e->getMessage() : null,
-            ], 500);
-        }
-    }
 
     /**
      * Update an existing listing (only owner)

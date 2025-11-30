@@ -26,6 +26,19 @@ const category = computed(() => props.service.category?.name || 'Uncategorized')
 const seeker = computed(() => props.service.seeker?.name || 'Unknown Provider')
 const tags = computed(() => props.service.tags || [])
 
+const createdAt = computed(() => props.service.created_at ? formatDate(props.service.created_at) : null)
+const expiresAt = computed(() =>
+  props.service.expires_at ? formatDate(props.service.expires_at) : null
+)
+const isExpired = computed(() => !!props.service.is_expired)
+
+function formatDate(dateStr) {
+  // Use vanilla JS Date formatting
+  const date = new Date(dateStr)
+  // "Nov 10, 2025 14:30"
+  return `${date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} ${date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}`
+}
+
 const viewDetails = (evt) => {
   evt?.stopPropagation?.()
   router.push(`/listings/${props.service.id}`)
@@ -36,13 +49,23 @@ const viewDetails = (evt) => {
   <!-- Grid Card -->
   <div
     v-if="layout === 'grid'"
-    class="bg-white rounded-lg border border-gray-300 hover:border-primary-500 shadow-sm hover:shadow-md cursor-pointer flex flex-col h-[380px]"
+    class="bg-white rounded-lg border border-gray-300 hover:border-primary-500 shadow-sm hover:shadow-md cursor-pointer flex flex-col h-[400px]"
     @click="viewDetails"
   >
     <div class="p-6 flex flex-col flex-1 overflow-hidden">
-      <h3 class="text-lg font-semibold text-gray-900 mb-3 line-clamp-2 leading-snug" tabindex="0">
+      <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 leading-snug" tabindex="0">
         {{ title }}
       </h3>
+      <div class="flex gap-2 text-xs text-gray-500 mb-1">
+        <span>Created: <strong>{{ createdAt }}</strong></span>
+        <span v-if="expiresAt">
+          <span>&bull; Expires: <strong>{{ expiresAt }}</strong></span>
+        </span>
+        <span v-else>
+          <span>&bull; No Expiry</span>
+        </span>
+        <span v-if="isExpired" class="text-[#b91c1c] font-bold ml-2"><i class="pi pi-clock"></i> Expired</span>
+      </div>
       <p class="text-gray-600 flex-1 mb-3 line-clamp-3" tabindex="0">{{ description }}</p>
       <div class="flex justify-between items-center mb-3">
         <div class="flex items-center gap-3">
@@ -57,6 +80,9 @@ const viewDetails = (evt) => {
       </div>
       <div class="flex flex-wrap gap-2 mb-4">
         <span v-for="tag in [category]" :key="tag" class="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ tag }}</span>
+        <span v-for="tag in tags" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs px-2 py-1 rounded">
+          {{ tag.name ?? tag }}
+        </span>
       </div>
       <div class="flex gap-3">
         <button @click.stop="viewDetails" class="flex-1 flex items-center justify-center gap-2 border border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white rounded-md px-4 py-2 text-sm font-semibold transition-colors" tabindex="0" aria-label="View Details">
@@ -75,6 +101,16 @@ const viewDetails = (evt) => {
     <div class="flex-1 flex flex-col justify-between p-5">
       <div>
         <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-1 leading-snug" tabindex="0">{{ title }}</h3>
+        <div class="flex gap-2 text-xs text-gray-500 mb-1">
+          <span>Created: <strong>{{ createdAt }}</strong></span>
+          <span v-if="expiresAt">
+            <span>&bull; Expires: <strong>{{ expiresAt }}</strong></span>
+          </span>
+          <span v-else>
+            <span>&bull; No Expiry</span>
+          </span>
+          <span v-if="isExpired" class="text-[#b91c1c] font-bold ml-2"><i class="pi pi-clock"></i> Expired</span>
+        </div>
         <p class="text-gray-600 mb-2 line-clamp-2" tabindex="0">{{ description }}</p>
       </div>
       <div>
@@ -91,6 +127,9 @@ const viewDetails = (evt) => {
         </div>
         <div class="flex flex-wrap gap-2">
           <span v-for="tag in [category]" :key="tag" class="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ tag }}</span>
+          <span v-for="tag in tags" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs px-2 py-1 rounded">
+            {{ tag.name ?? tag }}
+          </span>
         </div>
       </div>
     </div>
