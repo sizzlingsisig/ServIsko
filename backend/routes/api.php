@@ -39,7 +39,7 @@ use App\Http\Controllers\Listing\ListingController;
 // ========================================================================
 // CATEGORY CONTROLLERS
 // ========================================================================
-use App\Http\Controllers\User\CategoryController as UserCategoryController;
+use App\Http\Controllers\Category\CategoryController as PublicCategoryController;
 use App\Http\Controllers\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Admin\CategoryRequestController as AdminCategoryRequestController;
 
@@ -75,8 +75,8 @@ Route::get('/listings', [ListingController::class, 'index']);
 Route::get('/listings/{id}', [ListingController::class, 'show']);
 
 // Public category routes
-Route::get('/categories', [UserCategoryController::class, 'index']);
-Route::get('/categories/{id}', [UserCategoryController::class, 'show']);
+Route::get('/categories', [PublicCategoryController::class, 'index']);
+Route::get('/categories/{id}', [PublicCategoryController::class, 'show']);
 
 // ========================================================================
 // PROTECTED ROUTES (Requires Authentication)
