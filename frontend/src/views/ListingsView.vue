@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Paginator from 'primevue/paginator'
@@ -7,15 +7,26 @@ import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import Dialog from 'primevue/dialog'
 import Dropdown from 'primevue/dropdown'
+import AutoComplete from 'primevue/autocomplete'
+import Chip from 'primevue/chip'
 import ListingCard from '@/components/ListingCard.vue'
 import FilterSidebar from '@/components/FilterSidebar.vue'
-import { useToastStore } from '@/stores/toastStore'
+import { useToastHelper } from '@/composables/useToastHelper'
 import api from '@/composables/axios'
-import { useAuthStore } from '@/stores/AuthStore' // Adjust path as needed
+import { useAuthStore } from '@/stores/AuthStore'
 
 const authStore = useAuthStore()
+const toast = useToastHelper()
 
-const toastStore = useToastStore()
+// Custom debounce function
+const debounce = (func, delay) => {
+  let timeoutId
+  return function (...args) {
+    clearTimeout(timeoutId)
+    timeoutId = setTimeout(() => func.apply(this, args), delay)
+  }
+}
+
 const layout = ref('grid')
 const loading = ref(false)
 const totalRecords = ref(0)
@@ -34,8 +45,7 @@ const filters = reactive({
 const showAddModal = ref(false)
 const activeStep = ref(1)
 const newTitle = ref('')
-const newBriefDescription = ref('')
-const newFullDescription = ref('')
+const newDescription = ref('')
 const hasExpiry = ref(false)
 const expiryDate = ref('')
 const newBudget = ref(null)
@@ -43,12 +53,14 @@ const newCategoryId = ref(null)
 const categories = ref([])
 const tags = ref([])
 const selectedTags = ref([])
-const customTagInput = ref('')
+const tagInput = ref('')
+const filteredTags = ref([])
 
 const listings = ref([])
 
 const paginatedListings = computed(() => listings.value)
 
+// Load listings function
 const loadListings = async () => {
   try {
     loading.value = true
@@ -62,101 +74,203 @@ const loadListings = async () => {
       page: currentPage.value,
       per_page: itemsPerPage.value,
     }
-    // Show query params each call
-    console.log('API Query Params:', params)
 
     const response = await api.get('/listings', { params })
     if (response.data.success && response.data.data) {
-      const paginatedData = response.data.data
+      const paginatedData = response.data. data
       listings.value = paginatedData.data || []
-      totalRecords.value = paginatedData.total || 0
-      // Show listings result each call
-      console.log('Listings response:', listings.value)
+      totalRecords. value = paginatedData.total || 0
     } else {
       listings.value = []
       totalRecords.value = 0
-      toastStore.showError('No listings found', 'Error')
     }
   } catch (error) {
     console.error('Failed to load listings:', error)
-    toastStore.showError('Failed to load listings', 'Error')
+    toast.error('Failed to load listings')
     listings.value = []
     totalRecords.value = 0
   } finally {
-    loading.value = false
+    loading. value = false
   }
 }
 
-const handleSearch = (value) => {
-  filters.search = value
+// Debounced search function (500ms delay)
+const debouncedLoadListings = debounce(() => {
   currentPage.value = 1
   loadListings()
+}, 500)
+
+// Watch search input with debounce
+watch(
+  () => filters.search,
+  () => {
+    debouncedLoadListings()
+  }
+)
+
+// Watch filters (without debounce for immediate feedback)
+watch(
+  () => [
+    filters.category,
+    filters.minBudget,
+    filters. maxBudget,
+    filters.minRating,
+    filters.sort_by,
+  ],
+  () => {
+    currentPage.value = 1
+    loadListings()
+  }
+)
+
+// Watch pagination
+watch(
+  () => [currentPage.value, itemsPerPage.value],
+  () => {
+    loadListings()
+  }
+)
+
+const handleSearch = (value) => {
+  filters.search = value
+  // Watcher will handle the debounced call
 }
 
 const handleFilterChange = (newFilters) => {
   Object.assign(filters, newFilters)
-  currentPage.value = 1
-  loadListings()
+  // Watcher will handle the call
 }
 
 const handlePageChange = (event) => {
   currentPage.value = event.page + 1
-  loadListings()
+  itemsPerPage.value = event. rows
+  // Watcher will handle the call
 }
 
 const handleSortChange = (sortBy) => {
-  filters.sort_by = sortBy
-  currentPage.value = 1
-  loadListings()
+  filters. sort_by = sortBy
+  // Watcher will handle the call
 }
 
 const loadCategories = async () => {
   try {
     const { data } = await api.get('/categories')
-    categories.value = (data.data ?? []).slice().sort((a, b) => a.name.localeCompare(b.name))
+    categories.value = (data. data ??  []).slice(). sort((a, b) => a.name.localeCompare(b.name))
   } catch (err) {
+    console.error('Failed to load categories:', err)
+    toast.error('Failed to load categories')
     categories.value = []
   }
 }
-
-onMounted(() => {
-  loadCategories()
-  loadListings()
-})
 
 const loadTags = async () => {
   try {
     let res
     try {
-      res = await api.get('/tags')
+      res = await api. get('/admin/tags')
     } catch {
-      res = await api.get('/admin/tags')
+      tags.value = []
+      return
     }
     const data = res.data
-    tags.value = data.data ?? data
+    const rawTags = data.data ??  data
+    tags.value = rawTags.map(t => typeof t === 'string' ? t : t.name)
   } catch (err) {
+    console.error('Failed to load tags:', err)
+    toast.warning('Failed to load tags, you can still add custom tags')
     tags.value = []
   }
 }
 
-const addCustomTag = () => {
-  const t = (customTagInput.value || '').trim()
-  if (!t) return
-  if (!selectedTags.value.includes(t)) {
-    selectedTags.value.push(t)
+// AutoComplete search function with debounce
+const searchTagsInternal = (query) => {
+  if (! query) {
+    filteredTags. value = tags.value
+  } else {
+    filteredTags.value = tags.value. filter(tag =>
+      tag.toLowerCase().includes(query.toLowerCase())
+    )
   }
-  customTagInput.value = ''
+}
+
+const debouncedSearchTags = debounce(searchTagsInternal, 300)
+
+const searchTags = (event) => {
+  debouncedSearchTags(event. query)
+}
+
+// Add tag from autocomplete or Enter key
+const addTag = (event) => {
+  let tag = ''
+
+  if (event && event.value) {
+    tag = typeof event.value === 'string' ? event.value : event.value?. name || event.value
+  } else if (tagInput.value) {
+    tag = tagInput.value
+  }
+
+  const trimmedTag = tag.trim()
+
+  if (! trimmedTag) {
+    return
+  }
+
+  if (selectedTags.value.length >= 5) {
+    toast.warning('Maximum 5 tags allowed', 'Tag Limit')
+    tagInput.value = ''
+    return
+  }
+
+  if (selectedTags.value.includes(trimmedTag)) {
+    toast.info(`Tag "${trimmedTag}" already added`)
+    tagInput.value = ''
+    return
+  }
+
+  selectedTags.value.push(trimmedTag)
+  tagInput.value = ''
+  toast.success(`Tag "${trimmedTag}" added`)
+}
+
+// Handle Enter key for custom tags
+const handleTagKeydown = (event) => {
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    addTag({ value: tagInput.value })
+  }
+}
+
+// Remove tag
+const removeTag = (tag) => {
+  const index = selectedTags.value.indexOf(tag)
+  if (index > -1) {
+    selectedTags.value.splice(index, 1)
+    toast.info(`Tag "${tag}" removed`)
+  }
 }
 
 const openAddModal = async () => {
-  if (!authStore.isAuthenticated) {
-    toastStore.showError('You must be logged in to add a listing')
+  if (! authStore.isAuthenticated) {
+    toast. error('You must be logged in to add a listing')
     return
   }
+
   showAddModal.value = true
   activeStep.value = 1
+
+  // Reset form
+  newTitle.value = ''
+  newDescription.value = ''
+  hasExpiry.value = false
+  expiryDate.value = ''
+  newBudget.value = null
+  newCategoryId. value = null
+  selectedTags.value = []
+  tagInput.value = ''
+
+  // Load categories and tags
   await Promise.all([
-    loadCategories().catch(() => {
+    loadCategories(). catch(() => {
       categories.value = []
     }),
     loadTags().catch(() => {
@@ -166,96 +280,193 @@ const openAddModal = async () => {
 }
 
 const goNext = () => {
-  if (activeStep.value < 3) activeStep.value++
+  if (activeStep.value === 1) {
+    if (! newTitle.value || newTitle.value.trim() === '') {
+      toast.warning('Please enter a title')
+      return
+    }
+    if (newTitle.value.length > 255) {
+      toast.warning('Title must be 255 characters or less')
+      return
+    }
+  }
+
+  if (activeStep. value === 2) {
+    if (selectedTags.value.length === 0) {
+      toast. warning('Please select at least one tag')
+      return
+    }
+    if (selectedTags.value.length > 5) {
+      toast.warning('Maximum 5 tags allowed')
+      return
+    }
+  }
+
+  if (activeStep. value < 3) {
+    activeStep.value++
+    toast.success('Step completed!')
+  }
 }
+
 const goBack = () => {
   if (activeStep.value > 1) activeStep.value--
 }
 
 const submitListing = async () => {
-  console.log('submitListing called')
-  if (!newTitle.value || newTitle.value.trim() === '') {
-    toastStore.showError('Please enter a title for your listing')
+  // Final validation
+  if (!newTitle. value || newTitle.value.trim() === '') {
+    toast. warning('Please enter a title for your listing')
     return
   }
-  if (newTitle.value.length > 50) {
-    toastStore.showError('Title must be 50 characters or less')
+  if (newTitle.value.length > 255) {
+    toast.warning('Title must be 255 characters or less')
     return
   }
-  if (!newBriefDescription.value || newBriefDescription.value.length > 150) {
-    toastStore.showError('Brief description is required and must be 150 characters or less')
+  if (selectedTags.value.length === 0) {
+    toast.warning('Please add at least one tag')
     return
   }
-  // Ensure tags is a plain array
-  const tagsArr =
-    Array.isArray(selectedTags.value) && selectedTags.value.length > 0
-      ? [...selectedTags.value]
-      : null
-  // Ensure budget is a number or null
+  if (selectedTags.value.length > 5) {
+    toast.warning('Maximum 5 tags allowed')
+    return
+  }
+
+  if (hasExpiry.value && ! expiryDate.value) {
+    toast.warning('Please select an expiry date')
+    return
+  }
+
+  // Validate budget
   let budgetVal = newBudget.value
-  if (typeof budgetVal === 'string') {
-    budgetVal = budgetVal.trim() === '' ? null : Number(budgetVal)
-    if (isNaN(budgetVal)) budgetVal = null
+  if (budgetVal !== null && budgetVal !== undefined && budgetVal !== '') {
+    budgetVal = Number(budgetVal)
+    if (isNaN(budgetVal) || budgetVal < 0) {
+      toast. warning('Budget must be a valid positive number')
+      return
+    }
+  } else {
+    budgetVal = null
   }
-  // Build payload and remove null fields
+
+  // Format expires_at
+  let expiresAtVal = null
+  if (hasExpiry.value && expiryDate.value) {
+    try {
+      const date = new Date(expiryDate.value)
+      const year = date.getFullYear()
+      const month = String(date. getMonth() + 1).padStart(2, '0')
+      const day = String(date. getDate()).padStart(2, '0')
+      const hours = String(date.getHours()). padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      expiresAtVal = `${year}-${month}-${day} ${hours}:${minutes}:00`
+    } catch (e) {
+      console.error('Date formatting error:', e)
+      toast.error('Invalid expiry date')
+      return
+    }
+  }
+
+  // Build payload
   const payload = {
-    title: newTitle.value,
-    brief_description: newBriefDescription.value,
-    description: newFullDescription.value || null,
-    budget: budgetVal,
-    category_id: newCategoryId.value,
-    tags: tagsArr,
-    expires_at: hasExpiry.value && expiryDate.value ? expiryDate.value : null,
+    title: newTitle.value. trim(),
+    tags: [... selectedTags.value],
   }
-  // Remove null fields
-  Object.keys(payload).forEach((key) => (payload[key] === null ? delete payload[key] : undefined))
-  console.log('Submitting payload:', payload)
+
+  if (newDescription.value && newDescription.value.trim()) {
+    payload.description = newDescription.value.trim()
+  }
+
+  if (budgetVal !== null) {
+    payload. budget = budgetVal
+  }
+
+  if (newCategoryId.value) {
+    payload.category_id = newCategoryId.value
+  }
+
+  if (expiresAtVal) {
+    payload.expires_at = expiresAtVal
+  }
+
+  console.log('Submitting payload:', JSON.stringify(payload, null, 2))
+
   try {
-    const response = await api.post('/listings', payload)
-    console.log('API response:', response)
+    toast.info('Creating listing...')
+    const response = await api.post('/seeker/listings', payload)
+
     if (response.data.success) {
-      toastStore.showSuccess('Listing created successfully')
+      toast.success('Listing created successfully! ', 'Success')
       showAddModal.value = false
+
+      // Reset form
       newTitle.value = ''
-      newBriefDescription.value = ''
-      newFullDescription.value = ''
+      newDescription.value = ''
       hasExpiry.value = false
       expiryDate.value = ''
       newBudget.value = null
-      newCategoryId.value = null
+      newCategoryId. value = null
       selectedTags.value = []
-      customTagInput.value = ''
+      tagInput.value = ''
+      activeStep.value = 1
+
+      // Reload listings
       await loadListings()
     } else {
       const msg = response.data.message || 'Failed to create listing'
-      toastStore.showError(msg, 'Error')
+      toast.error(msg)
     }
   } catch (err) {
     console.error('API error:', err)
-    const msg = err.response?.data?.message || err.message || 'Failed to create listing'
-    toastStore.showError(msg, 'Error')
+
+    if (err.response?.status === 422) {
+      if (err.response.data?.errors) {
+        const errors = err.response.data.errors
+        const errorMessages = Object.entries(errors)
+          .map(([field, messages]) => `${field}: ${messages.join(', ')}`)
+          .join('\n')
+        toast.error(errorMessages, 'Validation Error')
+      } else if (err.response.data?.suggestions) {
+        const msg = err.response.data.message
+        const suggestions = err.response.data. suggestions
+        toast.info(`${msg}\nSuggestions: ${suggestions. join(', ')}`, 'Tag Suggestion')
+      } else {
+        toast.error(err.response. data?.message || 'Validation failed')
+      }
+    } else if (err.response?.status === 500) {
+      const serverMsg = err.response.data?.message || 'Server error occurred'
+      toast.error(`Server Error: ${serverMsg}`, 'Server Error')
+    } else {
+      const msg = err.response?.data?.message || err.message || 'Failed to create listing'
+      toast. error(msg)
+    }
   }
 }
+
+// Load initial data
+onMounted(() => {
+  loadCategories()
+  loadListings()
+})
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Main Search Bar Section -->
-    <section class="bg-[#6d0019] text-white px-4 py-8">
+    <section class="bg-primary-500 text-white px-4 py-8">
       <div class="max-w-7xl mx-auto">
         <h2 class="text-3xl font-bold mb-6">Find Services</h2>
         <div class="flex gap-4">
           <IconField icon-position="left" class="flex-1">
             <InputIcon class="pi pi-search"></InputIcon>
             <InputText
-              v-model="filters.search"
+              v-model="filters. search"
               placeholder="Search for services..."
               class="w-full"
               @input="handleSearch($event.target.value)"
             />
           </IconField>
           <button
-            class="bg-black text-white px-4 py-2 rounded"
+            class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
             @click="handleSearch(filters.search)"
           >
             Search
@@ -288,7 +499,7 @@ const submitListing = async () => {
                 <label class="text-sm text-gray-600">Sort by:</label>
                 <select
                   :value="filters.sort_by"
-                  @change="handleSortChange($event.target.value)"
+                  @change="handleSortChange($event. target.value)"
                   class="px-3 py-2 border border-gray-300 rounded-lg text-sm"
                 >
                   <option value="newest">Newest</option>
@@ -304,7 +515,7 @@ const submitListing = async () => {
                   :class="[
                     'px-3 py-2 rounded-lg transition',
                     layout === 'grid'
-                      ? 'bg-[#6d0019] text-white'
+                      ? 'bg-primary-500 text-white'
                       : 'bg-gray-200 text-gray-600 hover:bg-gray-300',
                   ]"
                 >
@@ -315,7 +526,7 @@ const submitListing = async () => {
                   :class="[
                     'px-3 py-2 rounded-lg transition',
                     layout === 'list'
-                      ? 'bg-[#6d0019] text-white'
+                      ? 'bg-primary-500 text-white'
                       : 'bg-gray-200 text-gray-600 hover:bg-gray-300',
                   ]"
                 >
@@ -338,13 +549,14 @@ const submitListing = async () => {
               </span>
             </div>
           </div>
+
           <!-- Services Grid/List -->
           <div v-if="loading" class="flex items-center justify-center py-12">
             <i class="pi pi-spin pi-spinner text-4xl text-[#6d0019]"></i>
           </div>
           <div v-else-if="paginatedListings.length === 0" class="text-center py-12">
             <i class="pi pi-inbox text-5xl text-gray-300 mb-4 block"></i>
-            <p class="text-gray-600 text-lg">No services found. Try adjusting your filters.</p>
+            <p class="text-gray-600 text-lg">No services found.  Try adjusting your filters.</p>
           </div>
           <div
             v-else-if="layout === 'grid'"
@@ -365,6 +577,8 @@ const submitListing = async () => {
               layout="list"
             />
           </div>
+
+          <!-- Pagination -->
           <div class="mt-8 flex justify-center">
             <Paginator
               :rows="itemsPerPage"
@@ -378,6 +592,7 @@ const submitListing = async () => {
         </div>
       </div>
     </div>
+
     <!-- Add Listing Modal -->
     <Dialog
       v-model:visible="showAddModal"
@@ -393,8 +608,8 @@ const submitListing = async () => {
             <div class="flex flex-col items-center flex-1">
               <div
                 :class="[
-                  'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold border-2 mb-2',
-                  activeStep >= 1 ? 'bg-[#6d0019] border-[#6d0019]' : 'bg-gray-300 border-gray-300',
+                  'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold border-2 mb-2 transition',
+                  activeStep >= 1 ? 'bg-primary-500 border-[#6d0019]' : 'bg-gray-300 border-gray-300',
                 ]"
               >
                 1
@@ -402,13 +617,13 @@ const submitListing = async () => {
               <span class="text-sm font-semibold text-gray-800">About</span>
             </div>
             <div
-              :class="['flex-1 h-1 mb-8', activeStep > 1 ? 'bg-[#6d0019]' : 'bg-gray-300']"
+              :class="['flex-1 h-1 mb-8 transition', activeStep > 1 ? 'bg-primary-500' : 'bg-gray-300']"
             ></div>
             <div class="flex flex-col items-center flex-1">
               <div
                 :class="[
-                  'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold border-2 mb-2',
-                  activeStep >= 2 ? 'bg-[#6d0019] border-[#6d0019]' : 'bg-gray-300 border-gray-300',
+                  'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold border-2 mb-2 transition',
+                  activeStep >= 2 ? 'bg-primary-500 border-[#6d0019]' : 'bg-gray-300 border-gray-300',
                 ]"
               >
                 2
@@ -416,116 +631,161 @@ const submitListing = async () => {
               <span class="text-sm font-semibold text-gray-800">Category & Tags</span>
             </div>
             <div
-              :class="['flex-1 h-1 mb-8', activeStep > 2 ? 'bg-[#6d0019]' : 'bg-gray-300']"
+              :class="['flex-1 h-1 mb-8 transition', activeStep > 2 ?  'bg-primary-500' : 'bg-gray-300']"
             ></div>
             <div class="flex flex-col items-center flex-1">
               <div
                 :class="[
-                  'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold border-2 mb-2',
-                  activeStep >= 3 ? 'bg-[#6d0019] border-[#6d0019]' : 'bg-gray-300 border-gray-300',
+                  'w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold border-2 mb-2 transition',
+                  activeStep >= 3 ? 'bg-primary-500 border-[#6d0019]' : 'bg-gray-300 border-gray-300',
                 ]"
               >
                 3
               </div>
-              <span class="text-sm font-semibold text-gray-800">Pricing</span>
+              <span class="text-sm font-semibold text-gray-800">Budget & Expiry</span>
             </div>
           </div>
         </div>
+
+        <!-- Step Content -->
         <div class="min-h-75 mb-8">
+          <!-- Step 1: About -->
           <div v-if="activeStep === 1" class="space-y-4">
-            <label class="font-semibold">Title <span class="text-red-500">*</span></label>
-            <InputText
-              v-model="newTitle"
-              :maxlength="50"
-              placeholder="Service title (max 50 chars)"
-              class="w-full"
-            />
-            <div class="text-xs text-gray-500">{{ newTitle.length }}/50</div>
-            <label class="font-semibold"
-              >Brief Description <span class="text-red-500">*</span></label
-            >
-            <InputText
-              v-model="newBriefDescription"
-              :maxlength="150"
-              placeholder="Short summary (max 150 chars, shown in card)"
-              class="w-full"
-            />
-            <div class="text-xs text-gray-500">{{ newBriefDescription.length }}/150</div>
-            <label class="font-semibold">Full Description</label>
-            <textarea
-              v-model="newFullDescription"
-              rows="6"
-              class="w-full border rounded px-3 py-2"
-              placeholder="Full details (shown in details view)"
-            ></textarea>
-            <div class="flex items-center gap-4 mt-2">
-              <label class="font-semibold">Does this listing have an expiry?</label>
-              <input type="checkbox" v-model="hasExpiry" class="accent-[#6d0019] w-5 h-5" />
-              <span class="text-sm text-gray-600">Yes</span>
+            <div>
+              <label class="font-semibold block mb-2">
+                Title <span class="text-red-500">*</span>
+              </label>
+              <InputText
+                v-model="newTitle"
+                :maxlength="255"
+                placeholder="e.g., Need Web Developer for E-commerce Site"
+                class="w-full"
+              />
+              <div class="text-xs text-gray-500 mt-1">{{ newTitle.length }}/255 characters</div>
             </div>
-            <div v-if="hasExpiry" class="mt-2">
-              <label class="font-semibold">Expiry Date</label>
-              <input type="date" v-model="expiryDate" class="border rounded px-3 py-2" />
+
+            <div>
+              <label class="font-semibold block mb-2">Description</label>
+              <textarea
+                v-model="newDescription"
+                rows="6"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Describe your project requirements, deliverables, timeline, etc..."
+              ></textarea>
             </div>
           </div>
+
+          <!-- Step 2: Category & Tags -->
           <div v-if="activeStep === 2" class="space-y-4">
             <div>
-              <label class="font-semibold">Category <span class="text-red-500">*</span></label>
+              <label class="font-semibold block mb-2">Category</label>
               <Dropdown
                 v-model="newCategoryId"
                 :options="categories"
                 option-label="name"
                 option-value="id"
-                placeholder="Select a category"
-                class="w-full mt-2"
+                placeholder="Select a category (optional)"
+                class="w-full"
                 :filter="true"
+                show-clear
               />
             </div>
+
             <div>
-              <label class="font-semibold">Tags <span class="text-red-500">*</span></label>
-              <div class="flex flex-wrap gap-2 mt-2">
-                <label
-                  v-for="(t, idx) in tags"
-                  :key="t.id ?? idx"
-                  class="flex items-center gap-2 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    :value="t.name ?? t"
-                    v-model="selectedTags"
-                    class="accent-[#6d0019] w-4 h-4"
-                  />
-                  <span class="text-gray-800">{{ t.name ?? t }}</span>
-                </label>
-              </div>
-              <div class="mt-3 flex gap-2 items-center">
-                <InputText
-                  v-model="customTagInput"
-                  placeholder="Type a custom tag"
-                  class="flex-1"
+              <label class="font-semibold block mb-2">
+                Tags <span class="text-red-500">*</span> (Max 5)
+              </label>
+
+              <!-- Selected Tags Display -->
+              <div v-if="selectedTags.length > 0" class="flex flex-wrap gap-2 mb-3">
+                <Chip
+                  v-for="(tag, idx) in selectedTags"
+                  :key="idx"
+                  :label="tag"
+                  removable
+                  @remove="removeTag(tag)"
                 />
-                <Button label="Add" icon="pi pi-check" @click="addCustomTag" />
               </div>
-              <p class="text-sm text-gray-500 mt-2">
-                Tip: You can select multiple tags or add your own.
+
+              <!-- AutoComplete for Tags -->
+              <AutoComplete
+                v-model="tagInput"
+                :suggestions="filteredTags"
+                @complete="searchTags"
+                @item-select="addTag"
+                @keydown="handleTagKeydown"
+                placeholder="Type to search tags or press Enter to add custom"
+                :disabled="selectedTags.length >= 5"
+                class="w-full"
+                :force-selection="false"
+                dropdown
+              >
+                <template #option="slotProps">
+                  <div class="flex items-center gap-2">
+                    <i class="pi pi-tag text-primary-500"></i>
+                    <span>{{ slotProps. option }}</span>
+                  </div>
+                </template>
+              </AutoComplete>
+              <p class="text-xs text-gray-500 mt-2">
+                {{ selectedTags. length }}/5 tags selected.  Type and press Enter for custom tags.
               </p>
             </div>
           </div>
+
+          <!-- Step 3: Budget & Expiry -->
           <div v-if="activeStep === 3" class="space-y-4">
-            <label class="font-semibold">Budget (₱)</label>
-            <InputText v-model="newBudget" placeholder="Enter budget (numbers only)" class="w-40" />
+            <div>
+              <label class="font-semibold block mb-2">Budget (₱)</label>
+              <InputText
+                v-model="newBudget"
+                type="number"
+                placeholder="e.g., 10000"
+                class="w-full"
+                min="0"
+              />
+              <p class="text-xs text-gray-500 mt-1">Optional: Enter your budget in Philippine Pesos</p>
+            </div>
+
+            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+              <input
+                type="checkbox"
+                v-model="hasExpiry"
+                class="accent-[#6d0019] w-5 h-5 cursor-pointer"
+                id="hasExpiry"
+              />
+              <label for="hasExpiry" class="font-semibold cursor-pointer">
+                Set an expiry date for this listing
+              </label>
+            </div>
+
+            <div v-if="hasExpiry" class="p-4 bg-blue-50 rounded-lg">
+              <label class="font-semibold block mb-2">Expiry Date & Time</label>
+              <input
+                type="datetime-local"
+                v-model="expiryDate"
+                class="border border-gray-300 rounded-lg px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-primary-500"
+              />
+              <p class="text-xs text-gray-500 mt-2">
+                Format: YYYY-MM-DD HH:MM:SS
+              </p>
+            </div>
           </div>
         </div>
-        <div class="flex justify-between items-center">
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between items-center pt-4 border-t">
           <Button
-            :label="activeStep === 1 ? 'Cancel' : '← Back'"
-            :class="activeStep === 1 ? 'bg-gray-300 text-gray-700' : 'bg-gray-200 text-gray-700'"
+            :label="activeStep === 1 ?  'Cancel' : '← Back'"
+            severity="secondary"
             @click="activeStep === 1 ? (showAddModal = false) : goBack()"
           />
           <Button
-            :label="activeStep === 3 ? 'Create Listing →' : 'Next →'"
-            class="bg-[#6d0019] text-white"
-            @click="activeStep === 3 ? submitListing() : goNext()"
+            :label="activeStep === 3 ? 'Create Listing' : 'Next →'"
+            severity="success"
+            :icon="activeStep === 3 ?  'pi pi-check' : 'pi pi-arrow-right'"
+            iconPos="right"
+            @click="activeStep === 3 ?  submitListing() : goNext()"
           />
         </div>
       </div>
@@ -534,5 +794,27 @@ const submitListing = async () => {
 </template>
 
 <style scoped>
-/* Add any global styles here if needed */
+/* Custom chip styling */
+:deep(.p-chip) {
+  background: #fef3c7;
+  color: #92400e;
+  font-weight: 600;
+}
+
+:deep(.p-chip .p-chip-remove-icon) {
+  color: #92400e;
+}
+
+:deep(.p-chip .p-chip-remove-icon:hover) {
+  color: #78350f;
+}
+
+/* AutoComplete styling */
+:deep(.p-autocomplete) {
+  width: 100%;
+}
+
+:deep(.p-autocomplete-input) {
+  width: 100%;
+}
 </style>

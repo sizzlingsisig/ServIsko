@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Listing extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     // Columns that can be mass assigned
     protected $fillable = [
@@ -64,24 +65,15 @@ class Listing extends Model
         return $this->hasMany(Review::class);
     }
 
-    // Check if listing has expired
-    public function isExpired()
+    /**
+     * Check if listing has expired
+     */
+    public function isExpired(): bool
     {
-        return $this->expires_at && $this->expires_at->isPast();
-    }
+        if (! $this->expires_at) {
+            return false;
+        }
 
-    // Scope to get only active (non-expired) listings
-    public function scopeActive($query)
-    {
-        return $query->where(function($q) {
-            $q->whereNull('expires_at')
-              ->orWhere('expires_at', '>', now());
-        });
-    }
-
-    // Scope to get only expired listings
-    public function scopeExpired($query)
-    {
-        return $query->where('expires_at', '<=', now());
+        return $this->expires_at->isPast();
     }
 }

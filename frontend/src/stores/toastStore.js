@@ -1,85 +1,97 @@
+// stores/toastStore.js
 import { defineStore } from 'pinia'
 import { useToast } from 'primevue/usetoast'
 
-export const useToastStore = defineStore('toast', () => {
-  let toastInstance = null
+export const useToastStore = defineStore('toast-store', () => {
+  let toast = null
 
-  // Initialize toast (call this once in App.vue)
-  const initToast = () => {
-    toastInstance = useToast()
+  const getToast = () => {
+    if (!toast) {
+      toast = useToast()
+    }
+    return toast
   }
 
-  // Success toast
-  const showSuccess = (message, title = 'Success', life = 3000) => {
-    if (!toastInstance) return
-    toastInstance.add({
-      severity: 'success',
-      summary: title,
-      detail: message,
-      group: 'br',
-      life,
-    })
+  const success = (message, title = 'Success', life = 3000) => {
+    const toastInstance = getToast()
+    if (typeof message === 'object') {
+      toastInstance. add({
+        severity: 'success',
+        summary: message.title || title,
+        detail: message.text || message. message,
+        life: message.timeout || life,
+      })
+    } else {
+      toastInstance.add({
+        severity: 'success',
+        summary: title,
+        detail: message,
+        life,
+      })
+    }
   }
 
-  // Error toast
-  const showError = (message, title = 'Error', life = 5000) => {
-    if (!toastInstance) return
-    toastInstance.add({
-      severity: 'error',
-      summary: title,
-      detail: message,
-      group: 'br',
-      life,
-    })
+  const error = (message, title = 'Error', life = 5000) => {
+    const toastInstance = getToast()
+    if (typeof message === 'object') {
+      toastInstance.add({
+        severity: 'error',
+        summary: message.title || title,
+        detail: message.text || message.message,
+        life: message.timeout || life,
+      })
+    } else {
+      toastInstance.add({
+        severity: 'error',
+        summary: title,
+        detail: message,
+        life,
+      })
+    }
   }
 
-  // Warning toast
-  const showWarning = (message, title = 'Warning', life = 4000) => {
-    if (!toastInstance) return
-    toastInstance.add({
-      severity: 'warn',
-      summary: title,
-      detail: message,
-      group: 'br',
-      life,
-    })
+  const warning = (message, title = 'Warning', life = 4000) => {
+    const toastInstance = getToast()
+    if (typeof message === 'object') {
+      toastInstance.add({
+        severity: 'warn',
+        summary: message.title || title,
+        detail: message.text || message.message,
+        life: message.timeout || life,
+      })
+    } else {
+      toastInstance.add({
+        severity: 'warn',
+        summary: title,
+        detail: message,
+        life,
+      })
+    }
   }
 
-  // Info toast
-  const showInfo = (message, title = 'Info', life = 3000) => {
-    if (!toastInstance) return
-    toastInstance.add({
-      severity: 'info',
-      summary: title,
-      detail: message,
-      group: 'br',
-      life,
-    })
-  }
-
-  // Custom toast with full control
-  const showCustom = (options) => {
-    if (!toastInstance) return
-    toastInstance.add({
-      group: 'br',
-      life: 3000,
-      ...options,
-    })
-  }
-
-  // Clear all toasts
-  const clearAll = () => {
-    if (!toastInstance) return
-    toastInstance.removeAllGroups()
+  const info = (message, title = 'Info', life = 3000) => {
+    const toastInstance = getToast()
+    if (typeof message === 'object') {
+      toastInstance.add({
+        severity: 'info',
+        summary: message.title || title,
+        detail: message.text || message.message,
+        life: message.timeout || life,
+      })
+    } else {
+      toastInstance.add({
+        severity: 'info',
+        summary: title,
+        detail: message,
+        life,
+      })
+    }
   }
 
   return {
-    initToast,
-    showSuccess,
-    showError,
-    showWarning,
-    showInfo,
-    showCustom,
-    clearAll,
+    success,
+    error,
+    warning,
+    info,
   }
 })
