@@ -1,5 +1,60 @@
 <script setup>
+import { ref, onMounted } from 'vue'
 import CurvedCards from '@/layouts/components/CurvedCards.vue'
+import ListingCard from '@/components/ListingCard.vue'
+import Carousel from 'primevue/carousel'
+import api from '@/composables/axios'
+import { useToastStore } from '@/stores/toastStore'
+
+const toastStore = useToastStore()
+const featuredServices = ref([])
+const loading = ref(false)
+
+const responsiveOptions = ref([
+  {
+    breakpoint: '1024px',
+    numVisible: 3,
+    numScroll: 1,
+  },
+  {
+    breakpoint: '768px',
+    numVisible: 2,
+    numScroll: 1,
+  },
+  {
+    breakpoint: '560px',
+    numVisible: 1,
+    numScroll: 1,
+  },
+])
+
+const loadFeaturedServices = async () => {
+  try {
+    loading.value = true
+    const response = await api.get('/listings', {
+      params: {
+        per_page: 10,
+        sort_by: 'newest',
+      },
+    })
+
+    if (response.data.success && response.data.data) {
+      featuredServices.value = response.data.data.data || []
+    } else {
+      featuredServices.value = []
+    }
+  } catch (error) {
+    console.error('Failed to load featured services:', error)
+    toastStore.showError('Failed to load featured services', 'Error')
+    featuredServices.value = []
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  loadFeaturedServices()
+})
 </script>
 
 <template>
@@ -18,8 +73,21 @@ import CurvedCards from '@/layouts/components/CurvedCards.vue'
       </p>
 
       <div class="flex gap-4">
-        <Button label="Find Services" />
-        <Button label="Offer Services" outlined />
+        <!--ADD LINKS HERE
+        find services -> ListingsView
+        offer services (logged in) -> create listing view (not yet made)
+        offer services (not logged in) -> login view
+        -->
+        <button
+          class="px-8 py-3 bg-white text-[#6d0019] font-semibold rounded hover:bg-gray-100 transition-colors"
+        >
+          Find Services
+        </button>
+        <button
+          class="px-8 py-3 bg-transparent border-2 border-white text-white font-semibold rounded hover:bg-white hover:text-[#6d0019] transition-colors"
+        >
+          Offer Services
+        </button>
       </div>
     </div>
 
@@ -231,48 +299,37 @@ import CurvedCards from '@/layouts/components/CurvedCards.vue'
     </div>
   </section>
 
-  <section class="bg-[#f0f0f0] w-full h-screen">
-    <h2>Featured Services</h2>
-    <p>Lorem ipsum dolor sit amet, consectetur adipisicing</p>
-    <div class="services-carousel">
-      <Carousel
-        :value="products"
-        :numVisible="3"
-        :numScroll="1"
-        :responsiveOptions="responsiveOptions"
-        circular
-        :autoplayInterval="3000"
-      >
-        <template #item="slotProps">
-          <div class="border border-surface-200 dark:border-surface-700 rounded m-2 p-4">
-            <div class="mb-4">
-              <div class="relative mx-auto">
-                <img
-                  :src="
-                    'https://primefaces.org/cdn/primevue/images/product/' + slotProps.data.image
-                  "
-                  :alt="slotProps.data.name"
-                  class="w-full rounded"
-                />
-                <Tag
-                  :value="slotProps.data.inventoryStatus"
-                  :severity="getSeverity(slotProps.data.inventoryStatus)"
-                  class="absolute"
-                  style="left: 5px; top: 5px"
-                />
-              </div>
+  <section class="w-full py-16">
+    <div class="max-w-7xl mx-auto px-4 md:px-8">
+      <div class="text-center mb-12">
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Featured Services</h2>
+        <p class="text-gray-600 text-lg">Discover trending services from our community</p>
+      </div>
+
+      <div v-if="loading" class="flex justify-center items-center h-96">
+        <div class="text-gray-500">Loading services...</div>
+      </div>
+
+      <div v-else-if="featuredServices.length > 0" class="services-carousel">
+        <Carousel
+          :value="featuredServices"
+          :numVisible="3"
+          :numScroll="1"
+          :responsiveOptions="responsiveOptions"
+          circular
+          :autoplayInterval="5000"
+        >
+          <template #item="slotProps">
+            <div class="px-2">
+              <ListingCard :service="slotProps.data" layout="grid" />
             </div>
-            <div class="mb-4 font-medium">{{ slotProps.data.name }}</div>
-            <div class="flex justify-between items-center">
-              <div class="mt-0 font-semibold text-xl">${{ slotProps.data.price }}</div>
-              <span>
-                <Button icon="pi pi-heart" severity="secondary" variant="outlined" />
-                <Button icon="pi pi-shopping-cart" class="ml-2" />
-              </span>
-            </div>
-          </div>
-        </template>
-      </Carousel>
+          </template>
+        </Carousel>
+      </div>
+
+      <div v-else class="text-center py-12">
+        <p class="text-gray-500 text-lg">No services available at the moment</p>
+      </div>
     </div>
   </section>
 
