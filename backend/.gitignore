@@ -1,3 +1,11 @@
+# Copilot/AI/VSCode related
+.vscode/
+.history/
+.copilot/
+copilot-logs/
+copilot-data/
+__copilot/**
+*.copilot.json
 *.log
 .DS_Store
 .env
@@ -21,4 +29,6 @@
 /vendor
 Homestead.json
 Homestead.yaml
+.github
+/agents
 Thumbs.db

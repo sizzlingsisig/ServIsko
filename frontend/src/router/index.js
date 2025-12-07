@@ -72,6 +72,12 @@ const router = createRouter({
       meta: { layout: 'DefaultLayout', requiresAuth: false },
       props: true,
     },
+    {
+      path: '/profile/listings',
+      name: 'my-listings',
+      component: () => import('@/views/MyListingsView.vue'),
+      meta: { layout: 'ProfileLayout', requiresAuth: true },
+    },
     // {
     //   path: '/dashboard/messages',
     //   name: 'messages',

@@ -1,7 +1,7 @@
 // composables/useToastHelper.js
 import { useToast } from 'primevue/usetoast'
 
-export function useToastHelper() {
+function useToastHelper() {
   const toast = useToast()
 
   const success = (message, summary = 'Success', life = 3000) => {
@@ -83,3 +83,5 @@ export function useToastHelper() {
     info,
   }
 }
+
+export default useToastHelper
