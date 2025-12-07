@@ -1,7 +1,4 @@
 <script setup>
-// Limit tags to 3, show +N more if needed
-const visibleTags = computed(() => tags.value.slice(0, 3))
-const moreTagsCount = computed(() => Math.max(0, tags.value.length - 3))
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 
@@ -81,12 +78,11 @@ const viewDetails = (evt) => {
           <span class="text-gray-500 text-xs">(4.1)</span>
         </div>
       </div>
-      <div class="flex flex-wrap gap-0.5 mb-3">
-        <span class="bg-gray-100 border border-gray-200 text-gray-500 text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap">{{ category }}</span>
-        <span v-for="tag in visibleTags" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded">
+      <div class="flex flex-wrap gap-2 mb-4">
+        <span v-for="tag in [category]" :key="tag" class="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ tag }}</span>
+        <span v-for="tag in tags" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs px-2 py-1 rounded">
           {{ tag.name ?? tag }}
         </span>
-        <span v-if="moreTagsCount > 0" class="bg-gray-50 border border-gray-100 text-gray-400 text-[10px] px-1.5 py-0.5 rounded">+{{ moreTagsCount }} more</span>
       </div>
       <div class="flex gap-3">
         <button @click.stop="viewDetails" class="flex-1 flex items-center justify-center gap-2 border border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white rounded-md px-4 py-2 text-sm font-semibold transition-colors" tabindex="0" aria-label="View Details">
@@ -129,12 +125,11 @@ const viewDetails = (evt) => {
             <span class="text-gray-500 text-xs">(4.1)</span>
           </div>
         </div>
-        <div class="flex flex-wrap gap-0.5 mt-1">
-          <span class="bg-gray-100 border border-gray-200 text-gray-500 text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap">{{ category }}</span>
-          <span v-for="tag in visibleTags" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded">
+        <div class="flex flex-wrap gap-2">
+          <span v-for="tag in [category]" :key="tag" class="bg-white border border-gray-300 text-gray-700 text-xs px-3 py-1 rounded-full whitespace-nowrap">{{ tag }}</span>
+          <span v-for="tag in tags" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs px-2 py-1 rounded">
             {{ tag.name ?? tag }}
           </span>
-          <span v-if="moreTagsCount > 0" class="bg-gray-50 border border-gray-100 text-gray-400 text-[10px] px-1.5 py-0.5 rounded">+{{ moreTagsCount }} more</span>
         </div>
       </div>
     </div>
