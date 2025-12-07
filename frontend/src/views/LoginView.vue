@@ -3,11 +3,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/composables/axios'
 import { useAuthStore } from '@/stores/AuthStore'
-import { useToastStore } from '@/stores/toastStore'
+import { useToast } from 'primevue/usetoast'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const toastStore = useToastStore()
+const toast = useToast()
 
 // Loading state
 const loading = ref(false)
@@ -30,7 +30,7 @@ const handleLogin = async () => {
     authStore.setUser(response.data.user)
 
     // Show success toast
-    toastStore.showSuccess('Welcome back!')
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Welcome back!', life: 3000 })
 
     // Redirect based on role
     const userRole = response.data.user.role
@@ -42,7 +42,7 @@ const handleLogin = async () => {
   } catch (err) {
     // Error handled by axios interceptor, but show specific message if available
     if (err.response?.data?.message) {
-      toastStore.showError(err.response.data.message)
+      toast.add({ severity: 'error', summary: 'Error', detail: err.response.data.message, life: 3000 })
     }
   } finally {
     loading.value = false

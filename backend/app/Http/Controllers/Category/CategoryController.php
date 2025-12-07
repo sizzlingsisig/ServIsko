@@ -16,7 +16,12 @@ class CategoryController extends Controller
     public function index()
     {
         try {
-            $categories = Category::orderBy('name')->get();
+            $search = request()->input('search');
+            $categoriesQuery = Category::orderBy('name');
+            if ($search) {
+                $categoriesQuery->where('name', 'ILIKE', "%$search%");
+            }
+            $categories = $categoriesQuery->get();
 
             return response()->json([
                 'success' => true,

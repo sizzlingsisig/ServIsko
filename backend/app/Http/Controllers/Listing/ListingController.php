@@ -19,32 +19,35 @@ class ListingController extends Controller
     {
         try {
             // Validate request
-            $validated = $request->validate([
-                'category'     => ['nullable', 'integer', 'exists:categories,id'],
-                'search'       => ['nullable', 'string', 'max:255'],
-                'minBudget'    => ['nullable', 'numeric', 'min:0'],
-                'maxBudget'    => ['nullable', 'numeric', 'min:0'],
-                'sort_by'      => ['nullable', 'in:newest,oldest,price_low,price_high,rating'],
-                'page'         => ['nullable', 'integer', 'min:1'],
-                'per_page'     => ['nullable', 'integer', 'min:1', 'max:100'],
-                'expires_from' => ['nullable', 'date'],
-                'expires_to'   => ['nullable', 'date'],
-            ], [
-                'category.exists'   => 'Selected category does not exist.',
-                'search.max'        => 'Search term cannot exceed 255 characters.',
-                'minBudget.numeric' => 'Minimum budget must be a valid number.',
-                'minBudget.min'     => 'Minimum budget cannot be negative.',
-                'maxBudget. numeric' => 'Maximum budget must be a valid number.',
-                'maxBudget.min'     => 'Maximum budget cannot be negative.',
-                'sort_by. in'        => 'Sort by must be one of: newest, oldest, price_low, price_high, rating.',
-                'page. integer'      => 'Page must be a valid integer.',
-                'page.min'          => 'Page must be at least 1.',
-                'per_page.integer'  => 'Per page must be a valid integer.',
-                'per_page.min'      => 'Per page must be at least 1.',
-                'per_page.max'      => 'Per page cannot exceed 100.',
-                'expires_from.date' => 'Expires From must be a valid date.',
-                'expires_to.date'   => 'Expires To must be a valid date.',
-            ]);
+            $validated = $request->validate(
+                [
+                    'category' => ['nullable', 'integer', 'exists:categories,id'],
+                    'search' => ['nullable', 'string', 'max:255'],
+                    'minBudget' => ['nullable', 'numeric', 'min:0'],
+                    'maxBudget' => ['nullable', 'numeric', 'min:0'],
+                    'sort_by' => ['nullable', 'in:newest,oldest,price_low,price_high,rating'],
+                    'page' => ['nullable', 'integer', 'min:1'],
+                    'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+                    'expires_from' => ['nullable', 'date'],
+                    'expires_to' => ['nullable', 'date'],
+                ],
+                [
+                    'category.exists' => 'Selected category does not exist.',
+                    'search.max' => 'Search term cannot exceed 255 characters.',
+                    'minBudget.numeric' => 'Minimum budget must be a valid number.',
+                    'minBudget.min' => 'Minimum budget cannot be negative.',
+                    'maxBudget. numeric' => 'Maximum budget must be a valid number.',
+                    'maxBudget.min' => 'Maximum budget cannot be negative.',
+                    'sort_by. in' => 'Sort by must be one of: newest, oldest, price_low, price_high, rating.',
+                    'page. integer' => 'Page must be a valid integer.',
+                    'page.min' => 'Page must be at least 1.',
+                    'per_page.integer' => 'Per page must be a valid integer.',
+                    'per_page.min' => 'Per page must be at least 1.',
+                    'per_page.max' => 'Per page cannot exceed 100.',
+                    'expires_from.date' => 'Expires From must be a valid date.',
+                    'expires_to.date' => 'Expires To must be a valid date.',
+                ],
+            );
 
             $listings = $this->getAllListings($validated);
 
@@ -53,20 +56,26 @@ class ListingController extends Controller
                 'data' => $listings,
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed.',
-                'errors' => $e->errors(),
-            ], 422);
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Validation failed.',
+                    'errors' => $e->errors(),
+                ],
+                422,
+            );
         } catch (Exception $e) {
             Log::error('Failed to fetch all listings', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch listings.',
-            ], 500);
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Failed to fetch listings.',
+                ],
+                500,
+            );
         }
     }
 
@@ -78,14 +87,16 @@ class ListingController extends Controller
     {
         try {
             if ($id <= 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid listing ID.',
-                ], 400);
+                return response()->json(
+                    [
+                        'success' => false,
+                        'message' => 'Invalid listing ID.',
+                    ],
+                    400,
+                );
             }
 
-            $listing = Listing::with(['seeker', 'category', 'tags', 'hiredUser', 'applications'])
-                ->findOrFail($id);
+            $listing = Listing::with(['seeker', 'category', 'tags', 'hiredUser', 'applications'])->findOrFail($id);
 
             // Add expiry status to response
             $data = $listing->toArray();
@@ -96,19 +107,25 @@ class ListingController extends Controller
                 'data' => $data,
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Listing not found.',
-            ], 404);
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Listing not found.',
+                ],
+                404,
+            );
         } catch (Exception $e) {
             Log::error('Failed to fetch listing', [
                 'error' => $e->getMessage(),
                 'listing_id' => $id,
             ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch listing.',
-            ], 500);
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Failed to fetch listing.',
+                ],
+                500,
+            );
         }
     }
 
@@ -121,14 +138,16 @@ class ListingController extends Controller
      */
     private function getAllListings(array $filters = [])
     {
+        $userID = auth()->id();
+
         $query = Listing::with(['seeker', 'category', 'tags'])
             ->where('status', 'active')
+            ->whereNot('seeker_user_id', $userID)
             ->where(function ($q) {
                 // Only show non-expired listings publicly
-                $q->whereNull('expires_at')
-                  ->orWhere('expires_at', '>', now());
-            })
-            ->whereNot('user_id', auth()->id());
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            });
+
 
         // Map frontend to backend keys
         if (isset($filters['category'])) {
@@ -170,8 +189,7 @@ class ListingController extends Controller
         if (isset($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'ilike', "%{$search}%")
-                  ->orWhere('description', 'ilike', "%{$search}%");
+                $q->where('title', 'ilike', "%{$search}%")->orWhere('description', 'ilike', "%{$search}%");
             });
         }
 
@@ -200,9 +218,7 @@ class ListingController extends Controller
 
         // Hired user filter
         if (isset($filters['has_hired_user'])) {
-            $filters['has_hired_user']
-                ? $query->whereNotNull('hired_user_id')
-                : $query->whereNull('hired_user_id');
+            $filters['has_hired_user'] ? $query->whereNotNull('hired_user_id') : $query->whereNull('hired_user_id');
         }
 
         // Created date range filters

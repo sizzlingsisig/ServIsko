@@ -34,7 +34,7 @@ import MenuBar from './components/MenuBar.vue'
             <span
               class="absolute bottom-0 left-0 w-full h-0.5 bg-white rounded-full origin-left transition-all duration-300 ease-out"
               :class="[
-                $route.path === '/listings' ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100',
+                $route.path === '/profile/listings' ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100',
               ]"
             />
           </RouterLink>
