@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProviderProfile extends Model
 {
@@ -20,7 +21,7 @@ class ProviderProfile extends Model
         'updated_at',
     ];
 
-    public function links()
+    public function links(): HasMany
     {
         return $this->hasMany(ProviderLink::class)->orderBy('order');
     }
@@ -40,4 +41,10 @@ class ProviderProfile extends Model
             'skill_id'
         )->withTimestamps();
     }
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class, 'provider_id');
+    }
+
 }

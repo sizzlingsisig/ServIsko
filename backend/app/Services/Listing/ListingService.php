@@ -39,18 +39,7 @@ class ListingService
             unset($filters['minRating']);
         }
 
-        // Filtering expired/active listings (for future extensions)
-        if (isset($filters['expired'])) {
-            if ($filters['expired']) {
-                $query->whereNotNull('expires_at')->where('expires_at', '<=', now());
-            } else {
-                $query->where(function($q) {
-                    $q->whereNull('expires_at')
-                      ->orWhere('expires_at', '>', now());
-                });
-            }
-            unset($filters['expired']);
-        }
+
 
         return $this->applyFilters($query, $filters);
     }
