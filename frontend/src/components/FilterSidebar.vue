@@ -79,7 +79,7 @@ const clearRatingFilter = () => {
 </script>
 
 <template>
-  <div class="bg-white rounded-lg shadow p-6 sticky top-24">
+  <div class="bg-white rounded-lg shadow p-4 md:p-6 sticky top-24 w-full">
     <div class="flex items-center justify-between mb-6">
       <h3 class="text-xl font-bold text-gray-800">Filter Services</h3>
     </div>

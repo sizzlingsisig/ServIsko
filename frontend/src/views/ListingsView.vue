@@ -259,7 +259,7 @@ onBeforeUnmount(() => {
     <section class="bg-primary-500 text-white px-4 py-8">
       <div class="max-w-7xl mx-auto">
         <h2 class="text-3xl font-bold mb-6">Find Services</h2>
-        <div class="flex gap-4">
+        <div class="flex flex-col gap-4 md:flex-row">
           <IconField iconPosition="left" class="flex-1">
             <InputIcon class="pi pi-search" />
             <InputText
@@ -274,23 +274,24 @@ onBeforeUnmount(() => {
             icon="pi pi-search"
             severity="primary"
             @click="handleSearch(filters.search)"
+            class="w-full md:w-auto"
           />
         </div>
       </div>
     </section>
 
     <!-- Main Content Area -->
-    <div class="max-w-7xl mx-auto px-4 py-8">
-      <div class="flex gap-6">
+    <div class="max-w-7xl mx-auto px-2 py-4 md:px-4 md:py-8">
+      <div class="flex flex-col gap-6 md:flex-row">
         <!-- Left Sidebar - Filters -->
-        <div class="w-75 flex-shrink-0">
+        <div class="w-full md:w-72 flex-shrink-0 mb-6 md:mb-0">
           <FilterSidebar :filters="filters" :categories="categories" @update="handleFilterChange" />
         </div>
 
         <!-- Right Content Area -->
         <div class="flex-1">
           <!-- View Controls and Pagination Info -->
-          <div class="flex items-center justify-between mb-6">
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
             <div class="text-gray-600">
               Showing
               {{ totalRecords === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1 }}
@@ -298,7 +299,7 @@ onBeforeUnmount(() => {
               {{ Math.min(currentPage * itemsPerPage, totalRecords) }}
               of {{ totalRecords }} services
             </div>
-            <div class="flex items-center gap-4">
+            <div class="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
               <div class="flex items-center gap-2">
                 <label class="text-sm text-gray-600">Sort by:</label>
                 <select
@@ -339,7 +340,7 @@ onBeforeUnmount(() => {
               </div>
               <Button
                 v-if="authStore.isAuthenticated"
-                class="bg-[#10b981] hover:bg-[#0ea77a] text-white"
+                class="bg-[#10b981] hover:bg-[#0ea77a] text-white w-full md:w-auto"
                 icon="pi pi-plus"
                 label="Add Listing"
                 @click="openAddModal"
@@ -364,7 +365,7 @@ onBeforeUnmount(() => {
           </div>
           <div
             v-else-if="layout === 'grid'"
-            class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             <ListingCard
               v-for="service in listings"
@@ -383,14 +384,14 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- Pagination -->
-          <div class="mt-8 flex justify-center">
+          <div class="mt-8 flex justify-center w-full">
             <Paginator
               :rows="itemsPerPage"
               :total-records="totalRecords"
               :first="(currentPage - 1) * itemsPerPage"
               :rows-per-page-options="[12, 24, 36]"
               @page="handlePageChange"
-              class="flex justify-center"
+              class="flex justify-center w-full"
             ></Paginator>
           </div>
         </div>

@@ -20,6 +20,7 @@ class SeekerService
             'name' => $user->name,
             'email' => $user->email,
             'username' => $user->username,
+            'roles' => $user->getRoleNames(), // Spatie roles
             'profile' => $user->profile ? $user->profile->only(['bio', 'location', 'phone']) : null,
             'has_profile_picture' => Storage::exists("profile_pictures/{$user->id}"),
         ];
