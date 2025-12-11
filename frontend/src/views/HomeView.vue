@@ -68,8 +68,8 @@ onMounted(() => {
       </h1>
 
       <p class="text-[#f3e9e9] text-lg leading-relaxed max-w-[600px] mb-8">
-        ServIsko connects Miagao's students and locals, making it easy to find, offer, and review
-        trusted services in one convenient platform.
+        ServIsko connects UPV's students, making it easy to find, offer, and review trusted services
+        in one convenient platform.
       </p>
 
       <div class="flex gap-4">
@@ -109,7 +109,7 @@ onMounted(() => {
         Search & Browse Services
       </h2>
       <p class="text-[#555] mb-6 text-center">
-        Lorem ipsum dolor sit amet, consectetur adipiscing elitiiiii
+        Find the right service for your capabilities or needs from our diverse categories
       </p>
 
       <div class="rounded-2xl">
@@ -129,7 +129,8 @@ onMounted(() => {
     <div class="max-w-[700px] mx-auto mb-8 md:mb-12 text-center">
       <h2 class="text-2xl md:text-3xl font-bold mb-2 text-[#2a2a2a]">Why Choose ServIsko?</h2>
       <p class="text-sm md:text-base text-[#555]">
-        Connecting students and locals for trusted services.
+        Find trusted student-run and local services quickly — search, compare, and hire with
+        confidence.
       </p>
     </div>
     <div class="why-cards pb-8 md:pb-0">
@@ -145,9 +146,10 @@ onMounted(() => {
           >
             <i class="pi pi-wifi !text-2xl"></i>
           </div>
-          <span class="text-xl md:text-2xl font-bold">Bandwidth</span>
+          <span class="text-xl md:text-2xl font-bold">Trusted Service Providers</span>
           <span class="text-center text-sm md:text-base"
-            >Lorem ipsum dolor sit amet consectetur adipisicing elit.</span
+            >Verified students offering reliable services with ratings and reviews to help you
+            choose confidently.</span
           >
         </div>
         <div
@@ -161,9 +163,10 @@ onMounted(() => {
           >
             <i class="pi pi-database !text-2xl"></i>
           </div>
-          <span class="text-xl md:text-2xl font-bold">Storage</span>
+          <span class="text-xl md:text-2xl font-bold">Transparent Pricing</span>
           <span class="text-center text-sm md:text-base"
-            >Lorem ipsum dolor sit amet consectetur adipisicing elit.</span
+            >Clear service listings and upfront prices— compare offers and pick the best fit for
+            your budget.</span
           >
         </div>
         <div
@@ -177,9 +180,10 @@ onMounted(() => {
           >
             <i class="pi pi-arrows-v !text-2xl"></i>
           </div>
-          <span class="text-xl md:text-2xl font-bold">Requests</span>
+          <span class="text-xl md:text-2xl font-bold">Easy Booking & Communication</span>
           <span class="text-center text-sm md:text-base"
-            >Lorem ipsum dolor sit amet consectetur adipisicing elit.</span
+            >Message providers directly, schedule jobs, and manage requests all in one place for a
+            smooth booking experience.</span
           >
         </div>
       </div>
@@ -302,12 +306,12 @@ onMounted(() => {
   <section class="w-full py-16">
     <div class="max-w-7xl mx-auto px-4 md:px-8">
       <div class="text-center mb-12">
-        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Featured Services</h2>
-        <p class="text-gray-600 text-lg">Discover trending services from our community</p>
+        <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Featured Listings</h2>
+        <p class="text-gray-600 text-lg">Discover trending listings from our community</p>
       </div>
 
       <div v-if="loading" class="flex justify-center items-center h-96">
-        <div class="text-gray-500">Loading services...</div>
+        <div class="text-gray-500">Loading listings...</div>
       </div>
 
       <div v-else-if="featuredServices.length > 0" class="services-carousel">
@@ -328,7 +332,7 @@ onMounted(() => {
       </div>
 
       <div v-else class="text-center py-12">
-        <p class="text-gray-500 text-lg">No services available at the moment</p>
+        <p class="text-gray-500 text-lg">No listings available at the moment</p>
       </div>
     </div>
   </section>
