@@ -99,13 +99,13 @@ const viewDetails = (evt) => {
   <!-- List Card -->
   <div
     v-else
-    class="bg-white rounded-lg border border-gray-300 hover:border-primary-500 shadow-sm hover:shadow-md cursor-pointer flex h-[180px] min-h-[180px]"
+    class="bg-white rounded-lg border border-gray-300 hover:border-primary-500 shadow-sm hover:shadow-md cursor-pointer flex h-[200px] min-h-[200px] sm:h-[200px] sm:min-h-[200px] flex-col sm:flex-row w-full"
     @click="viewDetails"
   >
-    <div class="flex-1 flex flex-col justify-between p-5">
+    <div class="flex-1 flex flex-col justify-between p-4 sm:p-5">
       <div>
-        <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-1 leading-snug" tabindex="0">{{ title }}</h3>
-        <div class="flex gap-2 text-xs text-gray-500 mb-1">
+        <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-1 line-clamp-1 leading-snug break-words max-w-full" tabindex="0">{{ title }}</h3>
+        <div class="flex flex-wrap gap-1 sm:gap-2 text-xs text-gray-500 mb-1">
           <span>Created: <strong>{{ createdAt }}</strong></span>
           <span v-if="expiresAt">
             <span>&bull; Expires: <strong>{{ expiresAt }}</strong></span>
@@ -115,13 +115,13 @@ const viewDetails = (evt) => {
           </span>
           <span v-if="isExpired" class="text-[#b91c1c] font-bold ml-2"><i class="pi pi-clock"></i> Expired</span>
         </div>
-        <p class="text-gray-600 mb-2 line-clamp-2" tabindex="0">{{ description }}</p>
+        <p class="text-gray-600 mb-2 line-clamp-2 break-words whitespace-normal w-full max-w-full h-[2.8em] overflow-hidden text-xs sm:text-sm" style="word-break: break-all;" tabindex="0">{{ description }}</p>
       </div>
       <div>
-        <div class="flex justify-between items-center mb-2">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2">
           <div class="flex items-center gap-3">
             <div class="w-7 h-7 rounded-full bg-gray-800 text-white flex items-center justify-center text-sm font-bold" :aria-label="`Provider: ${seeker}`">{{ seeker.charAt(0).toUpperCase() }}</div>
-            <span class="text-sm text-gray-700 max-w-[140px] truncate" tabindex="0">{{ seeker }}</span>
+            <span class="text-xs sm:text-sm text-gray-700 max-w-[140px] truncate break-words" tabindex="0">{{ seeker }}</span>
           </div>
           <div class="flex items-center gap-2 text-sm" aria-label="Rating">
             <i class="pi pi-star-fill text-yellow-400"></i>
@@ -131,18 +131,18 @@ const viewDetails = (evt) => {
         </div>
         <div class="flex flex-wrap gap-0.5 mt-1">
           <span class="bg-gray-100 border border-gray-200 text-gray-500 text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap">{{ category }}</span>
-          <span v-for="tag in visibleTags" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded">
+          <span v-for="tag in visibleTags" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-100 text-gray-500 text-[10px] px-1.5 py-0.5 rounded truncate max-w-[60px] sm:max-w-[80px] break-words">
             {{ tag.name ?? tag }}
           </span>
-          <span v-if="moreTagsCount > 0" class="bg-gray-50 border border-gray-100 text-gray-400 text-[10px] px-1.5 py-0.5 rounded">+{{ moreTagsCount }} more</span>
+          <span v-if="moreTagsCount > 0" class="bg-gray-50 border border-gray-100 text-gray-400 text-[10px] px-1.5 py-0.5 rounded truncate max-w-[40px] sm:max-w-[60px]">+{{ moreTagsCount }} more</span>
         </div>
       </div>
     </div>
-    <div class="w-[180px] flex flex-col h-full border-l border-gray-200">
-      <div class="bg-primary-500 text-white px-6 py-3 flex items-center justify-center text-lg font-bold select-none min-h-[64px]" style="flex: 0 0 auto">{{ budget }}</div>
+    <div class="w-full sm:w-[180px] flex flex-col h-auto sm:h-full border-t sm:border-t-0 sm:border-l border-gray-200">
+      <div class="bg-primary-500 text-white px-6 py-3 flex items-center justify-center text-base sm:text-lg font-bold select-none min-h-[48px] sm:min-h-[64px]" style="flex: 0 0 auto">{{ budget }}</div>
       <div class="flex-1 flex items-end">
-        <div class="w-full p-5">
-          <button @click.stop="viewDetails" class="w-full flex items-center justify-center gap-2 border border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white rounded-md px-3 py-2 text-sm font-semibold transition-colors" tabindex="0" aria-label="View Details">
+        <div class="w-full p-4 sm:p-5">
+          <button @click.stop="viewDetails" class="w-full flex items-center justify-center gap-2 border border-primary-500 text-primary-500 hover:bg-primary-500 hover:text-white rounded-md px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold transition-colors" tabindex="0" aria-label="View Details">
             <i class="pi pi-info-circle"></i> View Details
           </button>
         </div>
