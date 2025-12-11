@@ -18,10 +18,23 @@ class PublicProviderController extends Controller
             'providerProfile.links',
             'providerProfile.skills',
             'profile',
-            'services',
+            'services.category',
+            'services.tags',
         ])
-        ->role('service-provider')
-        ->whereHas('providerProfile');
+        ->role('service-provider');
+
+        // Exclude user by query param (for public route)
+        if ($request->filled('exclude_user_id')) {
+            $excludeId = $request->input('exclude_user_id');
+            $query->where('id', '!=', $excludeId);
+        }
+        // Optionally exclude by provider_profile_id
+        if ($request->filled('exclude_provider_profile_id')) {
+            $excludeProfileId = $request->input('exclude_provider_profile_id');
+            $query->whereHas('providerProfile', function($q) use ($excludeProfileId) {
+                $q->where('id', '!=', $excludeProfileId);
+            });
+        }
 
         // --- FILTERS ---
 
@@ -113,7 +126,8 @@ class PublicProviderController extends Controller
                 'providerProfile.links',
                 'providerProfile.skills',
                 'profile',
-                'services',
+                'services.category',
+                'services.tags',
             ])
             ->role('service-provider')
             ->whereHas('providerProfile')

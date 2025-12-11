@@ -31,6 +31,7 @@ class RegisterRequest extends FormRequest
                 Rule::unique('users', 'username'),
             ],
             'password' => 'required|string|min:8|confirmed',
+            'role' => 'required|string|in:service-provider,service-seeker',
         ];
     }
 
@@ -49,6 +50,8 @@ class RegisterRequest extends FormRequest
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 8 characters.',
             'password.confirmed' => 'Passwords do not match.',
+            'role.required' => 'Role is required.',
+            'role.in' => 'Role must be either service-provider or service-seeker.',
         ];
     }
 }

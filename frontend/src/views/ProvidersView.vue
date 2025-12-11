@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, watch } from 'vue'
 import InputText from 'primevue/inputtext'
 import Paginator from 'primevue/paginator'
 import IconField from 'primevue/iconfield'
@@ -8,6 +8,7 @@ import FilterSidebar from '@/components/FilterSidebar.vue'
 import ProviderCard from '@/components/ProviderCard.vue'
 import { useToastStore } from '@/stores/toastStore'
 import api from '@/composables/axios'
+import { useAuthStore } from '@/stores/AuthStore'
 
 const toastStore = useToastStore()
 const layout = ref('grid')
@@ -15,6 +16,7 @@ const loading = ref(false)
 const totalRecords = ref(0)
 const currentPage = ref(1)
 const itemsPerPage = ref(12)
+
 
 const filters = reactive({
   search: '',
@@ -28,6 +30,39 @@ const filters = reactive({
 
 const providers = ref([])
 const paginatedProviders = computed(() => providers.value)
+
+const profile = reactive({ roles: [] })
+
+// Watch for changes to profile.value and log them
+watch(profile, (newVal) => {
+  console.log('profile.value changed:', newVal)
+}, { deep: true })
+
+const loadProfile = async () => {
+  try {
+    const response = await api.get('/provider/profile')
+    console.log('Full profile response:', response.data)
+    if (response.data.success) {
+      // Defensive: roles should be top-level, not inside data
+      const roles = Array.isArray(response.data.roles) ? response.data.roles : [];
+      // Assign all top-level properties
+      Object.keys(response.data).forEach(key => {
+        profile[key] = response.data[key];
+      });
+      profile.roles = roles;
+      // Also assign user for easy access
+      if (response.data.data && response.data.data.user) {
+        profile.user = response.data.data.user;
+      }
+      console.log('Profile roles:', roles)
+      return response.data
+    }
+  } catch (error) {
+    console.error('Failed to load profile:', error)
+  }
+  profile.value = { roles: [] }
+  return null
+}
 
 const loadProviders = async () => {
   try {
@@ -55,11 +90,12 @@ const loadProviders = async () => {
       }
     })
     const response = await api.get('/providers', { params })
-    // Use snake_case field access as returned by the API
     if (response.data.success && response.data.data) {
       const paginatedData = response.data.data
       providers.value = paginatedData.data || []
       totalRecords.value = paginatedData.total || 0
+
+      console.log(providers.value)
     } else {
       providers.value = []
       totalRecords.value = 0
@@ -99,6 +135,7 @@ const handleSortChange = (sortBy) => {
 
 onMounted(() => {
   loadProviders()
+  loadProfile()
 })
 </script>
 
@@ -151,7 +188,7 @@ onMounted(() => {
                   <option value="name">Name</option>
                 </select>
               </div>
-              <div class="flex gap-1">
+              <div class="flex gap-1 items-center">
                 <button
                   @click="layout = 'grid'"
                   :class="[
@@ -173,6 +210,16 @@ onMounted(() => {
                   ]"
                 >
                   <i class="pi pi-list"></i>
+                </button>
+                <button
+                  v-if="profile.roles && profile.roles.includes('service-provider') && profile.user && profile.user.id"
+                  @click="$router.push(`/providers/${profile.user.id}`)"
+                  class="font-semibold text-black hover:text-gray-700 decoration-0 flex items-center gap-2 w-full md:w-auto px-4 py-2 rounded transition"
+                  style="text-decoration:none;"
+                  aria-label="Go to My Profile"
+                >
+                  <i class="pi pi-user"></i>
+                  My Profile
                 </button>
               </div>
             </div>

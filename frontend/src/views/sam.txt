@@ -16,11 +16,15 @@ async function fetchListing() {
   loading.value = true
   error.value = null
   try {
-    const endpoint = `/listings/${route.params.id}`
+    const id = route.params.id
+    const endpoint = authStore.isAuthenticated
+      ? `/seeker/listings/${id}`
+      : `/listings/${id}`
     const response = await api.get(endpoint)
 
     if (response.data.success) {
       listing.value = response.data.data
+      roles.value = listing.value.user_current_role || []
       console.log('Fetched listing:', listing.value)
     } else {
       throw new Error(response.data.message || 'Failed to fetch listing')
@@ -33,25 +37,7 @@ async function fetchListing() {
   }
 }
 
-async function fetchProfile(){
-  try {
-    const response = await api.get('/provider/profile')
-    if (response.data.success) {
-      const profileData = response.data
-      roles.value = Array.isArray(profileData.roles) ? profileData.roles : []
-      console.log('Fetched profile roles:', roles.value)
-    }
-  } catch (e) {
-    console.error('Profile fetch error:', e)
-  }
-}
-
-onMounted(() => {
-  fetchListing()
-  if (authStore.isAuthenticated) {
-    fetchProfile()
-  }
-})
+onMounted(fetchListing)
 </script>
 
 <template>

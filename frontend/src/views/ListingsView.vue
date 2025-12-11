@@ -1,4 +1,7 @@
 <script setup>
+function handleSortChange(value) {
+  filters.sort_by = value
+}
 function handlePageChange(event) {
   currentPage.value = Math.floor(event.first / event.rows) + 1
   itemsPerPage.value = event.rows
@@ -46,6 +49,10 @@ const loading = ref(false)
 const totalRecords = ref(0)
 const currentPage = ref(1)
 const itemsPerPage = ref(DEFAULTS.ITEMS_PER_PAGE)
+
+function handleFilterChange(updated) {
+  Object.assign(filters, updated)
+}
 
 
 // UI state
@@ -120,13 +127,12 @@ const loadCategories = async () => {
  */
 const loadTags = async () => {
   try {
-    const res = await api.get('/admin/tags')
+    const res = await api.get('/services/tags')
     const data = res.data
     const rawTags = data.data ?? data
     tags.value = rawTags.map(t => typeof t === 'string' ? t : t.name)
   } catch (err) {
     console.error('Failed to load tags:', err)
-    warning('Failed to load tags, you can still add custom tags')
     tags.value = []
   }
 }
@@ -304,7 +310,7 @@ onBeforeUnmount(() => {
                 <label class="text-sm text-gray-600">Sort by:</label>
                 <select
                   :value="filters.sort_by"
-                  @change="handleSortChange($event. target.value)"
+                  @change="handleSortChange($event.target.value)"
                   class="px-3 py-2 border border-gray-300 rounded-lg text-sm"
                 >
                   <option value="newest">Newest</option>
@@ -345,6 +351,16 @@ onBeforeUnmount(() => {
                 label="Add Listing"
                 @click="openAddModal"
               />
+              <a
+                v-if="authStore.isAuthenticated"
+                href="javascript:void(0)"
+                @click="$router.push('/profile/listings')"
+                class="font-semibold text-black hover:text-gray-700 decoration-0 flex items-center gap-2 w-full md:w-auto px-4 py-2 rounded transition"
+                style="text-decoration:none;"
+              >
+                <i class="pi pi-list"></i>
+                My Listings
+              </a>
               <span
                 v-else
                 class="text-gray-400 text-sm font-semibold select-none flex items-center gap-2"
