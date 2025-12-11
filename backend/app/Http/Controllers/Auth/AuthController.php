@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\Admin\RoleService;
 use App\Services\Auth\AuthService;
 use App\Services\Seeker\SeekerService;
 use Illuminate\Support\Facades\RateLimiter;
@@ -18,7 +19,8 @@ class AuthController extends Controller
 {
     public function __construct(
         private AuthService $authService,
-        private SeekerService $seekerService
+        private SeekerService $seekerService,
+        private RoleService $roleService
     ) {}
 
     /**
@@ -28,15 +30,17 @@ class AuthController extends Controller
     {
         try {
             $result = DB::transaction(function () use ($request) {
-                // Register user
+                // Register user (roles assigned in AuthService)
                 $result = $this->authService->register($request->validated());
-
                 // Create seeker profile
                 $this->seekerService->createProfile($result['user']);
-
-                // Assign seeker role
-                $result['user']->assignRole('service-seeker');
-
+                // Create provider profile and assign provider role if needed
+                $role = $request->validated()['role'] ?? null;
+                if ($role == 'service-provider') {
+                    $this->seekerService->createProviderProfile($result['user']);
+                    $this->roleService->assignServiceProvider($result['user']);
+                }
+                // Do not assign service-seeker role here; AuthService already handles it
                 return $result;
             });
 
@@ -53,7 +57,7 @@ class AuthController extends Controller
                     'username' => $result['user']->username,
                     'name' => $result['user']->name,
                     'email' => $result['user']->email,
-                    'role' => 'service-seeker',
+                    'roles' => $result['user']->fresh()->getRoleNames(),
                 ],
                 'token' => $result['token'],
             ], 201);

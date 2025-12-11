@@ -77,8 +77,8 @@ const goToDetails = () => {
         </span>
       </div>
 
-      <!-- Bio -->
-      <div v-if="bio" class="mb-3 text-gray-700 text-sm">{{ bio }}</div>
+      <!-- Bio (clamped to 3 lines) -->
+      <div v-if="bio" class="mb-3 text-gray-700 text-sm clamp-3">{{ bio }}</div>
 
       <!-- Links -->
       <div v-if="links.length" class="mb-3 flex flex-wrap items-center gap-2">
@@ -103,6 +103,16 @@ const goToDetails = () => {
 </template>
 
 <style scoped>
+ .clamp-3 {
+   display: -webkit-box;
+   -webkit-line-clamp: 3;
+   line-clamp: 3;
+   -webkit-box-orient: vertical;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   word-break: break-word;
+   white-space: normal;
+ }
 .bg-primary-500 {
   background: #6d0019;
 }

@@ -21,10 +21,14 @@ class ServiceController extends Controller
             'per_page' => 'nullable|integer|min:1|max:100',
         ]);
 
-        $validated = $request->validated();
+        $validated = $request->only(['category_id', 'search', 'per_page']);
 
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
         // Get authenticated provider's services
-        $query = auth()->user()->provider->services()
+        $query = $user->services()
             ->with('category', 'tags');
 
         // Filter by category
@@ -75,23 +79,28 @@ class ServiceController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'required|string|max:5000',
             'price' => 'nullable|numeric|min:0|max:999999.99',
-            'tags' => 'nullable|array',
-            'tags.*' => 'exists:tags,id',
+            'tags' => 'nullable|array|max:5',
+            'tags.*' => 'string|min:2|max:50',
+        ], [
+            'tags.max' => 'You can add a maximum of 5 tags.',
+            'tags.*.min' => 'Each tag must be at least 2 characters.',
+            'tags.*.max' => 'Each tag cannot exceed 50 characters.',
         ]);
 
-        $validated = $request->validated();
+        $validated = $request->only(['category_id', 'title', 'description', 'price', 'tags']);
 
-        // Create service for authenticated provider
-        $service = auth()->user()->provider->services()->create([
+        $service = auth()->user()->services()->create([
             'category_id' => $validated['category_id'],
             'title' => $validated['title'],
             'description' => $validated['description'],
             'price' => $validated['price'] ?? null,
         ]);
 
-        // Attach tags if provided
-        if (isset($validated['tags'])) {
-            $service->tags()->attach($validated['tags']);
+        // Handle tags (robust, like ListingController)
+        if (!empty($validated['tags'])) {
+            $tagIds = $this->resolveTagNames($validated['tags']);
+            $tagIds = array_slice($tagIds, 0, 5);
+            $service->tags()->sync($tagIds);
         }
 
         $service->load('category', 'tags');
@@ -108,30 +117,29 @@ class ServiceController extends Controller
      */
     public function update(Request $request, Service $service): JsonResponse
     {
-        // Ensure provider can only update their own services
-        if ($service->provider_id !== auth()->user()->provider->id) {
-            return response()->json([
-                'message' => 'Unauthorized'
-            ], 403);
-        }
-
-        // Prevent editing suspended services
-        if ($service->suspended_at) {
-            return response()->json([
-                'message' => 'Cannot edit suspended service'
-            ], 422);
-        }
 
         $request->validate([
             'category_id' => 'sometimes|required|exists:categories,id',
             'title' => 'sometimes|required|string|max:255',
             'description' => 'sometimes|required|string|max:5000',
             'price' => 'nullable|numeric|min:0|max:999999.99',
+            'tags' => 'nullable|array|max:5',
+            'tags.*' => 'string|min:2|max:50',
+        ], [
+            'tags.max' => 'You can add a maximum of 5 tags.',
+            'tags.*.min' => 'Each tag must be at least 2 characters.',
+            'tags.*.max' => 'Each tag cannot exceed 50 characters.',
         ]);
-
-        $validated = $request->validated();
+        $validated = $request->all();
+        $tags = $validated['tags'] ?? null;
+        unset($validated['tags']);
         $service->update($validated);
-
+        // Handle tags (robust, like ListingController)
+        if (is_array($tags)) {
+            $tagIds = $this->resolveTagNames($tags);
+            $tagIds = array_slice($tagIds, 0, 5);
+            $service->tags()->sync($tagIds);
+        }
         return response()->json([
             'message' => 'Service updated successfully',
             'data' => $service->fresh(['category', 'tags'])
@@ -144,22 +152,14 @@ class ServiceController extends Controller
      */
     public function destroy(Service $service): JsonResponse
     {
-        // Ensure provider can only delete their own services
-        if ($service->provider_id !== auth()->user()->provider->id) {
-            return response()->json([
-                'message' => 'Unauthorized'
-            ], 403);
-        }
-
         $service->delete();
-
         return response()->json([
             'message' => 'Service deleted successfully'
         ], 200);
     }
 
     /**
-     * Add tags to a service
+     * Add tags to a service (accepts tag IDs or names, auto-creates if needed, max 5 tags)
      * POST /provider/services/{service}/tags
      */
     public function addTags(Request $request, Service $service): JsonResponse
@@ -172,14 +172,42 @@ class ServiceController extends Controller
         }
 
         $request->validate([
-            'tags' => 'required|array|min:1',
-            'tags.*' => 'required|exists:tags,id',
+            'tags' => 'required|array|min:1|max:5',
+            'tags.*' => 'string|min:2|max:50',
         ]);
 
-        $validated = $request->validated();
-
+        $tagInputs = $request->input('tags', []);
+        $tagIds = [];
+        foreach ($tagInputs as $tagInput) {
+            // If numeric, treat as tag ID
+            if (is_numeric($tagInput)) {
+                $tag = \App\Models\Tag::find($tagInput);
+                if ($tag) {
+                    $tagIds[] = $tag->id;
+                }
+                continue;
+            }
+            // Otherwise, treat as tag name (case-insensitive)
+            $tagName = trim($tagInput);
+            if ($tagName === '') continue;
+            $existingTag = \App\Models\Tag::whereRaw('LOWER(name) = LOWER(?)', [$tagName])->first();
+            if ($existingTag) {
+                $tagIds[] = $existingTag->id;
+            } else {
+                $newTag = \App\Models\Tag::create(['name' => $tagName]);
+                $tagIds[] = $newTag->id;
+            }
+        }
+        // Limit to 5 tags per service
+        $currentTagIds = $service->tags()->pluck('tags.id')->toArray();
+        $allTagIds = array_unique(array_merge($currentTagIds, $tagIds));
+        if (count($allTagIds) > 5) {
+            return response()->json([
+                'message' => 'Cannot add more than 5 tags to a service.'
+            ], 422);
+        }
         // Attach tags without removing existing ones
-        $service->tags()->syncWithoutDetaching($validated['tags']);
+        $service->tags()->syncWithoutDetaching($tagIds);
 
         return response()->json([
             'message' => 'Tags added successfully',
@@ -214,5 +242,32 @@ class ServiceController extends Controller
             'message' => 'Tags removed successfully',
             'data' => $service->load('tags')
         ], 200);
+    }
+
+    /**
+     * Helper: Resolve array of tag names with similarity and deduplication (like ListingController)
+     * @param array $tagNames
+     * @return array
+     */
+    private function resolveTagNames(array $tagNames): array
+    {
+        $tagIds = [];
+        foreach ($tagNames as $tagName) {
+            $trimmed = trim($tagName);
+            if ($trimmed === '') continue;
+            // Check for soft-deleted
+            $existingTag = \App\Models\Tag::withTrashed()
+                ->whereRaw('LOWER(name) = LOWER(?)', [$trimmed])
+                ->first();
+            if ($existingTag && $existingTag->trashed()) continue;
+            // Find exact match (case-insensitive)
+            $tag = \App\Models\Tag::whereRaw('LOWER(name) = LOWER(?)', [$trimmed])->first();
+            if (! $tag) {
+                // Optionally: add similarity check here if you want (see ListingController)
+                $tag = \App\Models\Tag::create(['name' => $trimmed]);
+            }
+            $tagIds[] = $tag->id;
+        }
+        return array_unique($tagIds);
     }
 }

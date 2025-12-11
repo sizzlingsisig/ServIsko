@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive, watch } from 'vue'
+import InputText from 'primevue/inputtext'
 import Slider from 'primevue/slider'
 
 const props = defineProps({
@@ -32,6 +33,21 @@ const sortOptions = [
 ]
 
 const budgetRange = ref([localFilters.minBudget, localFilters.maxBudget])
+
+function handleMinBudgetInput(e) {
+  let val = Number(e.target.value)
+  if (isNaN(val)) val = 0
+  localFilters.minBudget = val
+  budgetRange.value[0] = val
+  emitUpdate()
+}
+function handleMaxBudgetInput(e) {
+  let val = Number(e.target.value)
+  if (isNaN(val)) val = 10000
+  localFilters.maxBudget = val
+  budgetRange.value[1] = val
+  emitUpdate()
+}
 const ratingOptions = [
   { label: '5 Stars', value: 5 },
   { label: '4 Stars', value: 4 },
@@ -120,14 +136,28 @@ const clearRatingFilter = () => {
     <div>
       <Slider v-model="budgetRange" :min="0" :max="10000" :step="100" range class="mb-4"/>
       <div class="flex items-center justify-between text-sm mb-5">
-        <div>
-          <p class="text-gray-600">Min</p>
-          <p class="text-xl font-bold text-[#6d0019]">₱{{ localFilters.minBudget }}</p>
+        <div class="flex flex-col items-start">
+          <p class="text-gray-600 mb-1">Min</p>
+          <InputText
+            :value="localFilters.minBudget"
+            type="number"
+            min="0"
+            max="10000"
+            class="w-24 text-xl font-bold text-[#6d0019]"
+            @input="handleMinBudgetInput"
+          />
         </div>
         <div class="text-gray-400">to</div>
-        <div>
-          <p class="text-gray-600">Max</p>
-          <p class="text-xl font-bold text-[#6d0019]">₱{{ localFilters.maxBudget }}</p>
+        <div class="flex flex-col items-end">
+          <p class="text-gray-600 mb-1">Max</p>
+          <InputText
+            :value="localFilters.maxBudget"
+            type="number"
+            min="0"
+            max="10000"
+            class="w-24 text-xl font-bold text-[#6d0019]"
+            @input="handleMaxBudgetInput"
+          />
         </div>
       </div>
     </div>

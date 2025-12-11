@@ -67,6 +67,14 @@ class SeekerService
     }
 
     /**
+     * Create provider profile with data
+     */
+    public function createProviderProfile(User $user, array $data = []): void
+    {
+            $user->providerProfile()->create();
+    }
+
+    /**
      * Upload profile picture
      */
         public function uploadProfilePicture(User $user, $file): array
