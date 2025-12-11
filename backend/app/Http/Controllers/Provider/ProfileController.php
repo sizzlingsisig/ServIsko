@@ -22,10 +22,13 @@ class ProfileController extends Controller
         try {
             $user = auth()->user();
             $data = $this->profileService->getProfileWithSkills($user);
+            // Add roles to response
+            $roles = method_exists($user, 'roles') ? $user->roles->pluck('name')->toArray() : [];
 
             return response()->json([
                 'success' => true,
                 'data' => $data,
+                'roles' => $roles,
             ], 200);
 
         } catch (Exception $e) {

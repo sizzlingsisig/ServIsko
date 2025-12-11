@@ -98,13 +98,20 @@ class ListingController extends Controller
 
             $listing = Listing::with(['seeker', 'category', 'tags', 'hiredUser', 'applications'])->findOrFail($id);
 
+            $listingData = $listing->toArray();
+            if ($listing->seeker) {
+                $listingData['owner_name'] = $listing->seeker->name;
+                $listingData['owner_roles'] = $listing->seeker->getRoleNames();
+            } else {
+                $listingData['owner_name'] = null;
+                $listingData['owner_roles'] = [];
+            }
             // Add expiry status to response
-            $data = $listing->toArray();
-            $data['is_expired'] = $listing->isExpired();
+            $listingData['is_expired'] = $listing->isExpired();
 
             return response()->json([
                 'success' => true,
-                'data' => $data,
+                'data' => $listingData,
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(

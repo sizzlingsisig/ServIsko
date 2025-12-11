@@ -58,9 +58,7 @@ class RoleService
         // Create provider profile if it doesn't exist
         if (!$user->providerProfile) {
             $user->providerProfile()->create([
-                'bio' => null,
-                'hourly_rate' => null,
-                'availability' => 'available',
+
             ]);
         }
 

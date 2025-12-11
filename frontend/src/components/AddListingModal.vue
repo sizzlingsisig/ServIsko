@@ -156,32 +156,46 @@ function removeTag(tag) {
   }
 }
 
+const submitting = ref(false)
 async function submitListing() {
+  if (submitting.value) return
+  submitting.value = true
   // Final validation
   if (!createListingForm.title || createListingForm.title.trim() === '') {
     warning('Please enter a title for your listing')
+    submitting.value = false
     return
   }
   if (createListingForm.title.length > 255) {
     warning('Title must be 255 characters or less')
+    submitting.value = false
+    return
+  }
+  if (createListingForm.description && createListingForm.description.length > 500) {
+    warning('Description must be 500 characters or less')
+    submitting.value = false
     return
   }
   if (createListingForm.tags.length === 0) {
     warning('Please add at least one tag')
+    submitting.value = false
     return
   }
   if (createListingForm.tags.length > 5) {
     warning('Maximum 5 tags allowed', 'Tag Limit')
+    submitting.value = false
     return
   }
   if (hasExpiry.value && !expiryDate.value) {
     warning('Please select an expiry date')
+    submitting.value = false
     return
   }
   if (createListingForm.budget !== null && createListingForm.budget !== undefined && createListingForm.budget !== '') {
     const budgetVal = Number(createListingForm.budget)
     if (isNaN(budgetVal) || budgetVal < 0) {
       warning('Budget must be a valid positive number')
+      submitting.value = false
       return
     }
     createListingForm.budget = budgetVal
@@ -202,6 +216,7 @@ async function submitListing() {
       createListingForm.expires_at = `${year}-${month}-${day} ${hours}:${minutes}:00`
     } catch (e) {
       error('Invalid expiry date')
+      submitting.value = false
       return
     }
   } else {
@@ -211,9 +226,13 @@ async function submitListing() {
     createListingForm.category_id = createListingForm.category_id.id
   }
   info('Creating listing...')
-  emit('created', { ...createListingForm })
-  visible.value = false
-  resetForm()
+  try {
+    await emit('created', { ...createListingForm })
+    visible.value = false
+    resetForm()
+  } finally {
+    submitting.value = false
+  }
 }
 </script>
 
@@ -251,9 +270,11 @@ async function submitListing() {
             <textarea
               v-model="createListingForm.description"
               rows="6"
+              maxlength="500"
               class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="Describe your project requirements, deliverables, timeline, etc..."
             ></textarea>
+            <div class="text-xs text-gray-500 mt-1">{{ createListingForm.description.length }}/500 characters</div>
           </div>
         </div>
 
@@ -375,10 +396,11 @@ async function submitListing() {
         <button
           type="button"
           class="px-6 py-2 rounded-lg font-semibold text-white bg-primary-500 hover:bg-[#6d0019] transition flex items-center gap-2"
+          :disabled="submitting && activeStep === 3"
           @click="activeStep === 3 ? submitListing() : goNext()"
         >
-          <i :class="activeStep === 3 ? 'pi pi-check' : 'pi pi-arrow-right'"></i>
-          <span>{{ activeStep === 3 ? 'Create Listing' : 'Next' }}</span>
+          <i :class="activeStep === 3 ? 'pi pi-check' : 'pi pi-arrow-right'" ></i>
+          <span>{{ activeStep === 3 ? (submitting ? 'Creating...' : 'Create Listing') : 'Next' }}</span>
         </button>
       </div>
     </div>

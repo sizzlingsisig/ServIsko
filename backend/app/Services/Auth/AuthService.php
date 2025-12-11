@@ -28,6 +28,8 @@ class AuthService
             'email_verified_at' => null,
         ]);
 
+        $user ->assignRole('service-seeker');
+
         // Generate API token
         $token = $user->createToken('auth_token')->plainTextToken;
 

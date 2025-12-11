@@ -21,6 +21,7 @@ use App\Http\Controllers\Seeker\SeekerController;
 use App\Http\Controllers\Seeker\ListingController as SeekerListingController;
 use App\Http\Controllers\Seeker\ApplicationController as SeekerApplicationController;
 use App\Http\Controllers\Seeker\CategoryRequestController as SeekerCategoryRequestController;
+use App\Http\Controllers\Seeker\TagController as SeekerTagController;
 
 // ========================================================================
 // PROVIDER CONTROLLERS
@@ -122,6 +123,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/profile-picture', [SeekerController::class, 'getProfilePicture']);
         Route::delete('/profile-picture', [SeekerController::class, 'deleteProfilePicture']);
 
+        //Seeker Tag Routes
+        Route::get('/tags', [SeekerTagController::class, 'index']);
         // Seeker Listing Routes
 Route::prefix('listings')->group(function () {
     // List and Search

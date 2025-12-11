@@ -48,6 +48,32 @@ const handleLogin = async () => {
     loading.value = false
   }
 }
+
+// Handle register (Step 1 - account creation with role selection)
+const handleRegister = async (role) => {
+  loading.value = true
+  try {
+    const response = await api.post('/register', {
+      name: fullName.value,
+      username: username.value,
+      email: email.value,
+      password: password.value,
+      password_confirmation: passwordConfirm.value,
+      role: role,
+    })
+    authStore.setToken(response.data.token)
+    authStore.setUser(response.data.user)
+    toast.add({ severity: 'success', summary: 'Success', detail: `Welcome to ServISKO as a ${role}!`, life: 3000 })
+    activeStep.value = 2
+  } catch (err) {
+    if (err.response?.data?.errors) {
+      const validationErrors = Object.values(err.response.data.errors).flat()
+      toast.add({ severity: 'error', summary: 'Validation Error', detail: validationErrors.join(', '), life: 4000 })
+    }
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <template>

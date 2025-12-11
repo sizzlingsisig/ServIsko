@@ -98,9 +98,23 @@ class ListingController extends Controller
             $listing->load(['tags', 'category', 'applications']);
             $this->addIsExpired($listing);
 
+            // Add the owner's name and Spatie roles to the response
+            $listingData = $listing->toArray();
+            if ($listing->seeker) {
+                $listingData['owner_name'] = $listing->seeker->name;
+                $listingData['owner_roles'] = $listing->seeker->getRoleNames();
+            } else {
+                $listingData['owner_name'] = null;
+                $listingData['owner_roles'] = [];
+            }
+
+            // Add current user's role
+            $user = auth()->user();
+            $listingData['user_current_role'] = $user ? $user->getRoleNames()->toArray() : null;
+
             return response()->json([
                 'success' => true,
-                'data' => $listing,
+                'data' => $listingData,
             ]);
         } catch (Exception $e) {
             Log::error('Failed to fetch listing', [
@@ -126,7 +140,7 @@ class ListingController extends Controller
             // Validate request
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
+                'description' => 'nullable|string|max:500',
                 'budget' => 'nullable|numeric|min:0',
                 'category_id' => 'nullable|exists:categories,id',
                 'tags' => 'nullable|array|max:' . self::MAX_TAGS_PER_LISTING,

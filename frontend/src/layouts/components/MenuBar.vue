@@ -92,7 +92,7 @@ const toggleUserMenu = (event) => {
 const handleLogout = async () => {
   try {
     await axios.post(
-      '/api/logout',
+      '/logout',
       {},
       {
         headers: {
