@@ -15,10 +15,6 @@ import servisko from '@/composables/servisko.js'
 import { plugin as formKitPlugin, defaultConfig } from '@formkit/vue'
 import formKitConfig from '../../frontend/formkit.config.js'
 
-console.log('main.js loaded')
-console.log('PrimeVue:', PrimeVue)
-console.log('ToastService:', ToastService)
-
 const app = createApp(App)
 
 app.use(createPinia())
@@ -36,7 +32,6 @@ app.use(PrimeVue, {
 })
 
 app.use(ToastService)
-console.log('ToastService registered')
 
 app.use(formKitPlugin, defaultConfig(formKitConfig))
 

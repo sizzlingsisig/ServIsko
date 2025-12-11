@@ -16,9 +16,6 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import BlankLayout from '@/layouts/BlankLayout.vue'
 import ProfileLayout from './layouts/ProfileLayout.vue'
 
-console.log('App.vue loaded')
-console.log('Toast component:', Toast)
-
 const route = useRoute()
 
 const layoutComponents = {

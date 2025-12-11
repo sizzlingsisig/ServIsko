@@ -223,10 +223,10 @@ async function submitListing() {
     :modal="true"
     header="Create a Listing"
     header-style="background-color: #6d0019; color: white;"
-    :style="{ width: '800px' }"
+    :style="{ width: '100%', maxWidth: '800px' }"
     @update:visible="onUpdateVisible"
   >
-    <div class="p-6">
+    <div class="p-4 md:p-6">
       <!-- Stepper Header -->
       <!-- ...stepper header code... -->
 
