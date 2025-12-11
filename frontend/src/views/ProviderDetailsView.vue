@@ -2,6 +2,11 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/composables/axios'
+import Card from 'primevue/card'
+import Button from 'primevue/button'
+import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
+import Textarea from 'primevue/textarea'
 import Dropdown from 'primevue/dropdown'
 import AutoComplete from 'primevue/autocomplete'
 const categoryOptions = ref([])
@@ -15,7 +20,9 @@ const fetchCategoryOptions = async () => {
   try {
     const resp = await api.get('/categories')
     categoryOptions.value = resp.data.data || []
-  } catch {}
+  } catch {
+    // Silently fail if categories can't be loaded
+  }
 }
 
 const fetchTagOptions = async () => {
@@ -23,7 +30,9 @@ const fetchTagOptions = async () => {
     const resp = await api.get('/seeker/tags')
     tagOptions.value = (resp.data.data || []).map((tag) => ({ label: tag.name, value: tag.name }))
     tagSuggestions.value = tagOptions.value.map((t) => t.label)
-  } catch {}
+  } catch {
+    // Silently fail if tags can't be loaded
+  }
 }
 
 function filterTags(event) {
@@ -73,21 +82,14 @@ function handleTagKeydown(event) {
 
 function removeTag(tag) {
   // Support both string and object (defensive)
-  let tagStr = typeof tag === 'string' ? tag : (tag?.label || tag?.name || String(tag))
-  const idx = serviceForm.value.tags.findIndex(
-    (t) => {
-      let tStr = typeof t === 'string' ? t : (t?.label || t?.name || String(t))
-      return tStr.toLowerCase() === tagStr.toLowerCase()
-    }
-  )
+  let tagStr = typeof tag === 'string' ? tag : tag?.label || tag?.name || String(tag)
+  const idx = serviceForm.value.tags.findIndex((t) => {
+    let tStr = typeof t === 'string' ? t : t?.label || t?.name || String(t)
+    return tStr.toLowerCase() === tagStr.toLowerCase()
+  })
   if (idx > -1) {
     serviceForm.value.tags.splice(idx, 1)
   }
-}
-
-// Helper to get tag label for display (now just the string)
-function getTagLabel(tag) {
-  return tag
 }
 
 onMounted(() => {
@@ -107,9 +109,7 @@ const shareService = (service) => {
     window.prompt('Copy service link:', url)
   }
 }
-import Fieldset from 'primevue/fieldset'
-import Dialog from 'primevue/dialog'
-import Button from 'primevue/button'
+
 // Service CRUD state
 const serviceForm = ref({
   id: null,
@@ -132,7 +132,9 @@ const fetchServices = async () => {
     if (data.success && data.data) {
       provider.value = data.data
     }
-  } catch {}
+  } catch {
+    // Silently fail if provider can't be loaded
+  }
 }
 
 // Create service
@@ -201,7 +203,7 @@ const updateService = async () => {
     }
     // Ensure tags are only names (strings)
     payload.tags = (serviceForm.value.tags || []).map((t) =>
-      typeof t === 'object' && t.name ? t.name : t
+      typeof t === 'object' && t.name ? t.name : t,
     )
     const resp = await api.put(`/provider/services/${payload.id}`, payload)
     const data = resp.data
@@ -232,7 +234,9 @@ const confirmDeleteService = async () => {
     const resp = await api.delete(`/provider/services/${pendingDeleteId.value}`)
     const data = resp.data
     if (data.message) fetchServices()
-  } catch {}
+  } catch {
+    // Silently fail if delete fails
+  }
   showDeleteDialog.value = false
   pendingDeleteId.value = null
 }
@@ -298,8 +302,23 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col items-center py-5">
-    <div class="w-full max-w-6xl">
+  <div
+    class="min-h-screen bg-gradient-to-b from-gray-50 to-white flex flex-col items-center py-8 px-4"
+  >
+    <div class="w-full max-w-7xl">
+      <!-- Breadcrumbs -->
+      <nav class="flex items-center text-sm text-gray-500 mb-6">
+        <router-link to="/" class="hover:text-[#6d0019] transition">
+          <i class="pi pi-home"></i>
+        </router-link>
+        <i class="pi pi-angle-right text-gray-400 text-xs mx-2"></i>
+        <router-link to="/providers" class="hover:text-[#6d0019] transition">
+          Providers
+        </router-link>
+        <i class="pi pi-angle-right text-gray-400 text-xs mx-2"></i>
+        <span class="text-gray-400 truncate max-w-xs">{{ name }}</span>
+      </nav>
+
       <!-- Loading skeleton -->
       <div v-if="loading" class="flex flex-col items-center justify-center py-8">
         <div class="animate-pulse w-44 h-44 rounded-full bg-gray-200 mb-6"></div>
@@ -314,276 +333,302 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
         {{ error }}
       </div>
       <!-- Details Card -->
-      <div v-else-if="provider && provider.name" class="w-full flex gap-6 p-5">
-        <!-- Left column -->
-        <div class="w-1/4 flex flex-col gap-8 px-4">
-          <!-- Profile Pic -->
-          <div class="flex items-center justify-center">
-            <img
-              :src="avatar"
-              alt="Avatar"
-              class="w-32 h-32 rounded-full object-cover border shadow"
-            />
-          </div>
-          <!-- Bio and Links -->
-          <div>
-            <div class="font-bold text-lg mb-2">Bio</div>
-            <div class="text-gray-700 text-sm mb-2">{{ bio || 'No bio provided.' }}</div>
-            <div v-if="links.length" class="flex flex-col gap-2 mt-2">
-              <div class="font-bold text-xs text-gray-600 mb-1">Links</div>
-              <span v-for="link in links" :key="link.id" class="inline-flex items-center gap-2">
-                <a :href="link.url" target="_blank" class="text-sm text-primary-600 underline">{{
-                  link.title
-                }}</a>
-              </span>
-            </div>
-          </div>
-          <!-- Skills -->
-          <div>
-            <div class="font-bold text-lg mb-2">Skills</div>
-            <div v-if="skills.length" class="flex flex-wrap gap-2">
-              <span
-                v-for="skill in skills"
-                :key="skill.id"
-                class="bg-gray-100 text-xs text-gray-700 px-2 py-1 rounded"
-                >{{ skill.name }}</span
-              >
-            </div>
-            <div v-else class="text-xs text-gray-400">No skills listed.</div>
-          </div>
-        </div>
-        <!-- Right column -->
-        <div class="flex-1 flex flex-col gap-6 px-4">
-          <!-- Name, Location, Bookmark -->
-          <div class="flex justify-between items-center">
-            <div>
-              <div class="font-extrabold text-2xl">{{ name }}</div>
-              <div class="text-sm text-gray-500">{{ location || 'No location provided' }}</div>
-            </div>
-            <button
-              @click="toggleBookmark"
-              class="bg-gray-100 border border-gray-300 rounded-full px-5 py-2 font-bold text-gray-700 hover:bg-primary-100 transition flex items-center"
-            >
-              <span v-if="bookmarked" class="pi pi-bookmark text-[#6d0019] mr-2"></span>
-              <span v-else class="pi pi-bookmark mr-2"></span>
-              <span>{{ bookmarked ? 'Bookmarked' : 'Bookmark' }}</span>
-            </button>
-          </div>
-          <!-- Action Buttons -->
-          <div class="flex gap-4">
-            <button
-              class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded transition"
-            >
-              Send Message
-            </button>
-            <button
-              class="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded border transition"
-            >
-              Report User
-            </button>
-          </div>
-          <!-- Services Offered -->
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <div class="font-bold text-lg">Services Offered</div>
-              <Button
-                label="Add Service"
-                icon="pi pi-plus"
-                class="px-3 py-1 bg-primary-600 text-white rounded"
-                @click="openCreateService"
+      <div v-else-if="provider && provider.name" class="w-full">
+        <!-- Header Card with Avatar, Name, Actions -->
+        <Card class="mb-6 shadow-md border-0">
+          <template #content>
+            <div class="flex items-start gap-6">
+              <!-- Avatar -->
+              <img
+                :src="avatar"
+                alt="Avatar"
+                class="w-32 h-32 rounded-full object-cover border-4 border-[#6d0019] shadow-lg flex-shrink-0"
               />
-            </div>
-            <div v-if="services.length">
-              <div class="flex flex-col gap-4">
-                <div
-                  v-for="(service, i) in services"
-                  :key="service.id || i"
-                  class="bg-white rounded-lg shadow p-4 flex items-center justify-between"
-                >
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-4 mb-2">
-                      <div class="font-bold text-lg truncate">{{ service.title }}</div>
-                      <div
-                        v-if="service.category"
-                        class="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded"
-                      >
-                        {{ service.category.name }}
-                      </div>
-                      <div v-if="service.price" class="text-xs text-gray-600 ml-2">
-                        ₱{{ service.price }}
-                      </div>
-                    </div>
-                    <div class="text-sm text-gray-700 mb-2 truncate">{{ service.description }}</div>
-                    <div
-                      v-if="service.tags && service.tags.length"
-                      class="flex flex-wrap gap-1 mb-2"
-                    >
-                      <span
-                        v-for="tag in service.tags"
-                        :key="tag.id"
-                        class="bg-gray-100 text-xs px-2 py-1 rounded"
-                        >{{ tag.name }}</span
-                      >
-                    </div>
-                  </div>
-                  <div class="flex flex-col gap-1 items-end ml-4">
-                    <Button
-                      label=""
-                      icon="pi pi-pencil"
-                      class="p-1 text-xs bg-primary-100 text-primary-600 rounded"
-                      style="min-width: 28px; min-height: 28px"
-                      @click="editService(service)"
-                    />
-                    <Button
-                      label=""
-                      icon="pi pi-trash"
-                      class="p-1 text-xs bg-red-100 text-red-700 rounded"
-                      style="min-width: 28px; min-height: 28px"
-                      @click="deleteService(service.id)"
-                    />
-                    <Button
-                      label=""
-                      icon="pi pi-share-alt"
-                      class="p-1 text-xs bg-gray-100 text-gray-600 rounded"
-                      style="min-width: 28px; min-height: 28px"
-                      @click="shareService(service)"
-                    />
-                  </div>
+              <!-- Name, Location, and Actions -->
+              <div class="flex-1 flex flex-col justify-between">
+                <div>
+                  <h1 class="text-3xl font-extrabold text-[#0f1724]">
+                    {{ name }}
+                  </h1>
+                  <p class="text-gray-600">
+                    {{ location || 'No location provided' }}
+                  </p>
+                </div>
+                <!-- Actions Buttons -->
+                <div class="flex gap-3 mt-4">
+                  <Button
+                    label="Send Message"
+                    class="bg-[#6d0019] text-white px-6 py-2 rounded-md hover:bg-[#5a0013] transition"
+                  />
+                  <Button
+                    label="Report User"
+                    class="border-2 border-red-500 text-red-500 px-6 py-2 rounded-md hover:bg-red-50 transition"
+                  />
+                  <button
+                    @click="toggleBookmark"
+                    :class="[
+                      'p-3 border-2 rounded-md transition flex items-center gap-2',
+                      bookmarked ? 'text-yellow-500' : 'border-gray-300 hover:bg-gray-100',
+                    ]"
+                  >
+                    <span
+                      class="pi"
+                      :class="bookmarked ? 'pi-bookmark-fill' : 'pi-bookmark'"
+                    ></span>
+                  </button>
                 </div>
               </div>
             </div>
-            <div v-else class="text-xs text-gray-400">No services listed.</div>
+          </template>
+        </Card>
+
+        <!-- Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Left column: Bio & Skills -->
+          <div class="lg:col-span-1 flex flex-col gap-6">
+            <!-- Bio Card -->
+            <Card class="shadow-md border-0">
+              <template #header>
+                <div
+                  class="px-6 py-3 bg-gradient-to-r from-[#6d0019] to-[#8B1538] text-white rounded-t-lg"
+                >
+                  <h3 class="font-bold text-lg">Bio</h3>
+                </div>
+              </template>
+              <template #content>
+                <p class="text-gray-700 text-sm leading-relaxed">{{ bio || 'No bio provided.' }}</p>
+                <div v-if="links.length" class="mt-4 pt-4 border-t">
+                  <h4 class="font-semibold text-sm text-gray-800 mb-3">Links</h4>
+                  <div class="flex flex-col gap-2">
+                    <a
+                      v-for="link in links"
+                      :key="link.id"
+                      :href="link.url"
+                      target="_blank"
+                      class="text-[#6d0019] font-semibold hover:underline flex items-center gap-2 text-sm"
+                    >
+                      <i class="pi pi-external-link text-xs"></i>
+                      {{ link.title }}
+                    </a>
+                  </div>
+                </div>
+              </template>
+            </Card>
+
+            <!-- Skills Card -->
+            <Card class="shadow-md border-0">
+              <template #header>
+                <div
+                  class="px-6 py-3 bg-gradient-to-r from-[#6d0019] to-[#8B1538] text-white rounded-t-lg"
+                >
+                  <h3 class="font-bold text-lg">Skills</h3>
+                </div>
+              </template>
+              <template #content>
+                <div v-if="skills.length" class="flex flex-wrap gap-2">
+                  <span
+                    v-for="skill in skills"
+                    :key="skill.id"
+                    class="bg-[#f0e5e8] text-[#6d0019] text-xs font-semibold px-3 py-1.5 rounded-full"
+                    >{{ skill.name }}</span
+                  >
+                </div>
+                <div v-else class="text-xs text-gray-500">No skills listed.</div>
+              </template>
+            </Card>
           </div>
 
-          <!-- Service Modal -->
-          <Dialog v-model:visible="showServiceModal" :modal="true" :style="{ width: '400px' }">
-            <template #header>
-              <span class="font-bold text-lg">{{
-                isEditingService ? 'Edit Service' : 'Add Service'
-              }}</span>
-            </template>
-            <form @submit.prevent="isEditingService ? updateService() : createService()">
-              <div class="mb-2">
-                <label class="block text-sm font-semibold mb-1">Title</label>
-                <input
-                  v-model="serviceForm.title"
-                  type="text"
-                  class="w-full border px-2 py-1 rounded"
-                  required
-                />
-              </div>
-              <div class="mb-2">
-                <label class="block text-sm font-semibold mb-1">Description</label>
-                <textarea
-                  v-model="serviceForm.description"
-                  class="w-full border px-2 py-1 rounded"
-                  required
-                ></textarea>
-              </div>
-              <div class="mb-2">
-                <label class="block text-sm font-semibold mb-1">Price</label>
-                <input
-                  v-model="serviceForm.price"
-                  type="text"
-                  inputmode="decimal"
-                  pattern="^[0-9]*\.?[0-9]+$"
-                  class="w-full border px-2 py-1 rounded"
-                  min="0"
-                  step="any"
-                  placeholder="e.g. 149.99"
-                />
-              </div>
-              <div class="mb-2">
-                <label class="block text-sm font-semibold mb-1">Category</label>
-                <Select
-                  v-model="serviceForm.category_id"
-                  :options="categoryOptions"
-                  optionLabel="name"
-                  optionValue="id"
-                  placeholder="Select Category"
-                  class="w-full"
-                  required
-                />
-              </div>
-              <div class="mb-2">
-                <label class="block text-sm font-semibold mb-1">Tags</label>
-                <div v-if="serviceForm.tags && serviceForm.tags.length" class="flex flex-wrap gap-2 mb-2">
-                  <span
-                    v-for="(tag, idx) in serviceForm.tags"
-                    :key="idx"
-                    class="bg-gray-100 text-xs px-2 py-1 rounded flex items-center gap-1"
-                  >
-                    {{ getTagLabel(tag) }}
-                    <button
-                      type="button"
-                      class="ml-1 text-red-500 hover:text-red-700"
-                      @click="removeTag(tag)"
-                    >
-                      <i class="pi pi-times"></i>
-                    </button>
-                  </span>
+          <!-- Right column: Services -->
+          <div class="lg:col-span-2">
+            <Card class="shadow-md border-0">
+              <template #header>
+                <div
+                  class="px-6 py-3 bg-gradient-to-r from-[#6d0019] to-[#8B1538] text-white rounded-t-lg flex items-center justify-between"
+                >
+                  <h3 class="font-bold text-lg">Services Offered</h3>
+                  <Button
+                    label="Add Service"
+                    icon="pi pi-plus"
+                    size="small"
+                    class="bg-white text-[#6d0019]"
+                    @click="openCreateService"
+                  />
                 </div>
+              </template>
+              <template #content>
+                <div v-if="services.length" class="space-y-4">
+                  <div
+                    v-for="(service, i) in services"
+                    :key="service.id || i"
+                    class="bg-gray-50 rounded-lg border border-gray-200 p-4 hover:shadow-md transition"
+                  >
+                    <div class="flex items-start justify-between gap-4">
+                      <div class="flex-1">
+                        <h4 class="font-bold text-lg text-[#0f1724] mb-2">{{ service.title }}</h4>
+                        <p class="text-gray-600 text-sm mb-3 line-clamp-2">
+                          {{ service.description }}
+                        </p>
+                        <div class="flex gap-2 mb-3 flex-wrap items-center">
+                          <span
+                            v-if="service.category"
+                            class="text-xs font-semibold bg-[#f0e5e8] text-[#6d0019] px-2 py-1 rounded-full"
+                          >
+                            {{ service.category.name }}
+                          </span>
+                          <span
+                            v-for="(tag, idx) in service.tags"
+                            :key="idx"
+                            class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded"
+                            >{{ tag.name }}</span
+                          >
+                        </div>
+                      </div>
+                      <div
+                        v-if="service.price"
+                        class="font-bold text-lg text-[#6d0019] whitespace-nowrap"
+                      >
+                        ₱{{ parseFloat(service.price).toLocaleString() }}/hr
+                      </div>
+                    </div>
+                    <div class="flex gap-2 mt-4 justify-end">
+                      <Button
+                        icon="pi pi-pencil"
+                        class="p-button-rounded p-button-sm bg-[#6d0019] text-white"
+                        @click="editService(service)"
+                      />
+                      <Button
+                        icon="pi pi-trash"
+                        class="p-button-rounded p-button-sm bg-red-500 text-white"
+                        @click="deleteService(service.id)"
+                      />
+                      <Button
+                        icon="pi pi-share-alt"
+                        class="p-button-rounded p-button-sm bg-gray-600 text-white"
+                        @click="shareService(service)"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="text-center text-gray-500 py-8">
+                  <p class="text-sm">No services listed yet.</p>
+                </div>
+              </template>
+            </Card>
+          </div>
+        </div>
+
+        <!-- Service Modal -->
+        <Dialog
+          v-model:visible="showServiceModal"
+          :modal="true"
+          :header="isEditingService ? 'Edit Service' : 'Add Service'"
+          class="w-full md:w-1/2"
+        >
+          <form
+            @submit.prevent="isEditingService ? updateService() : createService()"
+            class="space-y-4"
+          >
+            <div>
+              <label class="block text-sm font-semibold mb-2">Title *</label>
+              <InputText v-model="serviceForm.title" class="w-full" required />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-2">Description *</label>
+              <Textarea v-model="serviceForm.description" class="w-full" rows="4" required />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-2">Price (₱/hour)</label>
+              <InputText
+                v-model="serviceForm.price"
+                type="number"
+                step="0.01"
+                min="0"
+                class="w-full"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-2">Category *</label>
+              <Dropdown
+                v-model="serviceForm.category_id"
+                :options="categoryOptions"
+                option-label="name"
+                option-value="id"
+                placeholder="Select a category"
+                class="w-full"
+                required
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-semibold mb-2">Tags (up to 5)</label>
+              <div class="flex gap-2 mb-2 flex-wrap">
+                <span
+                  v-for="(tag, idx) in serviceForm.tags"
+                  :key="idx"
+                  class="bg-[#f0e5e8] text-[#6d0019] text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-2"
+                >
+                  {{ tag }}
+                  <button
+                    type="button"
+                    @click="removeTag(tag)"
+                    class="hover:text-red-600 font-bold"
+                  >
+                    ×
+                  </button>
+                </span>
+              </div>
+              <div class="flex gap-2">
                 <AutoComplete
                   v-model="tagInput"
                   :suggestions="tagSuggestions"
                   @complete="filterTags"
                   @itemSelect="addTag"
                   @keydown="handleTagKeydown"
-                  :disabled="serviceForm.tags.length >= 5"
-                  class="w-full"
-                  :forceSelection="false"
-                  dropdown
-                  showClear
-                  aria-label="Tags"
-                  placeholder="Type to search tags or press Enter to add custom"
-                >
-                  <template #option="slotProps">
-                    <span>{{ slotProps.option }}</span>
-                  </template>
-                </AutoComplete>
-                <p class="text-xs text-gray-500 mt-2">
-                  {{ serviceForm.tags.length }}/5 tags selected. Type and press Enter for custom tags.
-                </p>
-              </div>
-              <div v-if="serviceError" class="text-xs text-red-600 mb-2">
-                <span v-if="typeof serviceError === 'string'">{{ serviceError }}</span>
-                <ul v-else-if="typeof serviceError === 'object' && serviceError">
-                  <li v-for="(errs, field) in serviceError" :key="field">
-                    <span v-for="err in errs" :key="err">{{ err }}</span>
-                  </li>
-                </ul>
-              </div>
-              <div class="flex gap-2 mt-4">
-                <Button
-                  type="submit"
-                  :label="isEditingService ? 'Update' : 'Create'"
-                  class="px-4 py-2 bg-primary-600 text-white rounded"
+                  placeholder="Add tags..."
+                  class="flex-1"
                 />
                 <Button
                   type="button"
-                  label="Cancel"
-                  class="px-4 py-2 bg-gray-200 text-gray-700 rounded"
-                  @click="showServiceModal = false"
+                  icon="pi pi-plus"
+                  @click="addTag"
+                  class="p-button-secondary"
                 />
               </div>
-            </form>
-          </Dialog>
-          <!-- Delete Confirmation Dialog -->
-          <Dialog v-model:visible="showDeleteDialog" :modal="true" :style="{ width: '350px' }">
-            <template #header>
-              <span class="font-bold text-lg">Confirm Delete</span>
-            </template>
-            <div class="mb-4">Are you sure you want to delete this service?</div>
-            <div class="flex gap-2 justify-end">
-              <Button label="Delete" class="bg-red-600 text-white" @click="confirmDeleteService" />
-              <Button
-                label="Cancel"
-                class="bg-gray-200 text-gray-700"
-                @click="cancelDeleteService"
-              />
             </div>
-          </Dialog>
-        </div>
+            <div
+              v-if="serviceError"
+              class="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm"
+            >
+              {{ serviceError }}
+            </div>
+          </form>
+          <template #footer>
+            <Button label="Cancel" @click="showServiceModal = false" class="p-button-secondary" />
+            <Button
+              :label="isEditingService ? 'Update' : 'Create'"
+              type="submit"
+              @click="isEditingService ? updateService() : createService()"
+              class="bg-[#6d0019] text-white"
+            />
+          </template>
+        </Dialog>
+
+        <!-- Delete Confirmation Dialog -->
+        <Dialog
+          v-model:visible="showDeleteDialog"
+          :modal="true"
+          header="Confirm Delete"
+          class="w-full md:w-1/3"
+        >
+          <p class="text-gray-700 mb-4">Are you sure you want to delete this service?</p>
+          <template #footer>
+            <Button label="Cancel" @click="cancelDeleteService" class="p-button-secondary" />
+            <Button
+              label="Delete"
+              @click="confirmDeleteService"
+              class="p-button-danger bg-red-600 text-white"
+            />
+          </template>
+        </Dialog>
       </div>
       <!-- Fallback -->
       <div v-else class="max-w-2xl mx-auto py-20 text-center text-gray-400">Loading profile...</div>
