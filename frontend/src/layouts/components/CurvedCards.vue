@@ -21,9 +21,6 @@ import tutoringImage from '@/assets/icons/2.png'
 </g>
 </svg>
 
-
-
-
 */
 
 const cards = [
@@ -76,11 +73,11 @@ const cards = [
 </script>
 
 <template>
-  <section class="relative bg-white py-16">
+  <section class="relative bg-white py-14">
     <!-- Header -->
     <div class="text-center mb-12">
-      <h2 class="text-4xl font-bold text-gray-900 mb-3">Popular Service Categories</h2>
-      <p class="text-gray-600">Lorem ipsum dolor sit amet, consectetur adipiscing elit</p>
+      <h2 class="text-4xl font-bold text-gray-900 mb-3">Popular Listing Categories</h2>
+      <p class="text-gray-600">Take a sneak peek at some of our categories</p>
     </div>
 
     <!-- SVG Cards Container -->
