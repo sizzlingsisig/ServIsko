@@ -11,6 +11,40 @@ const listing = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const roles = ref([])
+const applying = ref(false)
+
+async function applyToListing() {
+  if (!authStore.isAuthenticated) {
+    // e.g. show toast / redirect to login
+    console.warn('Not authenticated')
+    return
+  }
+
+  if (!listing.value?.id) return
+
+  applying.value = true
+  try {
+    const endpoint = `/provider/listings/${listing.value.id}/applications`
+    const payload = {
+      message: 'I would like to apply to this listing.' // later bind to a textarea
+    }
+
+    const response = await api.post(endpoint, payload)
+
+    if (response.data.success) {
+      console.log('Application created:', response.data.data)
+      // TODO: show success toast / disable button
+    } else {
+      console.error('Application failed:', response.data.message)
+    }
+  } catch (e) {
+    console.error('Application error:', e.response?.data || e)
+  } finally {
+    applying.value = false
+  }
+}
+
+
 
 async function fetchListing() {
   loading.value = true
@@ -33,16 +67,21 @@ async function fetchListing() {
   }
 }
 
-async function fetchProfile(){
+async function fetchProfile() {
   try {
     const response = await api.get('/provider/profile')
+    console.log('Profile response raw:', response.data)
+
     if (response.data.success) {
-      const profileData = response.data
+      // adjust depending on your API shape
+      const profileData = response.data      // or response.data.data
       roles.value = Array.isArray(profileData.roles) ? profileData.roles : []
       console.log('Fetched profile roles:', roles.value)
+      console.log('isAuthenticated:', authStore.isAuthenticated)
     }
   } catch (e) {
-    console.error('Profile fetch error:', e)
+    console.error('Profile fetch error status:', e.response?.status)
+    console.error('Profile fetch error data:', e.response?.data)
   }
 }
 
@@ -221,10 +260,13 @@ onMounted(() => {
             <button
               v-if="roles?.includes('service-provider')"
               class="w-full bg-white hover:bg-gray-100 text-[#6d0019] font-bold py-3 px-4 rounded-lg transition-colors mb-3 flex items-center justify-center gap-2"
+              :disabled="applying"
+              @click="applyToListing"
             >
               <i class="pi pi-send"></i>
-              <span>Apply To Listing</span>
+              <span>{{ applying ? 'Applying...' : 'Apply To Listing' }}</span>
             </button>
+
             <button
               v-else
               class="w-full bg-white text-[#6d0019] font-bold py-3 px-4 rounded-lg mb-3 flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
