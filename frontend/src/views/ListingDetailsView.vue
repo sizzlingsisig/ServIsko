@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/composables/axios'
+import ApplicationMessageModal from '@/components/ApplicationMessageModal.vue'
 import { useAuthStore } from '@/stores/AuthStore'
 
 const authStore = useAuthStore()
@@ -11,40 +12,82 @@ const listing = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const roles = ref([])
-const applying = ref(false)
 
-async function applyToListing() {
+const applying = ref(false)
+const hasApplied = ref(false)
+const isOwner = ref(false)
+
+// Modal state for application
+const showApplyModal = ref(false)
+const submittingApplication = ref(false)
+
+function openApplyModal() {
+  showApplyModal.value = true
+}
+
+function closeApplyModal() {
+  showApplyModal.value = false
+}
+// Check if user already applied to this listing
+async function checkIfApplied() {
+  if (!authStore.isAuthenticated || !listing.value?.id) {
+    hasApplied.value = false
+    return
+  }
+  try {
+    // Get all applications for this user (paginated)
+    const resp = await api.get('/provider/applications', { params: { per_page: 100 } })
+    if (resp.data.success && Array.isArray(resp.data.data?.data)) {
+      hasApplied.value = resp.data.data.data.some(app => app.listing_id === listing.value.id)
+    } else {
+      hasApplied.value = false
+    }
+  } catch (e) {
+    hasApplied.value = false
+  }
+}
+
+async function handleApplicationSubmit(message) {
   if (!authStore.isAuthenticated) {
     // e.g. show toast / redirect to login
     console.warn('Not authenticated')
     return
   }
-
-  if (!listing.value?.id) return
-
-  applying.value = true
+  if (!listing.value?.id || hasApplied.value) return
+  submittingApplication.value = true
   try {
     const endpoint = `/provider/listings/${listing.value.id}/applications`
     const payload = {
-      message: 'I would like to apply to this listing.' // later bind to a textarea
+      message: message
     }
-
     const response = await api.post(endpoint, payload)
-
     if (response.data.success) {
       console.log('Application created:', response.data.data)
-      // TODO: show success toast / disable button
+      hasApplied.value = true
+      showApplyModal.value = false
     } else {
       console.error('Application failed:', response.data.message)
     }
   } catch (e) {
+    if (e.response?.status === 409) {
+      hasApplied.value = true
+      showApplyModal.value = false
+    }
     console.error('Application error:', e.response?.data || e)
   } finally {
-    applying.value = false
+    submittingApplication.value = false
   }
 }
 
 
+const currentUserId = ref(null)
+
+async function getUserInfo() {
+  const response = await api.get('/user')
+  if (response.data && response.data.data?.id) {
+    currentUserId.value = response.data.data.id   // note: your JSON wraps in data.data
+  }
+}
 
 async function fetchListing() {
   loading.value = true
@@ -55,12 +98,18 @@ async function fetchListing() {
 
     if (response.data.success) {
       listing.value = response.data.data
-      console.log('Fetched listing:', listing.value)
+
+      // ownership check using ref
+      isOwner.value =
+        currentUserId.value === (listing.value.seeker_user_id || listing.value.user_id)
+
+      if (authStore.isAuthenticated) {
+        await checkIfApplied()
+      }
     } else {
       throw new Error(response.data.message || 'Failed to fetch listing')
     }
   } catch (e) {
-    console.error('Fetch error:', e)
     error.value = e.response?.data?.message || e.message || 'Failed to load listing'
   } finally {
     loading.value = false
@@ -85,19 +134,37 @@ async function fetchProfile() {
   }
 }
 
-onMounted(() => {
-  fetchListing()
+onMounted(async () => {
+  if (authStore.isAuthenticated) {
+    await getUserInfo()
+  }
+  await fetchListing()
   if (authStore.isAuthenticated) {
     fetchProfile()
   }
 })
+
+// Watch for login state or listing change to re-check application
+import { watch } from 'vue'
+watch([() => authStore.isAuthenticated, () => listing.value?.id], ([isAuth, id]) => {
+  if (isAuth && id) checkIfApplied()
+  else hasApplied.value = false
+})
 </script>
 
 <template>
-  <div v-if="loading" class="p-8 text-center">
+  <!-- Application Modal -->
+  <ApplicationMessageModal
+    :visible="showApplyModal"
+    :submitting="submittingApplication"
+    @update:visible="val => showApplyModal = val"
+    @submit="handleApplicationSubmit"
+  />
+
+  <div v-if="loading" class="flex flex-col justify-center items-center min-h-screen w-full p-8 text-center bg-white">
     <i class="pi pi-spin pi-spinner text-4xl text-primary-500"></i>
     <p class="mt-4 text-gray-600">Loading listing...</p>
-  </div>
+</div>
   <div v-else-if="listing" class="min-h-screen bg-gray-50">
     <div class="max-w-7xl mx-auto px-4 py-6">
       <!-- Breadcrumbs - More subtle -->
@@ -238,7 +305,7 @@ onMounted(() => {
         <!-- Right Column - Pricing Card -->
         <div class="lg:col-span-1">
           <!-- Main Pricing Card -->
-          <div class="bg-[#6d0019] rounded-lg shadow-md p-6 sticky top-6">
+          <div class="bg-[#6d0019] rounded-lg shadow-md p-6">
             <div class="mb-6">
               <div class="text-sm text-pink-100 mb-1">Budget</div>
               <div class="text-4xl font-bold text-white">
@@ -257,15 +324,41 @@ onMounted(() => {
               </div>
             </div>
 
+
+
+            <router-link
+              v-if="roles?.includes('service-provider') && isOwner"
+              :to="`/listings/${listing.id}/applications`"
+              class="w-full bg-blue-100 text-blue-900 font-bold py-3 px-4 rounded-lg mb-3 flex items-center justify-center gap-2 hover:bg-blue-200 transition-colors"
+              title="View applications for this listing."
+            >
+              <i class="pi pi-eye"></i>
+              <span>View Applications</span>
+            </router-link>
             <button
-              v-if="roles?.includes('service-provider')"
-              class="w-full bg-white hover:bg-gray-100 text-[#6d0019] font-bold py-3 px-4 rounded-lg transition-colors mb-3 flex items-center justify-center gap-2"
-              :disabled="applying"
-              @click="applyToListing"
+              v-else-if="roles?.includes('service-provider') && !isOwner"
+              :class="[
+                'w-full font-bold py-3 px-4 rounded-lg transition-colors mb-3 flex items-center justify-center gap-2',
+                hasApplied
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  : 'bg-white hover:bg-gray-100 text-[#6d0019]'
+              ]"
+              :disabled="applying || hasApplied"
+              @click="openApplyModal"
             >
               <i class="pi pi-send"></i>
-              <span>{{ applying ? 'Applying...' : 'Apply To Listing' }}</span>
+              <span v-if="hasApplied">Already Applied</span>
+              <span v-else>{{ applying ? 'Applying...' : 'Apply To Listing' }}</span>
             </button>
+
+            <router-link
+              v-else-if="roles?.includes('service-provider') && isOwner"
+              :to="`/listings/${listing.id}/applications`"
+              class="w-full bg-blue-100 text-blue-900 font-bold py-3 px-4 rounded-lg mb-3 flex items-center justify-center gap-2 hover:bg-blue-200 transition-colors"
+            >
+              <i class="pi pi-eye"></i>
+              <span>View Applications</span>
+            </router-link>
 
             <button
               v-else
@@ -281,7 +374,7 @@ onMounted(() => {
               class="w-full bg-transparent border-2 border-white/30 hover:border-white text-white font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
             >
               <i class="pi pi-bookmark"></i>
-              <span>Save Listing</span>
+              <span>Coming Soon</span>
             </button>
           </div>
 

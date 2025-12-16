@@ -18,7 +18,10 @@ import ListingCard from '@/components/ListingCard.vue'
 import FilterSidebar from '@/components/FilterSidebar.vue'
 import api from '@/composables/axios'
 import { useAuthStore } from '@/stores/AuthStore'
+import { ref as vueRef } from 'vue'
+import Dialog from 'primevue/dialog'
 
+const showMobileFilters = vueRef(false)
 // define constants
 const DEBOUNCE_DELAY = 500
 const DEFAULTS = {
@@ -83,8 +86,13 @@ const loadListings = async () => {
     const response = await api.get('/listings', { params })
     if (response.data.success && response.data.data) {
       const paginatedData = response.data.data
-      listings.value = paginatedData.data || []
-      totalRecords.value = paginatedData.total || 0
+      let allListings = paginatedData.data || []
+      // Filter out listings owned by the current user (if logged in)
+      if (authStore.isAuthenticated && authStore.user && authStore.user.id) {
+        allListings = allListings.filter(l => l.seeker_user_id !== authStore.user.id)
+      }
+      listings.value = allListings
+      totalRecords.value = allListings.length
     } else {
       listings.value = []
       totalRecords.value = 0
@@ -127,10 +135,11 @@ const loadCategories = async () => {
  */
 const loadTags = async () => {
   try {
-    const res = await api.get('/services/tags')
+    const res = await api.get('/seeker/tags')
     const data = res.data
     const rawTags = data.data ?? data
     tags.value = rawTags.map(t => typeof t === 'string' ? t : t.name)
+    console.log('Loaded tags:', tags.value)
   } catch (err) {
     console.error('Failed to load tags:', err)
     tags.value = []
@@ -251,6 +260,7 @@ const submitListing = async (payload) => {
 onMounted(() => {
   loadCategories()
   loadListings()
+  loadTags()
 })
 
 // Cancel pending debounced calls before unmount to prevent memory leaks
@@ -261,17 +271,17 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Main Search Bar Section -->
-    <section class="bg-primary-500 text-white px-4 py-8">
+    <!-- Main Search Bar Section (hidden on mobile, visible on sm+) -->
+    <section class="hidden sm:block bg-primary-500 text-white px-2 py-6 sm:px-4 sm:py-8">
       <div class="max-w-7xl mx-auto">
-        <h2 class="text-3xl font-bold mb-6">Find Services</h2>
-        <div class="flex flex-col gap-4 md:flex-row">
+        <h2 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Find Listings</h2>
+        <div class="flex flex-col gap-3 sm:gap-4 md:flex-row">
           <IconField iconPosition="left" class="flex-1">
             <InputIcon class="pi pi-search" />
             <InputText
               v-model="filters.search"
               placeholder="Search for services..."
-              class="w-full"
+              class="w-full text-base sm:text-lg py-2 sm:py-3"
               @input="handleSearch($event.target.value)"
             />
           </IconField>
@@ -280,38 +290,72 @@ onBeforeUnmount(() => {
             icon="pi pi-search"
             severity="primary"
             @click="handleSearch(filters.search)"
-            class="w-full md:w-auto"
+            class="w-full sm:w-auto text-base sm:text-lg py-2 sm:py-3"
           />
         </div>
       </div>
     </section>
 
+    <!-- Floating Action Button for mobile -->
+    <button
+      class="fixed bottom-6 right-6 z-50 flex sm:hidden items-center justify-center w-14 h-14 rounded-full bg-primary-500 text-white shadow-lg hover:bg-primary-600 transition-all"
+      @click="showMobileFilters = true"
+      aria-label="Show search and filters"
+    >
+      <i class="pi pi-sliders-h text-2xl"></i>
+    </button>
+
+    <!-- Mobile Filters/Search Modal -->
+    <Dialog v-model:visible="showMobileFilters" modal :closable="true" class="sm:hidden w-[95vw] max-w-md mx-auto" :style="{ top: '10vh' }">
+      <template #header>
+        <span class="font-bold text-lg">Search & Filters</span>
+      </template>
+      <div class="flex flex-col gap-4">
+        <IconField iconPosition="left" class="flex-1">
+          <InputIcon class="pi pi-search" />
+          <InputText
+            v-model="filters.search"
+            placeholder="Search for services..."
+            class="w-full text-base py-2"
+            @input="handleSearch($event.target.value)"
+          />
+        </IconField>
+        <FilterSidebar :filters="filters" :categories="categories" @update="handleFilterChange" />
+        <Button
+          label="Apply"
+          icon="pi pi-check"
+          severity="primary"
+          @click="showMobileFilters = false"
+          class="w-full text-base py-2"
+        />
+      </div>
+    </Dialog>
     <!-- Main Content Area -->
-    <div class="max-w-7xl mx-auto px-2 py-4 md:px-4 md:py-8">
+    <div class="max-w-7xl mx-auto px-1 py-2 sm:px-2 md:px-4 md:py-8">
       <div class="flex flex-col gap-6 md:flex-row">
-        <!-- Left Sidebar - Filters -->
-        <div class="w-full md:w-72 flex-shrink-0 mb-6 md:mb-0">
+        <!-- Left Sidebar - Filters (hidden on mobile) -->
+        <div class="hidden md:block w-full md:w-72 flex-shrink-0 mb-4 md:mb-0">
           <FilterSidebar :filters="filters" :categories="categories" @update="handleFilterChange" />
         </div>
 
         <!-- Right Content Area -->
-        <div class="flex-1">
+        <div class="flex-1 min-w-0">
           <!-- View Controls and Pagination Info -->
-          <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
-            <div class="text-gray-600">
+          <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-4">
+            <div class="text-gray-600 text-sm sm:text-base">
               Showing
               {{ totalRecords === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1 }}
               -
               {{ Math.min(currentPage * itemsPerPage, totalRecords) }}
               of {{ totalRecords }} services
             </div>
-            <div class="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
+            <div class="flex flex-col md:flex-row items-start md:items-center gap-2 sm:gap-4 w-full md:w-auto">
               <div class="flex items-center gap-2">
-                <label class="text-sm text-gray-600">Sort by:</label>
+                <label class="text-xs sm:text-sm text-gray-600">Sort by:</label>
                 <select
                   :value="filters.sort_by"
                   @change="handleSortChange($event.target.value)"
-                  class="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                  class="px-2 py-1 sm:px-3 sm:py-2 border border-gray-300 rounded-lg text-xs sm:text-sm"
                 >
                   <option value="newest">Newest</option>
                   <option value="oldest">Oldest</option>
@@ -324,7 +368,7 @@ onBeforeUnmount(() => {
                 <button
                   @click="layout = 'grid'"
                   :class="[
-                    'px-3 py-2 rounded-lg transition',
+                    'px-2 py-1 sm:px-3 sm:py-2 rounded-lg transition',
                     layout === 'grid'
                       ? 'bg-primary-500 text-white'
                       : 'bg-gray-200 text-gray-600 hover:bg-gray-300',
@@ -335,7 +379,7 @@ onBeforeUnmount(() => {
                 <button
                   @click="layout = 'list'"
                   :class="[
-                    'px-3 py-2 rounded-lg transition',
+                    'px-2 py-1 sm:px-3 sm:py-2 rounded-lg transition',
                     layout === 'list'
                       ? 'bg-primary-500 text-white'
                       : 'bg-gray-200 text-gray-600 hover:bg-gray-300',
@@ -346,7 +390,7 @@ onBeforeUnmount(() => {
               </div>
               <Button
                 v-if="authStore.isAuthenticated"
-                class="bg-[#10b981] hover:bg-[#0ea77a] text-white w-full md:w-auto"
+                class="bg-[#10b981] hover:bg-[#0ea77a] text-white w-full md:w-auto text-xs sm:text-base px-2 py-1 sm:px-4 sm:py-2"
                 icon="pi pi-plus"
                 label="Add Listing"
                 @click="openAddModal"
@@ -355,7 +399,7 @@ onBeforeUnmount(() => {
                 v-if="authStore.isAuthenticated"
                 href="javascript:void(0)"
                 @click="$router.push('/profile/listings')"
-                class="font-semibold text-black hover:text-gray-700 decoration-0 flex items-center gap-2 w-full md:w-auto px-4 py-2 rounded transition"
+                class="font-semibold text-black hover:text-gray-700 decoration-0 flex items-center gap-2 w-full md:w-auto px-2 py-1 sm:px-4 sm:py-2 rounded transition text-xs sm:text-base"
                 style="text-decoration:none;"
               >
                 <i class="pi pi-list"></i>
@@ -363,7 +407,7 @@ onBeforeUnmount(() => {
               </a>
               <span
                 v-else
-                class="text-gray-400 text-sm font-semibold select-none flex items-center gap-2"
+                class="text-gray-400 text-xs sm:text-sm font-semibold select-none flex items-center gap-2"
               >
                 <i class="pi pi-lock"></i>
                 Only logged-in users can add listings
@@ -419,7 +463,7 @@ onBeforeUnmount(() => {
       v-model:showAddModal="showAddModal"
       :categories="categories"
       :filteredCategories="filteredCategories"
-      :tags="tags"
+      :tags="tags.map(tag => typeof tag === 'object' ? tag : { name: tag })"
       :filteredTags="filteredTags"
       @created="submitListing"
     />

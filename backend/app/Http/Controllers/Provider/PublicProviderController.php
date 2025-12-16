@@ -38,10 +38,19 @@ class PublicProviderController extends Controller
 
         // --- FILTERS ---
 
-        // Filter by provider name (search, e.g. ?search=John)
+        // Filter by provider name, skills, or services (search, e.g. ?search=John)
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where('name', 'ilike', "%{$search}%");
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'ilike', "%{$search}%")
+                  ->orWhereHas('providerProfile.skills', function($q2) use ($search) {
+                      $q2->where('name', 'ilike', "%{$search}%");
+                  })
+                  ->orWhereHas('services', function($q3) use ($search) {
+                      $q3->where('title', 'ilike', "%{$search}%")
+                          ->orWhere('description', 'ilike', "%{$search}%");
+                  });
+            });
         }
 
         // Filter by location (e.g. ?location=Makati)

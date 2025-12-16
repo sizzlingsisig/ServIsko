@@ -96,8 +96,7 @@ onMounted(() => {
       width="100%"
       height="auto"
     >
-      <path fill="#ffffff" d="M0,320 C480,160 960,160 1440,320 L1440,320 L0,320 Z" />
-    </svg>
+<path fill="#ffffff" d="M0,320 C480,160 960,160 1440,320 L1440,321 L0,321 Z" />    </svg>
   </section>
 
   <section
@@ -351,7 +350,7 @@ onMounted(() => {
       width="100%"
       height="auto"
     >
-      <path fill="#ffffff" d="M0,0 L0,160 C480,320 960,320 1440,160 L1440,0 Z" />
+      <path fill="#ffffff" d="M0,0 L0,100 C480,200 960,200 1440,100 L1440,0 Z" />
     </svg>
 
     <div class="relative z-10 mt-20 sm:mt-50">

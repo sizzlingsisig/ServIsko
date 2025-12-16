@@ -92,19 +92,27 @@ const viewDetails = (evt) => {
     @click="viewDetails"
   >
     <div class="p-4 sm:p-6 flex flex-col overflow-hidden h-full justify-between">
-      <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-1 line-clamp-2 leading-snug break-words" tabindex="0">
+      <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-1 leading-snug break-words whitespace-normal" style="word-break:break-word;overflow-wrap:break-word;">
         {{ title }}
       </h3>
       <span class="bg-white border border-gray-300 text-gray-700 text-xs px-2 py-1 rounded-full whitespace-nowrap mb-2 block w-fit">{{ category }}</span>
-      <div class="flex flex-wrap gap-2 text-xs text-gray-500 mb-1">
-        <span>Created: <strong>{{ createdAt }}</strong></span>
-        <span v-if="expiresAt">
-          <span>&bull; Expires: <strong>{{ expiresAt }}</strong></span>
+      <div class="flex items-center gap-1 text-xs text-gray-500 mb-1">
+        <span>
+          <i class="pi pi-calendar mr-1"></i>
+          <strong>Created:</strong> {{ props.service.created_at ? (new Date(props.service.created_at)).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A' }}
         </span>
-        <span v-else>
-          <span>&bull; No Expiry</span>
+        <span class="mx-1 text-gray-300">•</span>
+        <span>
+          <i class="pi pi-clock mr-1"></i>
+          <strong>Expires:</strong>
+          <template v-if="props.service.expires_at">
+            {{ (new Date(props.service.expires_at)).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }}
+          </template>
+          <template v-else>
+            No Expiry
+          </template>
         </span>
-        <span v-if="isExpired" class="text-[#b91c1c] font-bold ml-2"><i class="pi pi-clock"></i> Expired</span>
+        <span v-if="isExpired" class="text-[#b91c1c] font-bold ml-2 flex items-center"><i class="pi pi-clock mr-1"></i>Expired</span>
       </div>
       <p class="text-gray-600 clamp-3 w-full mb-3 text-xs sm:text-sm" tabindex="0">{{ description }}</p>
       <div class="flex flex-col gap-2 mt-auto">
@@ -113,17 +121,17 @@ const viewDetails = (evt) => {
           <span class="text-xs sm:text-sm text-gray-700 max-w-[120px] sm:max-w-[160px] truncate" tabindex="0">{{ seeker }}</span>
         </div>
         <div class="flex flex-wrap gap-1 sm:gap-2 mb-2">
-          <span v-for="(tag, idx) in tags.slice(0, 3)" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs px-2 py-1 rounded truncate max-w-[60px] sm:max-w-[80px]">
+          <span v-for="(tag, idx) in tags.slice(0, 2)" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs px-2 py-1 rounded truncate max-w-[60px] sm:max-w-[80px]">
             {{ tag.name ?? tag }}
           </span>
           <span
-            v-if="tags.length > 3"
+            v-if="tags.length > 2"
             class="bg-gray-200 px-2 py-1 rounded text-xs text-gray-500 cursor-pointer relative"
             @mouseenter="showPopover($event)"
             @mouseleave="hidePopover"
             style="position:relative;"
           >
-            ...<span class="ml-1">+{{ tags.length - 3 }}</span>
+            ...<span class="ml-1">+{{ tags.length - 2 }}</span>
           </span>
           <Teleport to="body">
             <div
@@ -157,16 +165,25 @@ const viewDetails = (evt) => {
     <div class="flex-1 flex flex-col justify-between p-3 sm:p-5">
       <div>
         <h3 class="text-xs sm:text-lg font-semibold text-gray-900 mb-1 line-clamp-1 leading-snug break-words max-w-full" tabindex="0">{{ title }}</h3>
-        <div class="flex flex-wrap gap-1 sm:gap-2 text-xs text-gray-500 mb-1">
+        <div class="flex flex-wrap gap-2 text-xs text-gray-500 mb-1 items-center">
           <span>Category: {{ category }}</span>
-          <span>Created: <strong>{{ createdAt }}</strong></span>
-          <span v-if="expiresAt">
-            <span>&bull; Expires: <strong>{{ expiresAt }}</strong></span>
+          <span class="mx-1 text-gray-300">•</span>
+          <span>
+            <i class="pi pi-calendar mr-1"></i>
+            <strong>Created:</strong> {{ props.service.created_at ? (new Date(props.service.created_at)).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A' }}
           </span>
-          <span v-else>
-            <span>&bull; No Expiry</span>
+          <span class="mx-1 text-gray-300">•</span>
+          <span>
+            <i class="pi pi-clock mr-1"></i>
+            <strong>Expires:</strong>
+            <template v-if="props.service.expires_at">
+              {{ (new Date(props.service.expires_at)).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) }}
+            </template>
+            <template v-else>
+              No Expiry
+            </template>
           </span>
-          <span v-if="isExpired" class="text-[#b91c1c] font-bold ml-2"><i class="pi pi-clock"></i> Expired</span>
+          <span v-if="isExpired" class="text-[#b91c1c] font-bold ml-2 flex items-center"><i class="pi pi-clock mr-1"></i>Expired</span>
         </div>
         <p class="text-gray-600 mb-2 line-clamp-2 break-words whitespace-normal w-full max-w-full h-[2.8em] overflow-hidden text-xs sm:text-sm" style="word-break: break-all;" tabindex="0">{{ description }}</p>
       </div>
@@ -183,17 +200,17 @@ const viewDetails = (evt) => {
           </div>
         </div>
         <div class="flex flex-wrap gap-1 sm:gap-2 mt-1">
-          <span v-for="(tag, idx) in tags.slice(0, 3)" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs px-2 py-1 rounded truncate max-w-[60px] sm:max-w-[80px]">
+          <span v-for="(tag, idx) in tags.slice(0, 2)" :key="tag.id ?? tag" class="bg-gray-50 border border-gray-200 text-gray-600 text-xs px-2 py-1 rounded truncate max-w-[60px] sm:max-w-[80px]">
             {{ tag.name ?? tag }}
           </span>
           <span
-            v-if="tags.length > 3"
+            v-if="tags.length > 2"
             class="bg-gray-200 px-2 py-1 rounded text-xs text-gray-500 cursor-pointer relative"
             @mouseenter="showTooltip = true"
             @mouseleave="showTooltip = false"
             style="position:relative;"
           >
-            ...<span class="ml-1">+{{ tags.length - 3 }}</span>
+            ...<span class="ml-1">+{{ tags.length - 2 }}</span>
             <!-- Popover -->
             <div
               v-if="showTooltip"

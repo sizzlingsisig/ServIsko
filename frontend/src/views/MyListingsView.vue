@@ -11,12 +11,7 @@
             <h1 class="text-4xl font-bold text-gray-900 mb-2">My Listings</h1>
             <p class="text-lg text-gray-600">Manage your service requests and listing status</p>
           </div>
-          <!-- Pro Tip Tooltip -->
-          <i
-            class="pi pi-info-circle text-primary-500 text-xl cursor-help"
-            v-tooltip.
-            right="'Keep your listings updated with clear descriptions and competitive budgets to attract more applicants!'"
-          ></i>
+
         </div>
 
         <!-- Action Buttons -->
@@ -61,6 +56,18 @@
                 <!-- Status Tabs -->
                 <div class="flex gap-2 flex-wrap">
                   <button
+                    @click="changeStatus('all')"
+                    :class="[
+                      'px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2',
+                      activeStatus === 'all'
+                        ? 'bg-primary-500 text-white shadow-sm'
+                        : 'bg-white text-gray-700 border-2 border-gray-300 hover:border-primary-500 hover:text-primary-500',
+                    ]"
+                  >
+                    <i class="pi pi-list"></i>
+                    All
+                  </button>
+                  <button
                     @click="changeStatus('active')"
                     :class="[
                       'px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2',
@@ -82,7 +89,7 @@
                     ]"
                   >
                     <i class="pi pi-times-circle"></i>
-                    Inactive
+                    Expired
                   </button>
                   <button
                     @click="changeStatus('closed')"
@@ -94,7 +101,7 @@
                     ]"
                   >
                     <i class="pi pi-check"></i>
-                    Completed
+                    Closed
                   </button>
                 </div>
 
@@ -196,8 +203,8 @@
                           :class="[
                             'px-3 py-1 rounded-full text-xs font-semibold uppercase',
                             listing.status === 'active' ? 'bg-green-100 text-green-700' : '',
-                            listing.status === 'inactive' ? 'bg-red-100 text-red-700' : '',
-                            listing.status === 'completed' ? 'bg-blue-100 text-blue-700' : '',
+                            listing.status === 'expired' ? 'bg-red-100 text-red-700' : '',
+                            listing.status === 'closed' ? 'bg-blue-100 text-blue-700' : '',
                           ]"
                         >
                           {{ listing.status }}
@@ -253,19 +260,19 @@
                   class="p-4  rounded-lg shadow-md transform hover:scale-105 transition-transform"
                 >
                   <div class="flex justify-between items-center mb-1">
-                    <span class="text-sm text-black font-semibold">Completed</span>
+                    <span class="text-sm text-black font-semibold">Closed</span>
                     <i class="pi pi-check text-black text-2xl"></i>
                   </div>
-                  <p class="text-4xl font-bold text-black">{{ stats.completed }}</p>
+                  <p class="text-4xl font-bold text-black">{{ stats.closed }}</p>
                 </div>
                 <div
                   class="p-4  rounded-lg shadow-md transform hover:scale-105 transition-transform"
                 >
                   <div class="flex justify-between items-center mb-1">
-                    <span class="text-sm text-black font-semibold">This Month</span>
-                    <i class="pi pi-calendar text-black text-2xl"></i>
+                    <span class="text-sm text-black font-semibold">Expired</span>
+                    <i class="pi pi-times-circle text-black text-2xl"></i>
                   </div>
-                  <p class="text-4xl font-bold text-black">{{ stats.thisMonth }}</p>
+                  <p class="text-4xl font-bold text-black">{{ stats.expired }}</p>
                 </div>
 
                 <Divider />
@@ -273,7 +280,7 @@
                 <div class="space-y-2 bg-gray-50 p-3 rounded-lg">
                   <div class="flex justify-between text-sm">
                     <span class="text-gray-600 font-medium">Total Records</span>
-                    <span class="font-bold text-gray-900">{{ pagination.total }}</span>
+                    <span class="font-bold text-gray-900">{{ stats.active + stats.closed + stats.expired }}</span>
                   </div>
                 </div>
               </div>
@@ -375,6 +382,122 @@
         </div>
       </template>
     </Dialog>
+
+    <!-- Edit Listing Dialog -->
+    <Dialog
+      v-model:visible="showEditDialog"
+      :modal="true"
+      :style="{ width: '600px' }"
+      :draggable="false"
+    >
+      <template #header>
+        <div class="flex items-center gap-2">
+          <i class="pi pi-pencil text-primary-500"></i>
+          <span class="font-bold text-xl">Edit Listing</span>
+        </div>
+      </template>
+
+      <div class="space-y-4 py-4">
+        <!-- Title -->
+        <div>
+          <label for="edit-title" class="block font-semibold mb-2 text-gray-700">
+            Title <span class="text-red-500">*</span>
+          </label>
+          <InputText
+            id="edit-title"
+            v-model="editForm.title"
+            placeholder="Enter listing title"
+            class="w-full"
+            :class="{ 'p-invalid': editErrors.title }"
+          />
+          <small v-if="editErrors.title" class="text-red-500">{{ editErrors.title }}</small>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label for="edit-description" class="block font-semibold mb-2 text-gray-700">
+            Description <span class="text-red-500">*</span>
+          </label>
+          <Textarea
+            id="edit-description"
+            v-model="editForm.description"
+            placeholder="Describe what you're looking for..."
+            rows="5"
+            class="w-full"
+            :class="{ 'p-invalid': editErrors.description }"
+          />
+          <small v-if="editErrors.description" class="text-red-500">{{ editErrors.description }}</small>
+        </div>
+
+        <!-- Category -->
+        <div>
+          <label for="edit-category" class="block font-semibold mb-2 text-gray-700">
+            Category <span class="text-red-500">*</span>
+          </label>
+          <Dropdown
+            id="edit-category"
+            v-model="editForm.category_id"
+            :options="categories"
+            optionLabel="name"
+            optionValue="id"
+            placeholder="Select a category"
+            class="w-full"
+            :class="{ 'p-invalid': editErrors.category_id }"
+          />
+          <small v-if="editErrors.category_id" class="text-red-500">{{ editErrors.category_id }}</small>
+        </div>
+
+        <!-- Budget -->
+        <div>
+          <label for="edit-budget" class="block font-semibold mb-2 text-gray-700">
+            Budget <span class="text-red-500">*</span>
+          </label>
+          <InputNumber
+            id="edit-budget"
+            v-model="editForm.budget"
+            placeholder="Enter budget amount"
+            :min="0"
+            prefix="₱"
+            class="w-full"
+            :class="{ 'p-invalid': editErrors.budget }"
+          />
+          <small v-if="editErrors.budget" class="text-red-500">{{ editErrors.budget }}</small>
+        </div>
+
+        <!-- Deadline -->
+        <div>
+          <label for="edit-deadline" class="block font-semibold mb-2 text-gray-700">
+            Deadline
+          </label>
+          <Calendar
+            id="edit-deadline"
+            v-model="editForm.deadline"
+            :showIcon="true"
+            placeholder="Select deadline"
+            dateFormat="yy-mm-dd"
+            class="w-full"
+          />
+        </div>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <Button
+            label="Cancel"
+            severity="secondary"
+            outlined
+            @click="closeEditDialog"
+            :disabled="updateLoading"
+          />
+          <Button
+            label="Save Changes"
+            icon="pi pi-check"
+            @click="updateListing"
+            :loading="updateLoading"
+          />
+        </div>
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -382,14 +505,17 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import Card from 'primevue/card'
 import InputText from 'primevue/inputtext'
+import Textarea from 'primevue/textarea'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import Paginator from 'primevue/paginator'
 import ProgressSpinner from 'primevue/progressspinner'
 import Menu from 'primevue/menu'
 import Dialog from 'primevue/dialog'
+import Button from 'primevue/button'
 import Dropdown from 'primevue/dropdown'
 import InputNumber from 'primevue/inputnumber'
+import Calendar from 'primevue/calendar'
 import Divider from 'primevue/divider'
 import Tooltip from 'primevue/tooltip'
 import { useToast } from 'primevue/usetoast'
@@ -410,10 +536,12 @@ const debounce = (func, delay) => {
 
 // State
 const activeRole = ref('seeker')
-const activeStatus = ref('active')
+const activeStatus = ref('all')
 const searchQuery = ref('')
 const loading = ref(false)
 const showFilterDialog = ref(false)
+const showEditDialog = ref(false)
+const updateLoading = ref(false)
 
 const listings = ref([])
 const pagination = ref({
@@ -428,8 +556,8 @@ const pagination = ref({
 // Statistics
 const stats = ref({
   active: 0,
-  completed: 0,
-  thisMonth: 0,
+  closed: 0,
+  expired: 0,
 })
 
 // Filters
@@ -441,28 +569,45 @@ const filters = ref({
 
 const categories = ref([])
 
+// Edit Form
+const editForm = ref({
+  id: null,
+  title: '',
+  description: '',
+  category_id: null,
+  budget: null,
+  deadline: null,
+})
+
+const editErrors = ref({
+  title: '',
+  description: '',
+  category_id: '',
+  budget: '',
+})
+
 // Menu
 const menu = ref()
 const selectedListing = ref(null)
 
 const menuItems = ref([
   {
-    label: 'View Details',
-    icon: 'pi pi-eye',
-    command: () => viewListing(selectedListing.value),
-  },
-  {
     label: 'Edit',
     icon: 'pi pi-pencil',
     command: () => editListing(selectedListing.value),
   },
   {
-    separator: true,
+    label: 'View Details',
+    icon: 'pi pi-eye',
+    command: () => viewListing(selectedListing.value),
   },
   {
-    label: 'Mark as Completed',
-    icon: 'pi pi-check',
-    command: () => markCompleted(selectedListing.value),
+    label: 'View Applications',
+    icon: 'pi pi-users',
+    command: () => viewApplications(selectedListing.value),
+  },
+  {
+    separator: true,
   },
   {
     label: 'Deactivate',
@@ -480,6 +625,11 @@ const menuItems = ref([
   },
 ])
 
+// View Applications navigation
+const viewApplications = (listing) => {
+  router.push(`/listings/${listing.id}/applications`)
+}
+
 // Computed
 const appliedFiltersCount = computed(() => {
   let count = 0
@@ -494,17 +644,18 @@ const loadListings = async () => {
   try {
     loading.value = true
 
+    // Build params, only include filters if set
     const params = {
       perPage: pagination.value.per_page,
       page: pagination.value.current_page,
-      status: activeStatus.value,
-      categoryId: filters.value.categoryId,
-      search: searchQuery.value,
-      minBudget: filters.value.minBudget,
-      maxBudget: filters.value.maxBudget,
       sortBy: 'created_at',
       sortOrder: 'desc',
     }
+    if (activeStatus.value && activeStatus.value !== 'all') params.status = activeStatus.value
+    if (filters.value.categoryId) params.categoryId = filters.value.categoryId
+    if (filters.value.minBudget !== null && filters.value.minBudget !== undefined && filters.value.minBudget !== '') params.minBudget = filters.value.minBudget
+    if (filters.value.maxBudget !== null && filters.value.maxBudget !== undefined && filters.value.maxBudget !== '') params.maxBudget = filters.value.maxBudget
+    if (searchQuery.value && searchQuery.value.trim() !== '') params.search = searchQuery.value.trim()
 
     const response = await api.get('/seeker/listings', { params })
 
@@ -533,23 +684,17 @@ const loadStatistics = async () => {
     })
     stats.value.active = activeResponse.data.pagination.total
 
-    // Load completed listings count
-    const completedResponse = await api.get('/seeker/listings', {
-      params: { status: 'completed', perPage: 1 },
+    // Load closed listings count
+    const closedResponse = await api.get('/seeker/listings', {
+      params: { status: 'closed', perPage: 1 },
     })
-    stats.value.completed = completedResponse.data.pagination.total
+    stats.value.closed = closedResponse.data.pagination.total
 
-    // Load this month's listings
-    const thisMonth = new Date()
-    thisMonth.setDate(1)
-    const monthResponse = await api.get('/seeker/listings', {
-      params: { perPage: 1000 }, // Get all to count
+    // Load expired listings count
+    const expiredResponse = await api.get('/seeker/listings', {
+      params: { status: 'expired', perPage: 1 },
     })
-    const thisMonthListings = monthResponse.data.data.filter((listing) => {
-      const createdDate = new Date(listing.created_at)
-      return createdDate >= thisMonth
-    })
-    stats.value.thisMonth = thisMonthListings.length
+    stats.value.expired = expiredResponse.data.pagination.total
   } catch (error) {
     console.error('Failed to load statistics:', error)
   }
@@ -564,6 +709,97 @@ const loadCategories = async () => {
   }
 }
 
+// Validation
+const validateEditForm = () => {
+  editErrors.value = {
+    title: '',
+    description: '',
+    category_id: '',
+    budget: '',
+  }
+
+  let isValid = true
+
+  if (!editForm.value.title || editForm.value.title.trim() === '') {
+    editErrors.value.title = 'Title is required'
+    isValid = false
+  } else if (editForm.value.title.length < 5) {
+    editErrors.value.title = 'Title must be at least 5 characters'
+    isValid = false
+  }
+
+  if (!editForm.value.description || editForm.value.description.trim() === '') {
+    editErrors.value.description = 'Description is required'
+    isValid = false
+  } else if (editForm.value.description.length < 20) {
+    editErrors.value.description = 'Description must be at least 20 characters'
+    isValid = false
+  }
+
+  if (!editForm.value.category_id) {
+    editErrors.value.category_id = 'Category is required'
+    isValid = false
+  }
+
+  if (!editForm.value.budget || editForm.value.budget <= 0) {
+    editErrors.value.budget = 'Budget must be greater than 0'
+    isValid = false
+  }
+
+  return isValid
+}
+
+// Update Listing
+const updateListing = async () => {
+  if (!validateEditForm()) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Validation Error',
+      detail: 'Please fix the errors in the form',
+      life: 3000,
+    })
+    return
+  }
+
+  updateLoading.value = true
+
+  try {
+    const payload = {
+      title: editForm.value.title,
+      description: editForm.value.description,
+      category_id: editForm.value.category_id,
+      budget: editForm.value.budget,
+      deadline: editForm.value.deadline
+        ? new Date(editForm.value.deadline).toISOString().split('T')[0]
+        : null,
+    }
+
+    const response = await api.put(`/seeker/listings/${editForm.value.id}`, payload)
+
+    if (response.data.success) {
+      toast.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Listing updated successfully',
+        life: 3000,
+      })
+      closeEditDialog()
+      loadListings()
+      loadStatistics()
+    }
+  } catch (error) {
+    console.error('Failed to update listing:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.response?.data?.message || 'Failed to update listing',
+      life: 3000,
+    })
+  } finally {
+    updateLoading.value = false
+  }
+}
+
 // Debounced search
 const debouncedSearch = debounce(() => {
   pagination.value.current_page = 1
@@ -574,6 +810,13 @@ const debouncedSearch = debounce(() => {
 watch(searchQuery, () => {
   debouncedSearch()
 })
+watch(
+  () => [filters.value.categoryId, filters.value.minBudget, filters.value.maxBudget],
+  () => {
+    pagination.value.current_page = 1
+    loadListings()
+  }
+)
 
 // Methods
 const changeStatus = (status) => {
@@ -610,47 +853,128 @@ const viewListing = (listing) => {
 }
 
 const editListing = (listing) => {
-  router.push(`/listings/${listing.id}/edit`)
+  editForm.value = {
+    id: listing.id,
+    title: listing.title,
+    description: listing.description,
+    category_id: listing.category?.id || null,
+    budget: parseFloat(listing.budget),
+    deadline: listing.deadline ? new Date(listing.deadline) : null,
+  }
+  editErrors.value = {
+    title: '',
+    description: '',
+    category_id: '',
+    budget: '',
+  }
+  showEditDialog.value = true
 }
 
-const markCompleted = (listing) => {
+const closeEditDialog = () => {
+  showEditDialog.value = false
+  editForm.value = {
+    id: null,
+    title: '',
+    description: '',
+    category_id: null,
+    budget: null,
+    deadline: null,
+  }
+  editErrors.value = {
+    title: '',
+    description: '',
+    category_id: '',
+    budget: '',
+  }
+}
+
+const markClosed = (listing) => {
   toast.add({
     severity: 'success',
-    summary: 'Listing Completed',
-    detail: `${listing.title} marked as completed`,
+    summary: 'Listing Closed',
+    detail: `${listing.title} marked as closed`,
     life: 3000,
   })
   loadListings()
   loadStatistics()
 }
 
-const deactivateListing = (listing) => {
-  toast.add({
-    severity: 'warn',
-    summary: 'Listing Deactivated',
-    detail: `${listing.title} has been deactivated`,
-    life: 3000,
-  })
-  loadListings()
-  loadStatistics()
+
+const deactivateListing = async (listing) => {
+  if (!listing || !listing.id) return
+  if (!confirm(`Are you sure you want to deactivate "${listing.title}"? This will reject all applications for this listing.`)) return
+  try {
+    updateLoading.value = true
+    const response = await api.post(`/seeker/listings/${listing.id}/deactivate`)
+    if (response.data.success) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Listing Deactivated',
+        detail: `${listing.title} has been deactivated`,
+        life: 3000,
+      })
+      loadListings()
+      loadStatistics()
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: response.data.message || 'Failed to deactivate listing',
+        life: 3000,
+      })
+    }
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.response?.data?.message || 'Failed to deactivate listing',
+      life: 3000,
+    })
+  } finally {
+    updateLoading.value = false
+  }
 }
 
-const deleteListing = (listing) => {
-  toast.add({
-    severity: 'error',
-    summary: 'Listing Deleted',
-    detail: `${listing.title} has been deleted`,
-    life: 3000,
-  })
-  loadListings()
-  loadStatistics()
+const deleteListing = async (listing) => {
+  if (!listing || !listing.id) return
+  if (!confirm(`Are you sure you want to delete "${listing.title}"? This action cannot be undone.`)) return
+  try {
+    updateLoading.value = true
+    const response = await api.delete(`/seeker/listings/${listing.id}`)
+    if (response.data.success) {
+      toast.add({
+        severity: 'error',
+        summary: 'Listing Deleted',
+        detail: `${listing.title} has been deleted`,
+        life: 3000,
+      })
+      loadListings()
+      loadStatistics()
+    } else {
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: response.data.message || 'Failed to delete listing',
+        life: 3000,
+      })
+    }
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.response?.data?.message || 'Failed to delete listing',
+      life: 3000,
+    })
+  } finally {
+    updateLoading.value = false
+  }
 }
 
 const exportListings = () => {
   toast.add({
     severity: 'success',
     summary: 'Export Started',
-    detail: 'Your listings are being exported.. .',
+    detail: 'Your listings are being exported...',
     life: 3000,
   })
 }
@@ -676,12 +1000,7 @@ const applyFilters = () => {
   showFilterDialog.value = false
   pagination.value.current_page = 1
   loadListings()
-  toast.add({
-    severity: 'success',
-    summary: 'Filters Applied',
-    detail: `${appliedFiltersCount.value} filter(s) applied`,
-    life: 3000,
-  })
+  // No need to toast here, as watcher will trigger loadListings
 }
 
 // Lifecycle

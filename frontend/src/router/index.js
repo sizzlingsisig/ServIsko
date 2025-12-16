@@ -58,6 +58,13 @@ const router = createRouter({
       meta: { layout: 'DefaultLayout', requiresAuth: false },
       props: true,
     },
+    {
+      path: '/listings/:id/applications',
+      name: 'listing-applications',
+      component: () => import('@/views/ListingApplicationsView.vue'),
+      meta: { layout: 'DefaultLayout', requiresAuth: true },
+      props: true,
+    },
 
     {
       path: '/providers',
@@ -78,6 +85,7 @@ const router = createRouter({
       component: () => import('@/views/MyListingsView.vue'),
       meta: { layout: 'ProfileLayout', requiresAuth: true },
     },
+
     // {
     //   path: '/dashboard/messages',
     //   name: 'messages',
