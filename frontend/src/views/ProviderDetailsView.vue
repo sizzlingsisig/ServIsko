@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/composables/axios'
+
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
@@ -15,6 +16,28 @@ const categoryOptions = ref([])
 const tagOptions = ref([]) // [{label, value}]
 const tagSuggestions = ref([]) // [string]
 const tagInput = ref('')
+
+const user = ref(null)
+const isOwner = ref(false)
+
+const fetchUserInfo = async ()=> {
+  try {
+    const resp = await api.get('/user/')
+    const data = resp.data
+    if (data.success && data.data) {
+      user.value = data.data
+      console.log('user info:', user.value.id)
+      console.log('provider id:', providerId.value)
+      if(user.value.id === parseInt(providerId.value)) {
+        isOwner.value = true
+      }
+    }
+  } catch {
+    // Silently fail if user can't be loaded
+  }
+}
+
+
 
 const fetchCategoryOptions = async () => {
   try {
@@ -93,6 +116,7 @@ function removeTag(tag) {
 }
 
 onMounted(() => {
+  fetchUserInfo()
   fetchCategoryOptions()
   fetchTagOptions()
 })
@@ -362,7 +386,7 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
                   />
                   <Button
                     label="Report User"
-                    class="border-2 border-red-500 text-red-500 px-6 py-2 rounded-md hover:bg-red-50 transition"
+                    style="background-color: #e5e7eb; color: #374151; border: 2px solid #d1d5db; padding: 0.5rem 1.5rem; border-radius: 0.375rem;"
                   />
                   <button
                     @click="toggleBookmark"
@@ -447,6 +471,7 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
                 >
                   <h3 class="font-bold text-lg">Services Offered</h3>
                   <Button
+                    v-if="isOwner"
                     label="Add Service"
                     icon="pi pi-plus"
                     size="small"
@@ -492,11 +517,13 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
                     </div>
                     <div class="flex gap-2 mt-4 justify-end">
                       <Button
+                        v-if="isOwner"
                         icon="pi pi-pencil"
                         class="p-button-rounded p-button-sm bg-[#6d0019] text-white"
                         @click="editService(service)"
                       />
                       <Button
+                        v-if="isOwner"
                         icon="pi pi-trash"
                         class="p-button-rounded p-button-sm bg-red-500 text-white"
                         @click="deleteService(service.id)"
@@ -519,6 +546,7 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
 
         <!-- Service Modal -->
         <Dialog
+          v-if="isOwner"
           v-model:visible="showServiceModal"
           :modal="true"
           :header="isEditingService ? 'Edit Service' : 'Add Service'"
@@ -586,12 +614,7 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
                   placeholder="Add tags..."
                   class="flex-1"
                 />
-                <Button
-                  type="button"
-                  icon="pi pi-plus"
-                  @click="addTag"
-                  class="p-button-secondary"
-                />
+
               </div>
             </div>
             <div
@@ -614,6 +637,7 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
 
         <!-- Delete Confirmation Dialog -->
         <Dialog
+          v-if="isOwner"
           v-model:visible="showDeleteDialog"
           :modal="true"
           header="Confirm Delete"
@@ -625,7 +649,7 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
             <Button
               label="Delete"
               @click="confirmDeleteService"
-              class="p-button-danger bg-red-600 text-white"
+              class=" bg-primary-600 text-white"
             />
           </template>
         </Dialog>
