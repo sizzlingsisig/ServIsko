@@ -27,27 +27,14 @@ class User extends Authenticatable
 
     protected $guard_name = 'sanctum';
 
-    protected $fillable = [
-        'name',
-        'email',
-        'username',
-        'password',
-    ];
-
-
+    protected $fillable = ['name', 'email', 'username', 'password'];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-        'created_at',
-        'updated_at',
-        'deleted_at'
-    ];
+    protected $hidden = ['password', 'remember_token', 'created_at', 'updated_at', 'deleted_at'];
 
     /**
      * Get the attributes that should be cast.
@@ -67,22 +54,23 @@ class User extends Authenticatable
      */
 
     // A user can have many listings
-        public function listings(): HasMany
+    public function listings(): HasMany
     {
         return $this->hasMany(Listing::class, 'seeker_user_id');
     }
-
 
     // A user can have many applications
     public function applications()
     {
         return $this->hasMany(Application::class);
     }
-    public function profile(): HasOne{
+    public function profile(): HasOne
+    {
         return $this->hasOne(UserProfile::class);
     }
 
-    public function providerProfile(): HasOne{
+    public function providerProfile(): HasOne
+    {
         return $this->hasOne(ProviderProfile::class);
     }
 
@@ -94,5 +82,15 @@ class User extends Authenticatable
     public function services(): HasMany
     {
         return $this->hasMany(Service::class, 'provider_id');
+    }
+
+    public function conversations()
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_participants')->withPivot('last_read_at')->withTimestamps()->orderByPivot('updated_at', 'desc');
+    }
+
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
     }
 }
