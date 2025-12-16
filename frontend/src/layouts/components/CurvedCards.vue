@@ -28,7 +28,7 @@ const cards = [
     id: 1,
     path: 'M0.5 318.492V0.5H254.5V194V381L161.5 362L76.5 342L0.5 318.492Z',
     title: 'Tutoring & Education',
-    subtitle: 'Teach and inspire others',
+    subtitle: 'Empower learning journeys',
     image: tutoringImage,
     x: 22,
     y: 40, // aligned top
@@ -64,7 +64,7 @@ const cards = [
     id: 5,
     path: 'M1097.5 397V0.5H1335.5V352.765L1323 355.5L1274 366.5L1227.5 376L1187.5 383L1142.5 390.5L1109 395.5L1097.5 397Z',
     title: 'Design and Creatives',
-    subtitle: 'Create stunning visuals',
+    subtitle: 'Create stunnning visuals',
     image: designImage,
     x: 1108,
     y: 40, // aligned top
