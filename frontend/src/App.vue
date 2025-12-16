@@ -39,28 +39,39 @@ const currentLayout = computed(() => {
 })
 
 // Check profile on mount and route changes
+
 onMounted(async () => {
   // Only check if user is authenticated
-  if (route.meta.requiresAuth !== false) {
-    await checkProfile()
+  try {
+    if (route.meta.requiresAuth !== false) {
+      await checkProfile()
+    }
+  } catch (err) {
+    console.error('Profile check failed on mount:', err)
   }
 })
 
 // Re-check profile when navigating to authenticated routes
-watch(() => route.path, async (newPath) => {
-  // Skip auth and public pages
-  const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password']
-  if (!publicPaths.includes(newPath) && route.meta.requiresAuth !== false) {
-    const skipped = localStorage.getItem('profileSetupSkipped')
-    if (!skipped) {
-      await checkProfile()
+watch(
+  () => route.fullPath,
+  async (newPath, oldPath) => {
+    // Skip auth and public pages
+    const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password']
+    try {
+      if (!publicPaths.includes(newPath) && route.meta.requiresAuth !== false) {
+        const skipped = localStorage.getItem('profileSetupSkipped')
+        if (!skipped) {
+          await checkProfile()
+        }
+      }
+    } catch (err) {
+      console.error('Profile check failed on route change:', err)
     }
   }
-})
+)
 
 const handleSetupCompleted = async () => {
   console.log('✅ Profile setup completed!')
-  // Optionally reload profile data across the app
   await checkProfile()
 }
 </script>
