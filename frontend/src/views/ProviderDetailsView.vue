@@ -20,6 +20,44 @@ const tagInput = ref('')
 const user = ref(null)
 const isOwner = ref(false)
 
+const showMessageModal = ref(false)
+const messageText = ref('')
+const messageSending = ref(false)
+const messageError = ref('')
+
+const sendMessageToProvider = async () => {
+  if (!messageText.value.trim()) return
+
+  messageSending.value = true
+  messageError.value = ''
+
+  try {
+    // First, get or create conversation with this provider
+    const convResp = await api.get(`/conversations/${providerId.value}`)
+    const conversation = convResp.data
+
+    // Then send the message
+    await api.post(`/conversations/${conversation.id}/messages`, {
+      message_text: messageText.value
+    })
+
+    // Success - close modal and reset
+    showMessageModal.value = false
+    messageText.value = ''
+    alert('Message sent successfully!')
+  } catch (err) {
+    messageError.value = err.response?.data?.message || 'Failed to send message'
+  } finally {
+    messageSending.value = false
+  }
+}
+
+const openMessageModal = () => {
+  messageText.value = ''
+  messageError.value = ''
+  showMessageModal.value = true
+}
+
 const fetchUserInfo = async ()=> {
   try {
     const resp = await api.get('/user/')
@@ -380,10 +418,12 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
                 </div>
                 <!-- Actions Buttons -->
                 <div class="flex gap-3 mt-4">
-                  <Button
-                    label="Send Message"
-                    class="bg-[#6d0019] text-white px-6 py-2 rounded-md hover:bg-[#5a0013] transition"
-                  />
+                    <Button
+                      label="Send Message"
+                      class="bg-[#6d0019] text-white px-6 py-2 rounded-md hover:bg-[#5a0013] transition"
+                      @click="openMessageModal"
+                      v-if="!isOwner && providerProfile && Object.keys(providerProfile).length > 0"
+                    />
                   <Button
                     label="Report User"
                     style="background-color: #e5e7eb; color: #374151; border: 2px solid #d1d5db; padding: 0.5rem 1.5rem; border-radius: 0.375rem;"
@@ -634,6 +674,50 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
             />
           </template>
         </Dialog>
+
+        <!-- Send Message Modal -->
+<Dialog
+  v-model:visible="showMessageModal"
+  :modal="true"
+  header="Send Message"
+  class="w-full md:w-1/2"
+>
+  <div class="space-y-4">
+    <p class="text-sm text-gray-600">Send a message to {{ name }}</p>
+    <div>
+      <label class="block text-sm font-semibold mb-2">Message *</label>
+      <Textarea
+        v-model="messageText"
+        class="w-full"
+        rows="6"
+        placeholder="Type your message here..."
+        :disabled="messageSending"
+        required
+      />
+    </div>
+    <div
+      v-if="messageError"
+      class="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm"
+    >
+      {{ messageError }}
+    </div>
+  </div>
+  <template #footer>
+    <Button
+      label="Cancel"
+      @click="showMessageModal = false"
+      class="p-button-secondary"
+      :disabled="messageSending"
+    />
+    <Button
+      label="Send"
+      @click="sendMessageToProvider"
+      class="bg-[#6d0019] text-white"
+      :disabled="!messageText.trim() || messageSending"
+      :loading="messageSending"
+    />
+  </template>
+</Dialog>
 
         <!-- Delete Confirmation Dialog -->
         <Dialog
