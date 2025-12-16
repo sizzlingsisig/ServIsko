@@ -9,6 +9,7 @@ import { useToast } from 'primevue/usetoast'
 const toast = useToast()
 const featuredServices = ref([])
 const loading = ref(false)
+const activeTab = ref('find')
 
 const responsiveOptions = ref([
   {
@@ -76,12 +77,25 @@ onMounted(() => {
 
       <div class="flex flex-col sm:flex-row gap-4 w-full max-w-xs sm:max-w-none">
         <button
-          class="px-8 py-3 bg-white text-[#6d0019] font-semibold rounded hover:bg-gray-100 transition-colors w-full sm:w-auto"
+          @click="activeTab = 'find'"
+          :class="[
+            'px-8 py-3 font-semibold rounded transition-colors w-full sm:w-auto border-2',
+            activeTab === 'find'
+              ? 'bg-white text-[#6d0019] border-white'
+              : 'bg-transparent text-white border-white'
+          ]"
         >
           Find Services
         </button>
+
         <button
-          class="px-8 py-3 bg-transparent border-2 border-white text-white font-semibold rounded hover:bg-white hover:text-[#6d0019] transition-colors w-full sm:w-auto"
+          @click="activeTab = 'offer'"
+          :class="[
+            'px-8 py-3 font-semibold rounded transition-colors w-full sm:w-auto border-2',
+            activeTab === 'offer'
+              ? 'bg-white text-[#6d0019] border-white'
+              : 'bg-transparent text-white border-white'
+          ]"
         >
           Offer Services
         </button>
@@ -96,7 +110,8 @@ onMounted(() => {
       width="100%"
       height="auto"
     >
-<path fill="#ffffff" d="M0,320 C480,160 960,160 1440,320 L1440,321 L0,321 Z" />    </svg>
+      <path fill="#ffffff" d="M0,320 C480,160 960,160 1440,320 L1440,321 L0,321 Z" />
+    </svg>
   </section>
 
   <section
@@ -115,7 +130,8 @@ onMounted(() => {
           <input
             type="text"
             placeholder="Search for services or providers..."
-            class="flex-1 px-4 sm:px-6 py-3 sm:py-4 border-2 border-gray-300 rounded text-base focus:outline-none focus:border-[#6d0019] bg-white"
+            class="flex-1 px-4 sm:px-6 py-3 sm:py-4 border-2 border-gray-300 rounded text-base
+                   focus:outline-none focus:border-[#6d0019] bg-white text-black placeholder-gray-500"
           />
           <Button label="Search" class="w-full sm:w-auto" />
         </div>
@@ -145,11 +161,12 @@ onMounted(() => {
             <i class="pi pi-wifi !text-2xl"></i>
           </div>
           <span class="text-xl md:text-2xl font-bold">Trusted Service Providers</span>
-          <span class="text-center text-sm md:text-base"
-            >Verified students offering reliable services with ratings and reviews to help you
-            choose confidently.</span
-          >
+          <span class="text-center text-sm md:text-base">
+            Verified students offering reliable services with ratings and reviews to help you
+            choose confidently.
+          </span>
         </div>
+
         <div
           v-animateonscroll="{
             enterClass: 'animate-enter fade-in-10 zoom-in-75 animate-duration-1000',
@@ -162,11 +179,12 @@ onMounted(() => {
             <i class="pi pi-database !text-2xl"></i>
           </div>
           <span class="text-xl md:text-2xl font-bold">Transparent Pricing</span>
-          <span class="text-center text-sm md:text-base"
-            >Clear service listings and upfront prices— compare offers and pick the best fit for
-            your budget.</span
-          >
+          <span class="text-center text-sm md:text-base">
+            Clear service listings and upfront prices— compare offers and pick the best fit for
+            your budget.
+          </span>
         </div>
+
         <div
           v-animateonscroll="{
             enterClass: 'animate-enter fade-in-10 zoom-in-50 animate-duration-1000',
@@ -179,10 +197,10 @@ onMounted(() => {
             <i class="pi pi-arrows-v !text-2xl"></i>
           </div>
           <span class="text-xl md:text-2xl font-bold">Easy Booking & Communication</span>
-          <span class="text-center text-sm md:text-base"
-            >Message providers directly, schedule jobs, and manage requests all in one place for a
-            smooth booking experience.</span
-          >
+          <span class="text-center text-sm md:text-base">
+            Message providers directly, schedule jobs, and manage requests all in one place for a
+            smooth booking experience.
+          </span>
         </div>
       </div>
     </div>
@@ -199,7 +217,6 @@ onMounted(() => {
       <div
         class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 max-w-6xl mx-auto px-2 sm:px-4 md:px-8 py-8 md:py-12"
       >
-        <!-- left column: For Service Seekers -->
         <div class="ml-0 lg:ml-15">
           <h2 class="text-2xl md:text-2xl font-bold mb-6 md:mb-8 text-left">For Service Seekers</h2>
 
@@ -303,7 +320,7 @@ onMounted(() => {
     </div>
   </section>
 
-  <section class="w-full py-8 sm:py-16">
+  <section class="w-full py-8 sm:py-16 bg-gray-50">
     <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-8">
       <div class="text-center mb-8 sm:mb-12">
         <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">Featured Listings</h2>
