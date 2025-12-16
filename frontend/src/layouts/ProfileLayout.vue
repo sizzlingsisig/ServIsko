@@ -30,7 +30,7 @@ import MenuBar from './components/MenuBar.vue'
             class="group px-4 py-2 text-white font-medium transition-all duration-300 relative inline-block"
             active-class="border-b-2 border-white"
           >
-            My Listings
+            Listings
             <span
               class="absolute bottom-0 left-0 w-full h-0.5 bg-white rounded-full origin-left transition-all duration-300 ease-out"
               :class="[

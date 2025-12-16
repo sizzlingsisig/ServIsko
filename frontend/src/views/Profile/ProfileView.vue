@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, reactive } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import Card from 'primevue/card'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
@@ -11,6 +12,7 @@ import axios from '@/composables/axios'
 import ProfileCardHeader from '@/views/Profile/Components/ProfileCardHeader.vue'
 
 // State
+const toast = useToast()
 const flags = reactive({
   isProvider: false,
   isEditingDetails: false,
@@ -137,11 +139,11 @@ const handleFileSelect = (event) => {
   if (!file) return
 
   if (!file.type.startsWith('image/')) {
-    alert('Please select a valid image file')
+    toast.add({ severity: 'warn', summary: 'Invalid File', detail: 'Please select a valid image file', life: 3000 })
     return
   }
   if (file.size > 2048000) {
-    alert('Image size must be less than 2MB')
+    toast.add({ severity: 'warn', summary: 'File Too Large', detail: 'Image size must be less than 2MB', life: 3000 })
     return
   }
 
@@ -166,7 +168,7 @@ const saveProfilePicture = async () => {
     forms.preview = { tempUrl: null, file: null }
     closePreviewModal()
   } catch (error) {
-    alert('Failed to upload image')
+    toast.add({ severity: 'error', summary: 'Upload Failed', detail: 'Failed to upload image', life: 3000 })
   } finally {
     flags.loading = false
   }
@@ -188,7 +190,7 @@ const saveEditDetails = async () => {
     flags.isEditingDetails = false
     await loadProfile()
   } catch (error) {
-    alert(error.response?.data?.message || 'Failed to save profile')
+    toast.add({ severity: 'error', summary: 'Save Failed', detail: error.response?.data?.message || 'Failed to save profile', life: 3000 })
   } finally {
     flags.loading = false
   }
@@ -211,7 +213,7 @@ const searchSkill = (event) => {
 
 const addSkill = async () => {
   if (!forms.skill.name.trim()) {
-    alert('Please select a skill')
+    toast.add({ severity: 'warn', summary: 'Skill Required', detail: 'Please select a skill', life: 3000 })
     return
   }
 
@@ -253,7 +255,7 @@ const addSkill = async () => {
 
 const requestSkill = async () => {
   if (!forms.skillRequest.name.trim()) {
-    alert('Please enter skill name')
+    toast.add({ severity: 'warn', summary: 'Skill Name Required', detail: 'Please enter skill name', life: 3000 })
     return
   }
 
@@ -264,14 +266,14 @@ const requestSkill = async () => {
       description: forms.skillRequest.description,
     })
 
-    alert('Skill request submitted successfully! Our team will review it soon.')
+    toast.add({ severity: 'success', summary: 'Skill Requested', detail: 'Skill request submitted successfully! Our team will review it soon.', life: 3000 })
     forms.skillRequest = { name: '', description: '' }
     forms.skill = { name: '', category: '', description: '' }
     flags.showSkillNotFoundDialog = false
     closeCreateSkillDialog()
   } catch (error) {
     console.error('Failed to request skill:', error)
-    alert(error.response?.data?.message || 'Failed to submit skill request')
+    toast.add({ severity: 'error', summary: 'Request Failed', detail: error.response?.data?.message || 'Failed to submit skill request', life: 3000 })
   } finally {
     flags.loading = false
   }
@@ -287,7 +289,7 @@ const confirmDeleteSkill = async () => {
     closeDeleteConfirmDialog()
   } catch (error) {
     console.error('Failed to delete skill:', error)
-    alert('Failed to delete skill')
+    toast.add({ severity: 'error', summary: 'Delete Failed', detail: 'Failed to delete skill', life: 3000 })
   } finally {
     flags.loading = false
     indexes.skillToDelete = null
@@ -340,13 +342,13 @@ const addLink = async () => {
     flags.loading = true
     await axios.post('/provider/profile/links', forms.link)
 
-    alert('Link added successfully')
+    toast.add({ severity: 'success', summary: 'Link Added', detail: 'Link added successfully', life: 3000 })
     forms.link = { title: '', url: '' }
     flags.showCreateLinkDialog = false
     await loadProfile() // Refetch profile
   } catch (error) {
     console.error('Failed to add link:', error)
-    alert(error.response?.data?.message || 'Failed to add link')
+    toast.add({ severity: 'error', summary: 'Add Link Failed', detail: error.response?.data?.message || 'Failed to add link', life: 3000 })
   } finally {
     flags.loading = false
   }
@@ -359,14 +361,14 @@ const updateLink = async () => {
     flags.loading = true
     await axios.put(`/provider/profile/links/${editingLinkId.value}`, forms.link)
 
-    alert('Link updated successfully')
+    toast.add({ severity: 'success', summary: 'Link Updated', detail: 'Link updated successfully', life: 3000 })
     forms.link = { title: '', url: '' }
     flags.showEditLinkDialog = false
     editingLinkId.value = null
     await loadProfile() // Refetch profile
   } catch (error) {
     console.error('Failed to update link:', error)
-    alert(error.response?.data?.message || 'Failed to update link')
+    toast.add({ severity: 'error', summary: 'Update Link Failed', detail: error.response?.data?.message || 'Failed to update link', life: 3000 })
   } finally {
     flags.loading = false
   }
@@ -380,11 +382,11 @@ const confirmDeleteLink = async () => {
     await axios.delete(`/provider/profile/links/${link.id}`)
 
     closeDeleteLinkDialog()
-    alert('Link deleted successfully')
+    toast.add({ severity: 'success', summary: 'Link Deleted', detail: 'Link deleted successfully', life: 3000 })
     await loadProfile() // Refetch profile
   } catch (error) {
     console.error('Failed to delete link:', error)
-    alert('Failed to delete link')
+    toast.add({ severity: 'error', summary: 'Delete Link Failed', detail: 'Failed to delete link', life: 3000 })
   } finally {
     flags.loading = false
     indexes.linkToDelete = null

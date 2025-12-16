@@ -73,6 +73,65 @@ class ListingController extends Controller
     }
 
     /**
+     * Deactivate a listing (set status to expired)
+     * POST /seeker/listings/{id}/deactivate
+     */
+    public function deactivate(Request $request, int $id): JsonResponse
+    {
+        try {
+            if ($id <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid listing ID.',
+                ], 400);
+            }
+
+            $listing = $this->findListingByUser($id);
+
+            if (!$listing) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Listing not found or you do not have permission to deactivate it.',
+                ], 404);
+            }
+
+            if ($listing->status !== 'active') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only active listings can be deactivated.',
+                ], 400);
+            }
+
+            // Set all applications to rejected
+            $listing->applications()->where('status', 'pending')->update(['status' => 'rejected']);
+
+            $listing->status = 'expired';
+            $listing->save();
+
+            Log::info('Listing deactivated (expired)', [
+                'listing_id' => $listing->id,
+                'seeker_user_id' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Listing deactivated (set to expired) successfully. All applications have been rejected.',
+                'data' => $listing,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to deactivate listing', [
+                'error' => $e->getMessage(),
+                'listing_id' => $id,
+                'user_id' => auth()->id(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to deactivate listing.',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+    /**
      * Get a single listing (only owner)
      * GET /seeker/listings/{id}
      */

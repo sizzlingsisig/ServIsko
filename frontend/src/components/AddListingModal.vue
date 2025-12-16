@@ -16,6 +16,7 @@ const props = defineProps({
 const emit = defineEmits(['update:showAddModal', 'created'])
 
 const categorySuggestions = ref([])
+
 const tagSuggestions = ref([])
 
 function filterCategories(event) {
@@ -31,18 +32,19 @@ function filterCategories(event) {
 
 function filterTags(event) {
   const query = event.query?.toLowerCase() || ''
+  let tagObjs = (props.tags || []).map(tag => typeof tag === 'object' ? tag : { name: tag })
   if (!query) {
-    tagSuggestions.value = props.tags || []
+    tagSuggestions.value = tagObjs
   } else {
-    tagSuggestions.value = (props.tags || []).filter(tag =>
-      tag.toLowerCase().includes(query)
+    tagSuggestions.value = tagObjs.filter(tagObj =>
+      tagObj.name.toLowerCase().includes(query)
     )
   }
 }
 
 onMounted(() => {
   categorySuggestions.value = props.categories || []
-  tagSuggestions.value = props.tags || []
+  tagSuggestions.value = (props.tags || []).map(tag => typeof tag === 'object' ? tag : { name: tag })
 })
 
 const visible = ref(props.showAddModal)
@@ -50,6 +52,7 @@ watch(() => props.showAddModal, val => { visible.value = val })
 
 const activeStep = ref(1)
 const tagInput = ref('')
+const selectedTag = ref(null)
 const createListingForm = reactive({
   title: '',
   description: '',
@@ -114,30 +117,37 @@ function goBack() {
   if (activeStep.value > 1) activeStep.value--
 }
 
+
 function addTag(event) {
   let tag = ''
   if (event && event.value) {
-    tag = typeof event.value === 'string' ? event.value : event.value?.name || event.value
+    tag = typeof event.value === 'object' && event.value.name ? event.value.name : event.value
+  } else if (selectedTag.value && typeof selectedTag.value === 'object' && selectedTag.value.name) {
+    tag = selectedTag.value.name
   } else if (tagInput.value) {
     tag = tagInput.value
   }
   const trimmedTag = tag.trim()
   if (!trimmedTag) {
     tagInput.value = ''
+    selectedTag.value = null
     return
   }
   if (createListingForm.tags.length >= 5) {
     warning('Maximum 5 tags allowed', 'Tag Limit')
     tagInput.value = ''
+    selectedTag.value = null
     return
   }
   if (createListingForm.tags.includes(trimmedTag)) {
     info(`Tag "${trimmedTag}" already added`)
     tagInput.value = ''
+    selectedTag.value = null
     return
   }
   createListingForm.tags.push(trimmedTag)
   tagInput.value = ''
+  selectedTag.value = null
   success(`Tag "${trimmedTag}" added`)
 }
 
@@ -315,9 +325,10 @@ async function submitListing() {
               />
             </div>
             <AutoComplete
-              v-model="tagInput"
+              v-model="selectedTag"
               inputId="tags-autocomplete"
               :suggestions="tagSuggestions"
+              optionLabel="name"
               @complete="filterTags"
               @itemSelect="addTag"
               @keydown="handleTagKeydown"
@@ -328,11 +339,13 @@ async function submitListing() {
               showClear
               aria-label="Tags"
               placeholder="Type to search tags or press Enter to add custom"
+              :inputStyle="{ minWidth: '0' }"
+              :inputProps="{ value: tagInput, onInput: e => tagInput.value = e.target.value }"
             >
               <template #option="slotProps">
                 <div class="flex items-center gap-2">
                   <i class="pi pi-tag text-primary-500"></i>
-                  <span>{{ slotProps.option }}</span>
+                  <span>{{ slotProps.option.name }}</span>
                 </div>
               </template>
             </AutoComplete>

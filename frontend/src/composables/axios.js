@@ -38,40 +38,67 @@ instance.interceptors.response.use(
   (response) => response,
   (error) => {
     const authStore = useAuthStore()
-    const toastStore = useToastStore()
+    const toast = useToastStore().getToast ? useToastStore().getToast() : useToastStore().toast || useToastStore()
 
     // Handle 401 Unauthorized
+
     if (error.response?.status === 401) {
       authStore.clearUser()
-      toastStore.showError('Session expired. Please login again.', 'Unauthorized')
+      toast.add({
+        severity: 'error',
+        summary: 'Unauthorized',
+        detail: 'Session expired. Please login again.',
+        life: 5000,
+      })
       router.push({ name: 'login' })
       return Promise.reject(error)
     }
 
     // Handle 403 Forbidden
+
     if (error.response?.status === 403) {
-      toastStore.showError('You do not have permission to access this resource.', 'Forbidden')
+      toast.add({
+        severity: 'error',
+        summary: 'Forbidden',
+        detail: 'You do not have permission to access this resource.',
+        life: 5000,
+      })
       return Promise.reject(error)
     }
 
     // Handle 429 Rate Limiting
+
     if (error.response?.status === 429) {
-      toastStore.showWarning('Too many requests. Please try again later.', 'Rate Limited')
+      toast.add({
+        severity: 'warn',
+        summary: 'Rate Limited',
+        detail: 'Too many requests. Please try again later.',
+        life: 4000,
+      })
       return Promise.reject(error)
     }
 
     // Handle 500+ Server Errors
+
     if (error.response?.status >= 500) {
-      toastStore.showError(
-        error.response?.data?.message || 'Server error. Please try again later.',
-        'Server Error',
-      )
+      toast.add({
+        severity: 'error',
+        summary: 'Server Error',
+        detail: error.response?.data?.message || 'Server error. Please try again later.',
+        life: 5000,
+      })
       return Promise.reject(error)
     }
 
     // Handle network errors
+
     if (!error.response) {
-      toastStore.showError('Network error. Please check your connection.', 'Connection Error')
+      toast.add({
+        severity: 'error',
+        summary: 'Connection Error',
+        detail: 'Network error. Please check your connection.',
+        life: 5000,
+      })
       return Promise.reject(error)
     }
 

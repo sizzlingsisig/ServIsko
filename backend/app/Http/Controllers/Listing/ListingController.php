@@ -149,12 +149,16 @@ class ListingController extends Controller
 
         $query = Listing::with(['seeker', 'category', 'tags'])
             ->where('status', 'active')
-            ->whereNot('seeker_user_id', $userID)
+            ->where(function ($q) use ($userID) {
+                // Exclude current user's listings if authenticated
+                if ($userID) {
+                    $q->where('seeker_user_id', '!=', $userID??0);
+                }
+            })
             ->where(function ($q) {
                 // Only show non-expired listings publicly
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
             });
-
 
         // Map frontend to backend keys
         if (isset($filters['category'])) {
@@ -196,7 +200,16 @@ class ListingController extends Controller
         if (isset($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'ilike', "%{$search}%")->orWhere('description', 'ilike', "%{$search}%");
+                $q->where('title', 'ilike', "%{$search}%")
+                  ->orWhere('description', 'ilike', "%{$search}%")
+                  // Search in category name
+                  ->orWhereHas('category', function ($catQ) use ($search) {
+                      $catQ->where('name', 'ilike', "%{$search}%");
+                  })
+                  // Search in tag names
+                  ->orWhereHas('tags', function ($tagQ) use ($search) {
+                      $tagQ->where('name', 'ilike', "%{$search}%");
+                  });
             });
         }
 

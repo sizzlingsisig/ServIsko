@@ -141,7 +141,7 @@ onUnmounted(() => {
   <nav
     class="sticky top-0 overflow-visible z-50 backdrop-blur-lg bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50 shadow-sm"
   >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
       <div class="flex justify-between items-center h-16">
         <!-- Left Section: Burger / Logo -->
         <div class="flex items-center">
@@ -152,14 +152,14 @@ onUnmounted(() => {
             <i :class="mobileMenuOpen ? 'pi pi-times' : 'pi pi-bars'" class="text-2xl"></i>
           </button>
 
-          <router-link to="/" class="flex items-center space-x-3 group ml-3">
-            <span class="text-2xl md:text-3xl font-black text-primary-500">ServISKO</span>
+          <router-link to="/" class="flex items-center space-x-2 sm:space-x-3 group ml-2 sm:ml-3">
+            <span class="text-xl sm:text-2xl md:text-3xl font-black text-primary-500">ServISKO</span>
           </router-link>
         </div>
 
         <!-- Center Section: Menu Items (Desktop Only) -->
         <div class="hidden lg:flex items-center">
-          <ul class="flex items-center gap-6">
+          <ul class="flex items-center gap-4 sm:gap-6">
             <RouterLink v-for="item in items" :key="item.to" :to="item.to" class="relative group">
               <li
                 :class="[
@@ -186,9 +186,9 @@ onUnmounted(() => {
         </div>
 
         <!-- Right Section: Auth Buttons or User Menu -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2 sm:gap-4">
           <!-- Auth CTA Buttons (Not Authenticated) -->
-          <div v-if="!isAuthenticated()" class="flex items-center gap-3">
+          <div v-if="!isAuthenticated()" class="flex items-center gap-2 sm:gap-3">
             <Button
               label="Login"
               severity="secondary"
@@ -204,7 +204,7 @@ onUnmounted(() => {
           </div>
 
           <!-- User Menu (Authenticated) -->
-          <div v-else class="flex items-center gap-4">
+          <div v-else class="flex items-center gap-2 sm:gap-4">
             <!-- Help Icon -->
             <button
               class="flex items-center justify-center text-text-600 dark:text-text-300 hover:text-primary-500 dark:hover:text-primary-400 transition-colors cursor-pointer"
@@ -213,7 +213,7 @@ onUnmounted(() => {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                class="size-6"
+                class="size-5 sm:size-6"
               >
                 <path
                   fill-rule="evenodd"
@@ -231,7 +231,7 @@ onUnmounted(() => {
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                class="size-6"
+                class="size-5 sm:size-6"
               >
                 <path
                   fill-rule="evenodd"
@@ -252,7 +252,7 @@ onUnmounted(() => {
                 :image="profilePictureUrl"
                 shape="circle"
                 size="normal"
-                class="cursor-pointer ring-2 w-10 h-10 ring-text-200 dark:ring-text-700 hover:ring-primary-500 transition-all duration-200"
+                class="cursor-pointer ring-2 w-8 h-8 sm:w-10 sm:h-10 ring-text-200 dark:ring-text-700 hover:ring-primary-500 transition-all duration-200"
               />
             </button>
 
@@ -288,23 +288,23 @@ onUnmounted(() => {
     >
       <div
         v-if="mobileMenuOpen"
-        class="fixed top-16 left-0 w-72 h-[calc(100vh-4rem)] bg-white dark:bg-gray-900 shadow-2xl z-50 lg:hidden overflow-y-auto"
+        class="fixed top-16 left-0 w-64 sm:w-72 h-[calc(100vh-4rem)] bg-white dark:bg-gray-900 shadow-2xl z-50 lg:hidden overflow-y-auto"
       >
         <!-- Menu Header -->
-        <div class="px-6 py-4 bg-gradient-to-r from-primary-50 to-primary-100">
-          <h3 class="text-lg font-bold text-primary-700 dark:text-primary-300">Menu</h3>
+        <div class="px-4 sm:px-6 py-4 bg-gradient-to-r from-primary-50 to-primary-100">
+          <h3 class="text-base sm:text-lg font-bold text-primary-700 dark:text-primary-300">Menu</h3>
           <p class="text-xs text-text-500 dark:text-text-400 mt-1">Navigate your experience</p>
         </div>
 
         <!-- Menu Items -->
-        <div class="px-4 py-4 space-y-1">
+        <div class="px-2 sm:px-4 py-4 space-y-1">
           <RouterLink
             v-for="item in items"
             :key="item.to"
             :to="item.to"
             @click="mobileMenuOpen = false"
             :class="[
-              'flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold transition-all duration-200 group',
+              'flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 rounded-xl font-semibold transition-all duration-200 group',
               isActiveRoute(item.to)
                 ? 'bg-primary-500 text-white shadow-md shadow-primary-200'
                 : 'text-text-700 dark:text-text-300 hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:text-primary-600 dark:hover:text-primary-400 hover:pl-5',
@@ -324,7 +324,7 @@ onUnmounted(() => {
         <!-- Auth CTA Buttons for Mobile (Not Authenticated) -->
         <div
           v-if="!isAuthenticated()"
-          class="px-4 py-4 border-t border-text-200 dark:border-text-700"
+          class="px-2 sm:px-4 py-4 border-t border-text-200 dark:border-text-700"
         >
           <div class="flex flex-col gap-2">
             <Button label="Login" severity="secondary" class="w-full" @click="handleMobileLogin" />
@@ -334,7 +334,7 @@ onUnmounted(() => {
 
         <!-- Menu Footer -->
         <div
-          class="absolute bottom-0 left-0 right-0 px-6 py-4 bg-gradient-to-t from-text-50 to-transparent dark:from-gray-800 dark:to-transparent"
+          class="absolute bottom-0 left-0 right-0 px-4 sm:px-6 py-4 bg-gradient-to-t from-text-50 to-transparent dark:from-gray-800 dark:to-transparent"
         >
           <p class="text-xs text-text-500 text-center">ServISKO © 2025</p>
         </div>
