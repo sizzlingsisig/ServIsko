@@ -1,5 +1,4 @@
 <script setup>
-
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
@@ -29,6 +28,8 @@ const currentStep = ref(0)
 const loading = ref(false)
 const allSkills = ref([])
 const filteredSkills = ref([])
+const currentUser = ref(null)
+const isProvider = ref(false)
 
 const form = reactive({
   bio: '',
@@ -41,17 +42,41 @@ const form = reactive({
   }
 })
 
-// Ensure selectedSkills is always an array
-onMounted(() => {
-  if (!Array.isArray(form.selectedSkills)) form.selectedSkills = []
+// Fetch current user to check if they're a provider
+const fetchCurrentUser = async () => {
+  try {
+    const resp = await axios.get('/user/')
+    if (resp.data && resp.data.success && resp.data.data) {
+      currentUser.value = resp.data.data
+      // Check if user has provider role
+      isProvider.value = currentUser.value.roles?.some(role => role.name === 'provider') || false
+      console.log('Is Provider:', isProvider.value)
+    }
+  } catch (error) {
+    console.error('Failed to fetch user:', error)
+  }
+}
+
+// Calculate total steps based on user role
+const totalSteps = computed(() => {
+  return isProvider.value ? 3 : 2 // Basic Info + Skills + Review for provider, Basic Info + Review for seeker
 })
 
 // Progress calculation
 const progress = computed(() => {
-  return ((currentStep.value + 1) / 3) * 100
+  return ((currentStep.value + 1) / totalSteps.value) * 100
 })
 
-// Load available skills
+// Ensure selectedSkills is always an array
+onMounted(async () => {
+  if (!Array.isArray(form.selectedSkills)) form.selectedSkills = []
+  await fetchCurrentUser()
+  if (isProvider.value) {
+    await loadSkills()
+  }
+})
+
+// Load available skills (only for providers)
 const loadSkills = async () => {
   try {
     const { data } = await axios.get('/provider/skills', { params: { per_page: 100 } })
@@ -63,7 +88,6 @@ const loadSkills = async () => {
 
 const searchSkill = (event) => {
   const query = event.query?.toLowerCase() || ''
-  // Defensive: ensure selectedSkills is always an array
   const selected = Array.isArray(form.selectedSkills) ? form.selectedSkills : []
   if (!query) {
     filteredSkills.value = allSkills.value.filter(s => !selected.some(sel => sel.id === s.id))
@@ -89,7 +113,8 @@ const validateStep = (step) => {
     }
   }
 
-  if (step === 1) {
+  // Only validate skills if user is a provider and on skills step
+  if (isProvider.value && step === 1) {
     if (form.selectedSkills.length === 0) {
       form.errors.skills = 'Please add at least one skill'
       return false
@@ -118,7 +143,9 @@ const removeSkill = (index) => {
 
 // Save profile
 const saveProfile = async () => {
-  if (!validateStep(1)) return
+  // Validate the last step before review
+  const lastDataStep = isProvider.value ? 1 : 0
+  if (!validateStep(lastDataStep)) return
 
   loading.value = true
 
@@ -129,12 +156,14 @@ const saveProfile = async () => {
       location: form.location
     })
 
-    // Add skills
-    for (const skill of form.selectedSkills) {
-      try {
-        await axios.post('/provider/skills', { skill_id: skill.id })
-      } catch (error) {
-        console.error(`Failed to add skill ${skill.name}:`, error)
+    // Add skills only if user is a provider
+    if (isProvider.value && form.selectedSkills.length > 0) {
+      for (const skill of form.selectedSkills) {
+        try {
+          await axios.post('/provider/skills', { skill_id: skill.id })
+        } catch (error) {
+          console.error(`Failed to add skill ${skill.name}:`, error)
+        }
       }
     }
 
@@ -181,10 +210,6 @@ const handleSkip = () => {
   handleClose()
   localStorage.setItem('profileSetupSkipped', 'true')
 }
-
-onMounted(() => {
-  loadSkills()
-})
 </script>
 
 <template>
@@ -202,7 +227,7 @@ onMounted(() => {
           <div>
             <h2 class="text-2xl font-bold text-gray-900">Complete Your Profile</h2>
             <p class="text-sm text-gray-600 mt-1">
-              Help others learn more about you and your expertise
+              Help others learn more about you{{ isProvider ? ' and your expertise' : '' }}
             </p>
           </div>
           <Button
@@ -227,7 +252,7 @@ onMounted(() => {
             <div>
               <h4 class="font-semibold text-blue-900 mb-1">Why complete your profile?</h4>
               <p class="text-sm text-blue-800">
-                A complete profile helps clients understand your background and increases your chances of getting hired.
+                A complete profile helps {{ isProvider ? 'clients understand your background and increases your chances of getting hired' : 'service providers understand your needs better' }}.
               </p>
             </div>
           </div>
@@ -241,7 +266,7 @@ onMounted(() => {
             id="setup-bio"
             v-model="form.bio"
             rows="4"
-            placeholder="Tell clients about yourself, your experience, and what makes you unique..."
+            :placeholder="isProvider ? 'Tell clients about yourself, your experience, and what makes you unique...' : 'Tell us about yourself and what services you\'re looking for...'"
             class="w-full"
             :class="{ 'p-invalid': form.errors.bio }"
           />
@@ -266,8 +291,8 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Step 1: Skills -->
-      <div v-else-if="currentStep === 1" class="space-y-6">
+      <!-- Step 1: Skills (Only for Providers) -->
+      <div v-else-if="isProvider && currentStep === 1" class="space-y-6">
         <div class="bg-green-50 border border-green-200 rounded-lg p-4">
           <div class="flex items-start gap-3">
             <i class="pi pi-lightbulb text-green-600 text-xl mt-0.5"></i>
@@ -297,7 +322,6 @@ onMounted(() => {
             showClear
             forceSelection
             :virtualScrollerOptions="{ itemSize: 38 }"
-            @remove="removeSkill"
           />
           <small v-if="form.errors.skills" class="text-red-500 block mt-1">{{ form.errors.skills }}</small>
         </div>
@@ -322,8 +346,8 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Step 2: Review -->
-      <div v-else-if="currentStep === 2" class="space-y-6">
+      <!-- Final Step: Review -->
+      <div v-else-if="currentStep === totalSteps - 1" class="space-y-6">
         <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
           <div class="flex items-start gap-3">
             <i class="pi pi-check-circle text-purple-600 text-xl mt-0.5"></i>
@@ -347,7 +371,7 @@ onMounted(() => {
             <p class="text-gray-800 bg-gray-50 p-3 rounded-lg">{{ form.location }}</p>
           </div>
 
-          <div>
+          <div v-if="isProvider && form.selectedSkills.length > 0">
             <h4 class="font-semibold text-gray-700 mb-2">Skills ({{ form.selectedSkills.length }})</h4>
             <div class="flex flex-wrap gap-2">
               <span
@@ -382,7 +406,7 @@ onMounted(() => {
             @click="handleSkip"
           />
           <Button
-            v-if="currentStep < 2"
+            v-if="currentStep < totalSteps - 1"
             label="Next"
             icon="pi pi-arrow-right"
             iconPos="right"
@@ -400,3 +424,27 @@ onMounted(() => {
     </template>
   </Dialog>
 </template>
+
+<style scoped>
+.bg-primary-50 {
+  background-color: #f3e6eb;
+}
+.bg-primary-100 {
+  background-color: #f3e6eb;
+}
+.border-primary-200 {
+  border-color: #e5ccd5;
+}
+.text-primary-600 {
+  color: #6d0019;
+}
+.text-primary-800 {
+  color: #490010;
+}
+.text-primary-900 {
+  color: #3a000d;
+}
+.hover\:text-primary-800:hover {
+  color: #490010;
+}
+</style>

@@ -64,6 +64,7 @@ use App\Http\Controllers\Admin\ServiceController as AdminServiceController;
 |--------------------------------------------------------------------------
 */
 
+use App\Http\Controllers\Message\ConversationController;
 // ========================================================================
 // PUBLIC ROUTES (No Authentication Required)
 // ========================================================================
@@ -100,6 +101,12 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
 
+    Route::get('/conversations', [ConversationController::class, 'index']);
+    Route::get('/conversations/{user}', [ConversationController::class, 'show']);
+        Route::get('/conversations/{conversation}/messages', [ConversationController::class, 'getMessages']); // Add this
+
+    Route::post('/conversations/{conversation}/messages', [ConversationController::class, 'sendMessage']);
+    Route::post('/conversations/{conversation}/read', [ConversationController::class, 'markAsRead']);
     // ====================================================================
     // USER ACCOUNT ROUTES
     // ====================================================================

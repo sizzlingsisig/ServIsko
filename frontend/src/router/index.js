@@ -86,12 +86,12 @@ const router = createRouter({
       meta: { layout: 'ProfileLayout', requiresAuth: true },
     },
 
-    // {
-    //   path: '/dashboard/messages',
-    //   name: 'messages',
-    //   component: () => import('@/views/MessagesView.vue'),
-    //   meta: { layout: 'DefaultLayout', requiresAuth: true },
-    // },
+    {
+      path: '/messages',
+      name: 'messages',
+      component: () => import('@/views/MessagesView.vue'),
+      meta: { layout: 'DefaultLayout', requiresAuth: true },
+    },
     {
       path: '/profile',
       name: 'profile',
