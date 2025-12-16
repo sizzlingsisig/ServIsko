@@ -28,7 +28,7 @@ const cards = [
     id: 1,
     path: 'M0.5 318.492V0.5H254.5V194V381L161.5 362L76.5 342L0.5 318.492Z',
     title: 'Tutoring & Education',
-    subtitle: 'Teach and inspire others',
+    subtitle: 'Get peer help with courses, exams, and study skills..',
     image: tutoringImage,
     x: 22,
     y: 40, // aligned top
@@ -37,7 +37,7 @@ const cards = [
     id: 2,
     path: 'M284.5 386V0.5H525.5V414.768L473 410.5L375 400.5L284.5 386Z',
     title: 'Writing',
-    subtitle: 'Craft compelling content',
+    subtitle: 'Polish essays, reports, resumes, and creative work. .',
     image: writingImage,
     x: 298,
     y: 40, // aligned top
@@ -46,7 +46,7 @@ const cards = [
     id: 3,
     path: 'M560 417.567V0.5H794V421.72H747.522H702.5L641 421L594.5 419L560 417.567Z',
     title: 'Beauty and Cosmetics',
-    subtitle: 'Enhance natural beauty',
+    subtitle: 'Book student stylists for hair, makeup, and grooming.',
     image: beautyImage,
     x: 573,
     y: 40, // aligned top
@@ -55,7 +55,7 @@ const cards = [
     id: 4,
     path: 'M823.027 419.347V0.5H1071.5V400.5L1032.5 405L1004 408L975 411.041L949 413L908 415.5L869.616 417.567L823.027 419.347Z',
     title: 'Programming and Tech',
-    subtitle: 'Build innovative soluqefrgghdffdadtions',
+    subtitle: 'Get coding help, troubleshooting, and basic tech support.',
     image: techImage,
     x: 843,
     y: 40, // aligned top
@@ -64,7 +64,7 @@ const cards = [
     id: 5,
     path: 'M1097.5 397V0.5H1335.5V352.765L1323 355.5L1274 366.5L1227.5 376L1187.5 383L1142.5 390.5L1109 395.5L1097.5 397Z',
     title: 'Design and Creatives',
-    subtitle: 'Create stunning visuals and designs',
+    subtitle: 'Hire students for graphics, layouts, and visual content.',
     image: designImage,
     x: 1108,
     y: 40, // aligned top

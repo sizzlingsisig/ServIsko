@@ -385,7 +385,7 @@ watch([() => authStore.isAuthenticated, () => listing.value?.id], ([isAuth, id])
               <div>
                 <h4 class="font-bold text-gray-900 mb-2 text-sm">Need more information?</h4>
                 <p class="text-xs text-gray-600 mb-3 leading-relaxed">
-                  Contact the provider to discuss your specific requirements and get a customized
+                  Contact the seeker to discuss their specific requirements and get a customized
                   quote.
                 </p>
                 <button
