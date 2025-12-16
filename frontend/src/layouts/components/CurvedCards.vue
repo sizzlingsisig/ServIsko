@@ -55,7 +55,7 @@ const cards = [
     id: 4,
     path: 'M823.027 419.347V0.5H1071.5V400.5L1032.5 405L1004 408L975 411.041L949 413L908 415.5L869.616 417.567L823.027 419.347Z',
     title: 'Programming and Tech',
-    subtitle: 'Build innovative solutions',
+    subtitle: 'Build innovative soluqefrgghdffdadtions',
     image: techImage,
     x: 843,
     y: 40, // aligned top
