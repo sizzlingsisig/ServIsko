@@ -88,6 +88,9 @@ Route::get('/categories/{id}', [PublicCategoryController::class, 'show']);
 Route::get('/providers', [PublicProviderController::class, 'index']);
 Route::get('/providers/{id}', [PublicProviderController::class, 'show']);
 
+// Public Skills Routes
+Route::get('/skills', [AdminSkillController::class, 'index']);
+
 // ========================================================================
 // PROTECTED ROUTES (Requires Authentication)
 // ========================================================================
