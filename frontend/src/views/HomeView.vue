@@ -1,15 +1,20 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import CurvedCards from '@/layouts/components/CurvedCards.vue'
 import ListingCard from '@/components/ListingCard.vue'
 import Carousel from 'primevue/carousel'
 import api from '@/composables/axios'
 import { useToast } from 'primevue/usetoast'
 
+const router = useRouter()
+
 const toast = useToast()
 const featuredServices = ref([])
 const loading = ref(false)
-const activeTab = ref('find')
+
+// homepage search text
+const homeSearch = ref('')
 
 const responsiveOptions = ref([
   {
@@ -55,6 +60,16 @@ const loadFeaturedServices = async () => {
   }
 }
 
+// redirect to listings with ?search=
+const handleHomeSearch = () => {
+  router.push({
+    name: 'listings', // or path: '/listings'
+    query: {
+      search: homeSearch.value || '',
+    },
+  })
+}
+
 onMounted(() => {
   loadFeaturedServices()
 })
@@ -65,7 +80,9 @@ onMounted(() => {
     class="relative bg-[#6d0019] text-left px-4 sm:px-8 pt-24 sm:pt-32 pb-20 sm:pb-32 overflow-hidden min-h-[50vh] sm:h-[65vh] flex items-center justify-start z-[0]"
   >
     <div class="max-w-[800px] w-full">
-      <h1 class="text-3xl sm:text-6xl text-white font-extrabold leading-tight mb-4 -mt-12 sm:-mt-[120px]">
+      <h1
+        class="text-3xl sm:text-6xl text-white font-extrabold leading-tight mb-4 -mt-12 sm:-mt-[120px]"
+      >
         Services by Students,<br />
         for Students
       </h1>
@@ -77,25 +94,12 @@ onMounted(() => {
 
       <div class="flex flex-col sm:flex-row gap-4 w-full max-w-xs sm:max-w-none">
         <button
-          @click="activeTab = 'find'"
-          :class="[
-            'px-8 py-3 font-semibold rounded transition-colors w-full sm:w-auto border-2',
-            activeTab === 'find'
-              ? 'bg-white text-[#6d0019] border-white'
-              : 'bg-transparent text-white border-white'
-          ]"
+          class="px-8 py-3 bg-white text-[#6d0019] font-semibold rounded hover:bg-gray-100 transition-colors w-full sm:w-auto"
         >
           Find Services
         </button>
-
         <button
-          @click="activeTab = 'offer'"
-          :class="[
-            'px-8 py-3 font-semibold rounded transition-colors w-full sm:w-auto border-2',
-            activeTab === 'offer'
-              ? 'bg-white text-[#6d0019] border-white'
-              : 'bg-transparent text-white border-white'
-          ]"
+          class="px-8 py-3 bg-transparent border-2 border-white text-white font-semibold rounded hover:bg-white hover:text-[#6d0019] transition-colors w-full sm:w-auto"
         >
           Offer Services
         </button>
@@ -122,18 +126,19 @@ onMounted(() => {
         Search & Browse Services
       </h2>
       <p class="text-[#555] mb-6 text-center text-sm sm:text-base">
-        Find the right service for your capabilities or needs from our diverse categories
+        Find the right listings for your capabilities or needs from our diverse categories
       </p>
 
       <div class="rounded-2xl">
         <div class="flex flex-col sm:flex-row gap-4 w-full">
           <input
+            v-model="homeSearch"
             type="text"
-            placeholder="Search for services or providers..."
-            class="flex-1 px-4 sm:px-6 py-3 sm:py-4 border-2 border-gray-300 rounded text-base
-                   focus:outline-none focus:border-[#6d0019] bg-white text-black placeholder-gray-500"
+            placeholder="Search for services listings..."
+            class="flex-1 px-4 sm:px-6 py-3 sm:py-4 border-2 border-gray-300 rounded text-base focus:outline-none focus:border-[#6d0019] bg-white"
+            @keyup.enter="handleHomeSearch"
           />
-          <Button label="Search" class="w-full sm:w-auto" />
+          <Button label="Search" class="w-full sm:w-auto" @click="handleHomeSearch" />
         </div>
       </div>
     </div>
@@ -141,7 +146,9 @@ onMounted(() => {
 
   <section class="bg-white text-center px-2 sm:px-4 md:px-8 py-8 md:py-20 w-full">
     <div class="max-w-[700px] mx-auto mb-8 md:mb-12 text-center">
-      <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-[#2a2a2a]">Why Choose ServIsko?</h2>
+      <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-[#2a2a2a]">
+        Why Choose ServIsko?
+      </h2>
       <p class="text-xs sm:text-sm md:text-base text-[#555]">
         Find trusted student-run and local services quickly — search, compare, and hire with
         confidence.
@@ -161,12 +168,11 @@ onMounted(() => {
             <i class="pi pi-wifi !text-2xl"></i>
           </div>
           <span class="text-xl md:text-2xl font-bold">Trusted Service Providers</span>
-          <span class="text-center text-sm md:text-base">
-            Verified students offering reliable services with ratings and reviews to help you
-            choose confidently.
-          </span>
+          <span class="text-center text-sm md:text-base"
+            >Verified students offering reliable services with ratings and reviews to help you
+            choose confidently.</span
+          >
         </div>
-
         <div
           v-animateonscroll="{
             enterClass: 'animate-enter fade-in-10 zoom-in-75 animate-duration-1000',
@@ -179,12 +185,11 @@ onMounted(() => {
             <i class="pi pi-database !text-2xl"></i>
           </div>
           <span class="text-xl md:text-2xl font-bold">Transparent Pricing</span>
-          <span class="text-center text-sm md:text-base">
-            Clear service listings and upfront prices— compare offers and pick the best fit for
-            your budget.
-          </span>
+          <span class="text-center text-sm md:text-base"
+            >Clear service listings and upfront prices— compare offers and pick the best fit for
+            your budget.</span
+          >
         </div>
-
         <div
           v-animateonscroll="{
             enterClass: 'animate-enter fade-in-10 zoom-in-50 animate-duration-1000',
@@ -197,10 +202,10 @@ onMounted(() => {
             <i class="pi pi-arrows-v !text-2xl"></i>
           </div>
           <span class="text-xl md:text-2xl font-bold">Easy Booking & Communication</span>
-          <span class="text-center text-sm md:text-base">
-            Message providers directly, schedule jobs, and manage requests all in one place for a
-            smooth booking experience.
-          </span>
+          <span class="text-center text-sm md:text-base"
+            >Message providers directly, schedule jobs, and manage requests all in one place for a
+            smooth booking experience.</span
+          >
         </div>
       </div>
     </div>
@@ -320,11 +325,15 @@ onMounted(() => {
     </div>
   </section>
 
-  <section class="w-full py-8 sm:py-16 bg-gray-50">
+  <section class="w-full py-8 sm:py-16">
     <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-8">
       <div class="text-center mb-8 sm:mb-12">
-        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">Featured Listings</h2>
-        <p class="text-gray-600 text-base sm:text-lg">Discover trending listings from our community</p>
+        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          Featured Listings
+        </h2>
+        <p class="text-gray-600 text-base sm:text-lg">
+          Discover trending listings from our community
+        </p>
       </div>
 
       <div v-if="loading" class="flex justify-center items-center h-48 sm:h-96">
@@ -358,7 +367,9 @@ onMounted(() => {
     <CurvedCards class="mb-[-40px] sm:mb-[-80px] mt-[-10px] sm:mt-[-20px]" />
   </section>
 
-  <section class="relative bg-[#6d0019] text-white text-center pt-16 sm:pt-25 pb-10 sm:pb-20 overflow-hidden">
+  <section
+    class="relative bg-[#6d0019] text-white text-center pt-16 sm:pt-25 pb-10 sm:pb-20 overflow-hidden"
+  >
     <svg
       class="absolute top-0 left-0 w-full h-auto block pointer-events-none z-0"
       xmlns="http://www.w3.org/2000/svg"
@@ -371,7 +382,9 @@ onMounted(() => {
     </svg>
 
     <div class="relative z-10 mt-20 sm:mt-50">
-      <h2 class="text-2xl sm:text-5xl font-bold mb-10 sm:mb-28">Putting the service in Iskolars ng Bayan</h2>
+      <h2 class="text-2xl sm:text-5xl font-bold mb-10 sm:mb-28">
+        Putting the service in Iskolars ng Bayan
+      </h2>
       <div class="flex flex-col md:flex-row justify-center gap-12 md:gap-24 lg:gap-28 stats">
         <div>
           <h3 class="text-4xl sm:text-6xl font-extrabold mb-2 sm:mb-5">300+</h3>
