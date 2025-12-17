@@ -311,7 +311,7 @@ onBeforeUnmount(() => {
             icon="pi pi-search"
             severity="primary"
             @click="handleSearch(filters.search)"
-            class="w-full sm:w-auto text-base sm:text-lg py-2 sm:py-3"
+            class="w-full sm:w-auto text-base sm:text-lg py-2 sm:py-3 !bg-black !text-white hover:!bg-[#5a061e]"
           />
         </div>
       </div>
