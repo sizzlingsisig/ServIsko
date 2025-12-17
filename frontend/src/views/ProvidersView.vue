@@ -63,7 +63,7 @@ const loadProviders = async () => {
       page: currentPage.value,
       per_page: itemsPerPage.value,
     }
-    Object.keys(params).forEach(key => {
+    Object.keys(params).forEach((key) => {
       if (
         params[key] === null ||
         params[key] === '' ||
@@ -107,7 +107,7 @@ watch(
   () => filters.search,
   () => {
     debouncedSearchLoad()
-  }
+  },
 )
 
 // Watch all non-search filters with immediate loading
@@ -124,7 +124,7 @@ watch(
     debouncedSearchLoad.cancel()
     currentPage.value = 1
     loadProviders()
-  }
+  },
 )
 
 // Watch pagination separately (no page reset needed)
@@ -132,7 +132,7 @@ watch(
   () => [currentPage.value, itemsPerPage.value],
   () => {
     loadProviders()
-  }
+  },
 )
 
 const handleFilterChange = (newFilters) => {
@@ -160,7 +160,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Main Search Bar Section (hidden on mobile, visible on sm+) -->
-    <section class="hidden sm:block bg-[#6d0019] text-white px-2 py-6 sm:px-4 sm:py-8">
+    <section class="hidden sm:block bg-[#670723] text-white px-2 py-6 sm:px-4 sm:py-8">
       <div class="max-w-7xl mx-auto">
         <h2 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Find Service Providers</h2>
         <div class="flex flex-col gap-3 sm:gap-4 md:flex-row">
@@ -177,7 +177,7 @@ onBeforeUnmount(() => {
             icon="pi pi-search"
             severity="primary"
             @click="debouncedSearchLoad()"
-            class="w-full sm:w-auto text-base sm:text-lg py-2 sm:py-3"
+            class="w-full sm:w-auto text-base sm:text-lg py-2 sm:py-3 !bg-black !text-white hover:!bg-[#5a061e]"
           />
         </div>
       </div>
@@ -193,7 +193,13 @@ onBeforeUnmount(() => {
     </button>
 
     <!-- Mobile Filters/Search Modal -->
-    <Dialog v-model:visible="showMobileFilters" modal :closable="true" class="sm:hidden w-[95vw] max-w-md mx-auto" :style="{ top: '10vh' }">
+    <Dialog
+      v-model:visible="showMobileFilters"
+      modal
+      :closable="true"
+      class="sm:hidden w-[95vw] max-w-md mx-auto"
+      :style="{ top: '10vh' }"
+    >
       <template #header>
         <span class="font-bold text-lg">Search & Filters</span>
       </template>
@@ -228,7 +234,9 @@ onBeforeUnmount(() => {
         <!-- Right Content Area -->
         <div class="flex-1 min-w-0">
           <!-- View Controls and Pagination Info -->
-          <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-4">
+          <div
+            class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-4"
+          >
             <div class="text-gray-600 text-sm sm:text-base">
               Showing
               {{ totalRecords === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1 }}
@@ -236,7 +244,9 @@ onBeforeUnmount(() => {
               {{ Math.min(currentPage * itemsPerPage, totalRecords) }}
               of {{ totalRecords }} providers
             </div>
-            <div class="flex flex-col md:flex-row items-start md:items-center gap-2 sm:gap-4 w-full md:w-auto">
+            <div
+              class="flex flex-col md:flex-row items-start md:items-center gap-2 sm:gap-4 w-full md:w-auto"
+            >
               <div class="flex items-center gap-2">
                 <label class="text-xs sm:text-sm text-gray-600">Sort by:</label>
                 <select
@@ -282,7 +292,7 @@ onBeforeUnmount(() => {
           </div>
           <div v-else-if="providers.length === 0" class="text-center py-12">
             <i class="pi pi-inbox text-5xl text-gray-300 mb-4 block"></i>
-            <p class="text-gray-600 text-lg">No providers found.  Try adjusting your filters.</p>
+            <p class="text-gray-600 text-lg">No providers found. Try adjusting your filters.</p>
           </div>
           <div
             v-else-if="layout === 'grid'"
