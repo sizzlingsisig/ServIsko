@@ -2,10 +2,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/composables/axios'
-import { useToastStore } from '@/stores/toastStore'
+import { useToast } from 'primevue/usetoast'
 
 const router = useRouter()
-const toastStore = useToastStore()
+const toast = useToast()
 
 // Stepper state
 const activeStep = ref(1)
@@ -24,11 +24,16 @@ const requestOtp = async () => {
   loading.value = true
 
   try {
-    const response = await api.post('/api/forgot-password', {
+    const response = await api.post('/forgot-password', {
       email: email.value,
     })
 
-    toastStore.showSuccess(response.data.message || 'OTP sent to your email')
+    toast.add({
+      severity: 'success',
+      summary: 'OTP Sent',
+      detail: response.data.message || 'OTP sent to your email',
+      life: 3000
+    })
     sessionStorage.setItem('reset_email', email.value)
 
     setTimeout(() => {
@@ -36,7 +41,12 @@ const requestOtp = async () => {
     }, 1500)
   } catch (err) {
     if (err.response?.data?.message) {
-      toastStore.showError(err.response.data.message)
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: err.response.data.message,
+        life: 3000
+      })
     }
   } finally {
     loading.value = false
@@ -48,17 +58,27 @@ const verifyOtp = async () => {
   loading.value = true
 
   try {
-    const response = await api.post('/api/verify-reset-otp', {
+    const response = await api.post('/verify-reset-otp', {
       email: email.value,
       otp: otp.value,
     })
 
     sessionStorage.setItem('reset_token', response.data.reset_token)
-    toastStore.showSuccess('Code verified successfully')
+    toast.add({
+      severity: 'success',
+      summary: 'Verified',
+      detail: 'Code verified successfully',
+      life: 3000
+    })
     activeStep.value = 3
   } catch (err) {
     if (err.response?.data?.message) {
-      toastStore.showError(err.response.data.message)
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: err.response.data.message,
+        life: 3000
+      })
     }
   } finally {
     loading.value = false
@@ -73,7 +93,7 @@ const resetPassword = async () => {
     const token = sessionStorage.getItem('reset_token')
     const savedEmail = sessionStorage.getItem('reset_email')
 
-    await api.post('/api/reset-password', {
+    await api.post('/reset-password', {
       email: savedEmail,
       reset_token: token,
       password: password.value,
@@ -83,11 +103,21 @@ const resetPassword = async () => {
     sessionStorage.removeItem('reset_token')
     sessionStorage.removeItem('reset_email')
 
-    toastStore.showSuccess('Password reset successful!')
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Password reset successful!',
+      life: 3000
+    })
     activeStep.value = 4
   } catch (err) {
     if (err.response?.data?.message) {
-      toastStore.showError(err.response.data.message)
+      toast.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: err.response.data.message,
+        life: 3000
+      })
     }
   } finally {
     loading.value = false

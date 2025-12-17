@@ -3,11 +3,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/composables/axios'
 import { useAuthStore } from '@/stores/AuthStore'
-import { useToastStore } from '@/stores/toastStore'
+import { useToast } from 'primevue/usetoast'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const toastStore = useToastStore()
+const toast = useToast()
 
 // Loading state
 const loading = ref(false)
@@ -20,7 +20,7 @@ const handleLogin = async () => {
   loading.value = true
 
   try {
-    const response = await api.post('/api/login', {
+    const response = await api.post('/login', {
       email: loginData.value.email,
       password: loginData.value.password,
     })
@@ -30,19 +30,45 @@ const handleLogin = async () => {
     authStore.setUser(response.data.user)
 
     // Show success toast
-    toastStore.showSuccess('Welcome back!')
+    toast.add({ severity: 'success', summary: 'Success', detail: 'Welcome back!', life: 3000 })
 
     // Redirect based on role
     const userRole = response.data.user.role
     if (userRole === 'admin' || userRole === 'moderator') {
       router.push('/admin/dashboard')
     } else {
-      router.push('/dashboard')
+      router.push('/')
     }
   } catch (err) {
     // Error handled by axios interceptor, but show specific message if available
     if (err.response?.data?.message) {
-      toastStore.showError(err.response.data.message)
+      toast.add({ severity: 'error', summary: 'Error', detail: err.response.data.message, life: 3000 })
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+// Handle register (Step 1 - account creation with role selection)
+const handleRegister = async (role) => {
+  loading.value = true
+  try {
+    const response = await api.post('/register', {
+      name: fullName.value,
+      username: username.value,
+      email: email.value,
+      password: password.value,
+      password_confirmation: passwordConfirm.value,
+      role: role,
+    })
+    authStore.setToken(response.data.token)
+    authStore.setUser(response.data.user)
+    toast.add({ severity: 'success', summary: 'Success', detail: `Welcome to ServISKO as a ${role}!`, life: 3000 })
+    activeStep.value = 2
+  } catch (err) {
+    if (err.response?.data?.errors) {
+      const validationErrors = Object.values(err.response.data.errors).flat()
+      toast.add({ severity: 'error', summary: 'Validation Error', detail: validationErrors.join(', '), life: 4000 })
     }
   } finally {
     loading.value = false

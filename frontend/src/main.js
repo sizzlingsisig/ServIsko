@@ -1,5 +1,4 @@
 // main.js
-
 import './assets/main.css'
 
 import { createApp } from 'vue'
@@ -7,20 +6,20 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 
-// PrimeVue Setup
+// PrimeVue
 import PrimeVue from 'primevue/config'
+import ToastService from 'primevue/toastservice'
 import servisko from '@/composables/servisko.js'
 
-// FormKit Setup
+// FormKit
 import { plugin as formKitPlugin, defaultConfig } from '@formkit/vue'
-import formKitConfig from '../../frontend/formkit.config.js' // <-- Import the file you just created
+import formKitConfig from '../../frontend/formkit.config.js'
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
 
-// Use PrimeVue
 app.use(PrimeVue, {
   theme: {
     preset: servisko,
@@ -32,7 +31,9 @@ app.use(PrimeVue, {
   },
 })
 
-// Use FormKit with your custom Tailwind config
+app.use(ToastService)
+
 app.use(formKitPlugin, defaultConfig(formKitConfig))
 
 app.mount('#app')
+console.log('App mounted')
