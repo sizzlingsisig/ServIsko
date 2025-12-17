@@ -38,71 +38,100 @@ instance.interceptors.response.use(
   (response) => response,
   (error) => {
     const authStore = useAuthStore()
-    const toast = useToastStore().getToast ? useToastStore().getToast() : useToastStore().toast || useToastStore()
+
+    // Only try to get toast store if we need it
+    let toastStore = null
+    try {
+      toastStore = useToastStore()
+    } catch (e) {
+      console.warn('Toast store not available in interceptor')
+    }
 
     // Handle 401 Unauthorized
-
     if (error.response?.status === 401) {
       authStore.clearUser()
-      toast.add({
-        severity: 'error',
-        summary: 'Unauthorized',
-        detail: 'Session expired. Please login again.',
-        life: 5000,
-      })
-      router.push({ name: 'login' })
+
+      // Check if this is a silent 401 (e.g., checking auth status)
+      const isSilent = error.config?.silent === true
+
+      if (!isSilent && toastStore) {
+        const toast = toastStore.toast || toastStore
+        toast.add({
+          severity: 'warn',
+          summary: 'Session Expired',
+          detail: 'Please log in to continue.',
+          life: 4000,
+        })
+      }
+
+      // Only redirect if not already on public pages
+      const publicRoutes = ['login', 'register', 'home', 'about']
+      const currentRoute = router.currentRoute.value.name
+
+      if (!publicRoutes.includes(currentRoute)) {
+        router.push({ name: 'login' })
+      }
+
       return Promise.reject(error)
     }
 
     // Handle 403 Forbidden
-
     if (error.response?.status === 403) {
-      toast.add({
-        severity: 'error',
-        summary: 'Forbidden',
-        detail: 'You do not have permission to access this resource.',
-        life: 5000,
-      })
+      if (toastStore) {
+        const toast = toastStore.toast || toastStore
+        toast.add({
+          severity: 'error',
+          summary: 'Forbidden',
+          detail: 'You do not have permission to access this resource.',
+          life: 5000,
+        })
+      }
       return Promise.reject(error)
     }
 
     // Handle 429 Rate Limiting
-
     if (error.response?.status === 429) {
-      toast.add({
-        severity: 'warn',
-        summary: 'Rate Limited',
-        detail: 'Too many requests. Please try again later.',
-        life: 4000,
-      })
+      if (toastStore) {
+        const toast = toastStore.toast || toastStore
+        toast.add({
+          severity: 'warn',
+          summary: 'Rate Limited',
+          detail: 'Too many requests. Please try again later.',
+          life: 4000,
+        })
+      }
       return Promise.reject(error)
     }
 
     // Handle 500+ Server Errors
-
     if (error.response?.status >= 500) {
-      toast.add({
-        severity: 'error',
-        summary: 'Server Error',
-        detail: error.response?.data?.message || 'Server error. Please try again later.',
-        life: 5000,
-      })
+      if (toastStore) {
+        const toast = toastStore.toast || toastStore
+        toast.add({
+          severity: 'error',
+          summary: 'Server Error',
+          detail: error.response?.data?.message || 'Server error. Please try again later.',
+          life: 5000,
+        })
+      }
       return Promise.reject(error)
     }
 
     // Handle network errors
-
     if (!error.response) {
-      toast.add({
-        severity: 'error',
-        summary: 'Connection Error',
-        detail: 'Network error. Please check your connection.',
-        life: 5000,
-      })
+      if (toastStore) {
+        const toast = toastStore.toast || toastStore
+        toast.add({
+          severity: 'error',
+          summary: 'Connection Error',
+          detail: 'Network error. Please check your connection.',
+          life: 5000,
+        })
+      }
       return Promise.reject(error)
     }
 
-    // Let component handle other errors
+    // Let component handle other errors (like 404, 422 validation errors)
     return Promise.reject(error)
   },
 )

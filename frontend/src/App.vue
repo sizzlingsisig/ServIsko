@@ -14,6 +14,9 @@
 </template>
 
 <script setup>
+
+import { useAuthStore } from '@/stores/AuthStore'
+const userStore = useAuthStore()
 import { computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Toast from 'primevue/toast'
@@ -43,7 +46,7 @@ const currentLayout = computed(() => {
 onMounted(async () => {
   // Only check if user is authenticated
   try {
-    if (route.meta.requiresAuth !== false) {
+    if (route.meta.requiresAuth !== false && userStore.isAuthenticated) {
       await checkProfile()
     }
   } catch (err) {
@@ -56,7 +59,7 @@ watch(
   () => route.fullPath,
   async (newPath, oldPath) => {
     // Skip auth and public pages
-    const publicPaths = ['/login', '/register', '/forgot-password', '/reset-password']
+    const publicPaths = ['/login', '/register', '/forgotpassword', '/resetpassword']
     try {
       if (!publicPaths.includes(newPath) && route.meta.requiresAuth !== false) {
         const skipped = localStorage.getItem('profileSetupSkipped')
@@ -72,6 +75,10 @@ watch(
 
 const handleSetupCompleted = async () => {
   console.log('✅ Profile setup completed!')
-  await checkProfile()
+  try {
+    await checkProfile()
+  } catch (err) {
+    console.error('Profile check failed after setup:', err)
+  }
 }
 </script>

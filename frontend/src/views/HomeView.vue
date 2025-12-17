@@ -93,16 +93,20 @@ onMounted(() => {
       </p>
 
       <div class="flex flex-col sm:flex-row gap-4 w-full max-w-xs sm:max-w-none">
-        <button
-          class="px-8 py-3 bg-white text-[#6d0019] font-semibold rounded hover:bg-gray-100 transition-colors w-full sm:w-auto"
-        >
-          Find Services
-        </button>
-        <button
-          class="px-8 py-3 bg-transparent border-2 border-white text-white font-semibold rounded hover:bg-white hover:text-[#6d0019] transition-colors w-full sm:w-auto"
-        >
-          Offer Services
-        </button>
+        <RouterLink to="/providers" class="w-full sm:w-auto">
+          <button
+            class="px-8 py-3 bg-white text-[#6d0019] font-semibold rounded hover:bg-gray-100 transition-colors w-full sm:w-auto"
+          >
+            Find Services
+          </button>
+        </RouterLink>
+        <RouterLink to="/listings" class="w-full sm:w-auto">
+          <button
+            class="px-8 py-3 bg-transparent border-2 border-white text-white font-semibold rounded hover:bg-white hover:text-[#6d0019] transition-colors w-full sm:w-auto"
+          >
+            Offer Services
+          </button>
+        </RouterLink>
       </div>
     </div>
 
@@ -114,7 +118,7 @@ onMounted(() => {
       width="100%"
       height="auto"
     >
-      <path fill="#ffffff" d="M0,320 C480,160 960,160 1440,320 L1440,321 L0,321 Z" />
+      <path fill="#ffffff" d="M0,320 C480,240 960,240 1440,320 L1440,321 L0,321 Z" />
     </svg>
   </section>
 
@@ -210,29 +214,36 @@ onMounted(() => {
     </div>
   </section>
 
-  <section class="w-full py-8 md:py-16 bg-white">
+   <section
+    class="w-full py-8 md:py-16 bg-white"
+  >
     <div
-      class="text-center w-[98%] sm:w-[95%] md:w-[85%] lg:w-[80%] mx-auto my-8 md:my-12 shadow-[0_0_10px_rgba(0,0,0,0.4)] rounded-lg pb-4 md:pb-5"
+      class="text-center w-[98%] sm:w-[95%] md:w-[85%] lg:w-[80%] mx-auto my-8 md:my-12 shadow-[0_0_10px_rgba(109,0,25,0.2)] rounded-lg pb-4 md:pb-5 border-t-4 border-[#6d0019]"
     >
       <h2 class="font-bold text-xl sm:text-2xl md:text-3xl pt-4 md:pt-12 lg:pt-10 px-2 sm:px-4">
-        How ServISKO Works
+        How <span class="text-[#6d0019]">ServISKO</span> Works
       </h2>
 
       <div
         class="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 max-w-6xl mx-auto px-2 sm:px-4 md:px-8 py-8 md:py-12"
       >
-        <div class="ml-0 lg:ml-15">
-          <h2 class="text-2xl md:text-2xl font-bold mb-6 md:mb-8 text-left">For Service Seekers</h2>
+        <div
+          v-animateonscroll="{
+            enterClass: 'animate-enter slide-right animate-duration-800',
+          }"
+          class="ml-0 lg:ml-15"
+        >
+          <h2 class="text-2xl md:text-2xl font-bold mb-6 md:mb-8 text-left text-[#8B1538]">For Service Seekers</h2>
 
           <div class="space-y-6 md:space-y-8 text-left">
-            <div class="flex gap-3 md:gap-4">
+            <div class="flex gap-3 md:gap-4 group">
               <div
-                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#8B1538] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg"
+                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#8B1538] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
               >
                 1
               </div>
               <div>
-                <h3 class="text-lg md:text-l font-bold">Browse & Search</h3>
+                <h3 class="text-lg md:text-l font-bold group-hover:text-[#8B1538] transition-colors">Browse & Search</h3>
                 <p class="text-sm md:text-base text-gray-600">
                   Explore thousands of services or use our advanced filters to find exactly what you
                   need
@@ -240,28 +251,28 @@ onMounted(() => {
               </div>
             </div>
 
-            <div class="flex gap-3 md:gap-4">
+            <div class="flex gap-3 md:gap-4 group">
               <div
-                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#8B1538] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg"
+                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#8B1538] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
               >
                 2
               </div>
               <div>
-                <h3 class="text-lg md:text-l font-bold">List Your Services</h3>
+                <h3 class="text-lg md:text-l font-bold group-hover:text-[#8B1538] transition-colors">Connect with Providers</h3>
                 <p class="text-sm md:text-base text-gray-600">
-                  Post detailed service listings with pricing and clear deliverables
+                  Review profiles, compare options, and message providers to discuss your needs
                 </p>
               </div>
             </div>
 
-            <div class="flex gap-3 md:gap-4">
+            <div class="flex gap-3 md:gap-4 group">
               <div
-                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#8B1538] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg"
+                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#8B1538] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
               >
                 3
               </div>
               <div>
-                <h3 class="text-lg md:text-l font-bold">Get Service & Review</h3>
+                <h3 class="text-lg md:text-l font-bold group-hover:text-[#8B1538] transition-colors">Get Service & Review</h3>
                 <p class="text-sm md:text-base text-gray-600">
                   Receive quality service and leave feedback to help our community grow
                 </p>
@@ -270,48 +281,52 @@ onMounted(() => {
           </div>
         </div>
 
-        <div>
-          <h2 class="text-2xl md:text-2xl font-bold mb-6 md:mb-8 text-left">
+        <div
+          v-animateonscroll="{
+            enterClass: 'animate-enter slide-left animate-duration-800',
+          }"
+        >
+          <h2 class="text-2xl md:text-2xl font-bold mb-6 md:mb-8 text-left text-[#1e5128]">
             For Service Providers
           </h2>
 
           <div class="space-y-6 md:space-y-8 text-left">
-            <div class="flex gap-3 md:gap-4">
+            <div class="flex gap-3 md:gap-4 group">
               <div
-                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#1e5128] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg"
+                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#1e5128] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
               >
                 1
               </div>
               <div>
-                <h3 class="text-lg md:text-l font-bold">Create Your Profile</h3>
+                <h3 class="text-lg md:text-l font-bold group-hover:text-[#1e5128] transition-colors">Create Your Profile</h3>
                 <p class="text-sm md:text-base text-gray-600">
                   Showcase your skills, experience, and portfolio to attract potential clients
                 </p>
               </div>
             </div>
 
-            <div class="flex gap-3 md:gap-4">
+            <div class="flex gap-3 md:gap-4 group">
               <div
-                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#1e5128] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg"
+                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#1e5128] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
               >
                 2
               </div>
               <div>
-                <h3 class="text-lg md:text-l font-bold">Connect & Communicate</h3>
+                <h3 class="text-lg md:text-l font-bold group-hover:text-[#1e5128] transition-colors">List Your Services</h3>
                 <p class="text-sm md:text-base text-gray-600">
-                  Message service seekers directly to discuss your requirements and negotiate terms
+                  Post detailed service listings with pricing and clear deliverables
                 </p>
               </div>
             </div>
 
-            <div class="flex gap-3 md:gap-4">
+            <div class="flex gap-3 md:gap-4 group">
               <div
-                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#1e5128] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg"
+                class="flex-shrink-0 w-8 h-8 md:w-10 md:h-10 bg-[#1e5128] text-white rounded-full flex items-center justify-center font-bold text-base md:text-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg"
               >
                 3
               </div>
               <div>
-                <h3 class="text-lg md:text-l font-bold">Deliver & Earn</h3>
+                <h3 class="text-lg md:text-l font-bold group-hover:text-[#1e5128] transition-colors">Deliver & Earn</h3>
                 <p class="text-sm md:text-base text-gray-600">
                   Complete listings successfully and build your reputation while earning money
                 </p>
@@ -323,12 +338,17 @@ onMounted(() => {
     </div>
   </section>
 
+
   <section class="w-full py-8 sm:py-16">
     <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-8">
       <div class="text-center mb-8 sm:mb-12">
-        <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          Featured Listings
-        </h2>
+        <div class="inline-flex items-center gap-2 mb-4">
+          <div class="w-8 h-1 bg-[#6d0019] rounded-full"></div>
+          <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">
+            Featured <span class="text-[#6d0019]">Listings</span>
+          </h2>
+          <div class="w-8 h-1 bg-[#6d0019] rounded-full"></div>
+        </div>
         <p class="text-gray-600 text-base sm:text-lg">
           Discover trending listings from our community
         </p>
@@ -362,11 +382,11 @@ onMounted(() => {
   </section>
 
   <section class="pb-0 bg-white text-center">
-    <CurvedCards class="mb-[-40px] sm:mb-[-80px] mt-[-10px] sm:mt-[-20px]" />
+    <CurvedCards class="mb-[-50px] sm:mb-[-100px] mt-[-40px] sm:mt-[-20px]" />
   </section>
 
   <section
-    class="relative bg-[#670723] text-white text-center pt-16 sm:pt-25 pb-10 sm:pb-20 overflow-hidden"
+    class="relative bg-[#670723] text-white text-center sm:pt-25 pb-10 sm:pb-20 overflow-hidden"
   >
     <svg
       class="absolute top-0 left-0 w-full h-auto block pointer-events-none z-0"
