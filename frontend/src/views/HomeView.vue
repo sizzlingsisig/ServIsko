@@ -77,7 +77,7 @@ onMounted(() => {
 
 <template>
   <section
-    class="relative bg-[#6d0019] text-left px-4 sm:px-8 pt-24 sm:pt-32 pb-20 sm:pb-32 overflow-hidden min-h-[50vh] sm:h-[65vh] flex items-center justify-start z-[0]"
+    class="relative bg-[#670723] text-left px-4 sm:px-8 pt-24 sm:pt-32 pb-20 sm:pb-32 overflow-hidden min-h-[50vh] sm:h-[65vh] flex items-center justify-start z-[0]"
   >
     <div class="max-w-[800px] w-full">
       <h1
@@ -88,7 +88,7 @@ onMounted(() => {
       </h1>
 
       <p class="text-[#f3e9e9] text-base sm:text-lg leading-relaxed max-w-[600px] mb-8">
-        ServIsko connects UPV's students, making it easy to find, offer, and review trusted services
+        ServISKO connects UPV's students, making it easy to find, offer, and review trusted services
         in one convenient platform.
       </p>
 
@@ -147,11 +147,10 @@ onMounted(() => {
   <section class="bg-white text-center px-2 sm:px-4 md:px-8 py-8 md:py-20 w-full">
     <div class="max-w-[700px] mx-auto mb-8 md:mb-12 text-center">
       <h2 class="text-xl sm:text-2xl md:text-3xl font-bold mb-2 text-[#2a2a2a]">
-        Why Choose ServIsko?
+        Why Choose servISKO?
       </h2>
       <p class="text-xs sm:text-sm md:text-base text-[#555]">
-        Find trusted student-run and local services quickly — search, compare, and hire with
-        confidence.
+        Find trusted student-run services quickly — search, compare, and hire with confidence.
       </p>
     </div>
     <div class="why-cards pb-8 md:pb-0">
@@ -169,7 +168,7 @@ onMounted(() => {
           </div>
           <span class="text-xl md:text-2xl font-bold">Trusted Service Providers</span>
           <span class="text-center text-sm md:text-base"
-            >Verified students offering reliable services with ratings and reviews to help you
+            >Verified students providing reliable services with ratings and reviews to help you
             choose confidently.</span
           >
         </div>
@@ -216,7 +215,7 @@ onMounted(() => {
       class="text-center w-[98%] sm:w-[95%] md:w-[85%] lg:w-[80%] mx-auto my-8 md:my-12 shadow-[0_0_10px_rgba(0,0,0,0.4)] rounded-lg pb-4 md:pb-5"
     >
       <h2 class="font-bold text-xl sm:text-2xl md:text-3xl pt-4 md:pt-12 lg:pt-10 px-2 sm:px-4">
-        How ServIsko Works
+        How ServISKO Works
       </h2>
 
       <div
@@ -248,10 +247,9 @@ onMounted(() => {
                 2
               </div>
               <div>
-                <h3 class="text-lg md:text-l font-bold">Connect & Communicate</h3>
+                <h3 class="text-lg md:text-l font-bold">List Your Services</h3>
                 <p class="text-sm md:text-base text-gray-600">
-                  Message service providers directly to discuss your requirements and negotiate
-                  terms
+                  Post detailed service listings with pricing and clear deliverables
                 </p>
               </div>
             </div>
@@ -299,9 +297,9 @@ onMounted(() => {
                 2
               </div>
               <div>
-                <h3 class="text-lg md:text-l font-bold">List Your Services</h3>
+                <h3 class="text-lg md:text-l font-bold">Connect & Communicate</h3>
                 <p class="text-sm md:text-base text-gray-600">
-                  Post detailed service offerings with competitive pricing and clear deliverables
+                  Message service seekers directly to discuss your requirements and negotiate terms
                 </p>
               </div>
             </div>
@@ -315,7 +313,7 @@ onMounted(() => {
               <div>
                 <h3 class="text-lg md:text-l font-bold">Deliver & Earn</h3>
                 <p class="text-sm md:text-base text-gray-600">
-                  Complete projects successfully and build your reputation while earning money
+                  Complete listings successfully and build your reputation while earning money
                 </p>
               </div>
             </div>
@@ -368,7 +366,7 @@ onMounted(() => {
   </section>
 
   <section
-    class="relative bg-[#6d0019] text-white text-center pt-16 sm:pt-25 pb-10 sm:pb-20 overflow-hidden"
+    class="relative bg-[#670723] text-white text-center pt-16 sm:pt-25 pb-10 sm:pb-20 overflow-hidden"
   >
     <svg
       class="absolute top-0 left-0 w-full h-auto block pointer-events-none z-0"
@@ -382,7 +380,7 @@ onMounted(() => {
     </svg>
 
     <div class="relative z-10 mt-20 sm:mt-50">
-      <h2 class="text-2xl sm:text-5xl font-bold mb-10 sm:mb-28">
+      <h2 class="text-2xl sm:text-6xl font-bold mb-10 sm:mb-28">
         Putting the service in Iskolars ng Bayan
       </h2>
       <div class="flex flex-col md:flex-row justify-center gap-12 md:gap-24 lg:gap-28 stats">
