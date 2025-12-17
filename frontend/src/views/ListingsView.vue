@@ -7,6 +7,7 @@ function handlePageChange(event) {
   itemsPerPage.value = event.rows
 }
 import { ref, reactive, onMounted, watch, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import AddListingModal from '@/components/AddListingModal.vue'
 import useToastHelper from '@/composables/useToastHelper'
 import Button from 'primevue/button'
@@ -21,6 +22,9 @@ import { useAuthStore } from '@/stores/AuthStore'
 import { ref as vueRef } from 'vue'
 import Dialog from 'primevue/dialog'
 
+const route = useRoute()
+const router = useRouter()
+
 const showMobileFilters = vueRef(false)
 // define constants
 const DEBOUNCE_DELAY = 500
@@ -33,9 +37,7 @@ const DEFAULTS = {
 const authStore = useAuthStore()
 const { success, error, warning, info } = useToastHelper()
 
-/* debounce function
-TODO: move to composable
-*/
+// debounce function
 const debounce = (func, delay) => {
   let timeoutId
   const debounced = function (...args) {
@@ -57,7 +59,6 @@ function handleFilterChange(updated) {
   Object.assign(filters, updated)
 }
 
-
 // UI state
 const showAddModal = ref(false)
 const categories = ref([])
@@ -66,9 +67,17 @@ const tags = ref([])
 const filteredTags = ref([])
 const listings = ref([])
 
-/* loads listings from API
-  also includes filter and pagination handling
- */
+// reactive filters, initialize from URL query
+const filters = reactive({
+  category: null,
+  search: route.query.search ? String(route.query.search) : '',
+  minBudget: 0,
+  maxBudget: DEFAULTS.MAX_BUDGET,
+  minRating: DEFAULTS.MIN_RATING,
+  sort_by: 'newest',
+})
+
+// load listings from API
 const loadListings = async () => {
   try {
     loading.value = true
@@ -89,7 +98,7 @@ const loadListings = async () => {
       let allListings = paginatedData.data || []
       // Filter out listings owned by the current user (if logged in)
       if (authStore.isAuthenticated && authStore.user && authStore.user.id) {
-        allListings = allListings.filter(l => l.seeker_user_id !== authStore.user.id)
+        allListings = allListings.filter((l) => l.seeker_user_id !== authStore.user.id)
       }
       listings.value = allListings
       totalRecords.value = allListings.length
@@ -106,17 +115,6 @@ const loadListings = async () => {
   }
 }
 
-// reactive filters
-const filters = reactive({
-  category: null,
-  search: '',
-  minBudget: 0,
-  maxBudget: DEFAULTS.MAX_BUDGET,
-  minRating: DEFAULTS.MIN_RATING,
-  sort_by: 'newest',
-})
-
-
 // loads categories from API
 const loadCategories = async () => {
   try {
@@ -131,14 +129,13 @@ const loadCategories = async () => {
   }
 }
 
-/* loads tags from API
- */
+// loads tags from API
 const loadTags = async () => {
   try {
     const res = await api.get('/seeker/tags')
     const data = res.data
     const rawTags = data.data ?? data
-    tags.value = rawTags.map(t => typeof t === 'string' ? t : t.name)
+    tags.value = rawTags.map((t) => (typeof t === 'string' ? t : t.name))
     console.log('Loaded tags:', tags.value)
   } catch (err) {
     console.error('Failed to load tags:', err)
@@ -151,12 +148,25 @@ const debouncedSearchLoad = debounce(() => {
   loadListings()
 }, DEBOUNCE_DELAY)
 
+// search handler that syncs URL query
+const handleSearch = (value) => {
+  filters.search = value
+  router.push({
+    name: 'listings', // or path: '/listings'
+    query: {
+      ...route.query,
+      search: filters.search || undefined, // remove when empty
+    },
+  })
+  debouncedSearchLoad()
+}
+
 // Watch search separately with debounce
 watch(
   () => filters.search,
   () => {
     debouncedSearchLoad()
-  }
+  },
 )
 
 // Watch all non-search filters with immediate loading
@@ -169,18 +179,30 @@ watch(
     filters.sort_by,
   ],
   () => {
-    debouncedSearchLoad.cancel() // Cancel pending search
+    debouncedSearchLoad.cancel()
     currentPage.value = 1
     loadListings()
-  }
+  },
 )
 
-// Watch pagination separately (no page reset needed)
+// Watch pagination
 watch(
   () => [currentPage.value, itemsPerPage.value],
   () => {
     loadListings()
-  }
+  },
+)
+
+// Watch route.query.search so navigation from homepage updates filters
+watch(
+  () => route.query.search,
+  (newVal) => {
+    const newSearch = newVal ? String(newVal) : ''
+    if (newSearch !== filters.search) {
+      filters.search = newSearch
+      debouncedSearchLoad()
+    }
+  },
 )
 
 // Handle tag search filtering
@@ -188,9 +210,7 @@ const searchTagsInternal = (query) => {
   if (!query) {
     filteredTags.value = tags.value
   } else {
-    filteredTags.value = tags.value.filter(tag =>
-      tag.toLowerCase().includes(query.toLowerCase())
-    )
+    filteredTags.value = tags.value.filter((tag) => tag.toLowerCase().includes(query.toLowerCase()))
   }
 }
 
@@ -200,9 +220,7 @@ const searchTags = (event) => {
   debouncedSearchTags(event.query)
 }
 
-// ============================================================================
 // Modal Management
-// ============================================================================
 const openAddModal = async () => {
   if (!authStore.isAuthenticated) {
     error('You must be logged in to add a listing')
@@ -210,8 +228,12 @@ const openAddModal = async () => {
   }
   showAddModal.value = true
   await Promise.all([
-    loadCategories().catch(() => { categories.value = [] }),
-    loadTags().catch(() => { tags.value = [] }),
+    loadCategories().catch(() => {
+      categories.value = []
+    }),
+    loadTags().catch(() => {
+      tags.value = []
+    }),
   ])
 }
 
@@ -254,21 +276,20 @@ const submitListing = async (payload) => {
   }
 }
 
-// ============================================================================
 // Lifecycle Hooks
-// ============================================================================
 onMounted(() => {
   loadCategories()
   loadListings()
   loadTags()
 })
 
-// Cancel pending debounced calls before unmount to prevent memory leaks
+// Cancel pending debounced calls before unmount
 onBeforeUnmount(() => {
   debouncedSearchLoad.cancel()
   debouncedSearchTags.cancel()
 })
 </script>
+
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Main Search Bar Section (hidden on mobile, visible on sm+) -->
@@ -306,7 +327,13 @@ onBeforeUnmount(() => {
     </button>
 
     <!-- Mobile Filters/Search Modal -->
-    <Dialog v-model:visible="showMobileFilters" modal :closable="true" class="sm:hidden w-[95vw] max-w-md mx-auto" :style="{ top: '10vh' }">
+    <Dialog
+      v-model:visible="showMobileFilters"
+      modal
+      :closable="true"
+      class="sm:hidden w-[95vw] max-w-md mx-auto"
+      :style="{ top: '10vh' }"
+    >
       <template #header>
         <span class="font-bold text-lg">Search & Filters</span>
       </template>
@@ -330,6 +357,7 @@ onBeforeUnmount(() => {
         />
       </div>
     </Dialog>
+
     <!-- Main Content Area -->
     <div class="max-w-7xl mx-auto px-1 py-2 sm:px-2 md:px-4 md:py-8">
       <div class="flex flex-col gap-6 md:flex-row">
@@ -341,7 +369,9 @@ onBeforeUnmount(() => {
         <!-- Right Content Area -->
         <div class="flex-1 min-w-0">
           <!-- View Controls and Pagination Info -->
-          <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-4">
+          <div
+            class="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 sm:mb-6 gap-3 sm:gap-4"
+          >
             <div class="text-gray-600 text-sm sm:text-base">
               Showing
               {{ totalRecords === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1 }}
@@ -349,7 +379,9 @@ onBeforeUnmount(() => {
               {{ Math.min(currentPage * itemsPerPage, totalRecords) }}
               of {{ totalRecords }} services
             </div>
-            <div class="flex flex-col md:flex-row items-start md:items-center gap-2 sm:gap-4 w-full md:w-auto">
+            <div
+              class="flex flex-col md:flex-row items-start md:items-center gap-2 sm:gap-4 w-full md:w-auto"
+            >
               <div class="flex items-center gap-2">
                 <label class="text-xs sm:text-sm text-gray-600">Sort by:</label>
                 <select
@@ -400,7 +432,7 @@ onBeforeUnmount(() => {
                 href="javascript:void(0)"
                 @click="$router.push('/profile/listings')"
                 class="font-semibold text-black hover:text-gray-700 decoration-0 flex items-center gap-2 w-full md:w-auto px-2 py-1 sm:px-4 sm:py-2 rounded transition text-xs sm:text-base"
-                style="text-decoration:none;"
+                style="text-decoration: none"
               >
                 <i class="pi pi-list"></i>
                 My Listings
@@ -421,7 +453,7 @@ onBeforeUnmount(() => {
           </div>
           <div v-else-if="listings.length === 0" class="text-center py-12">
             <i class="pi pi-inbox text-5xl text-gray-300 mb-4 block"></i>
-            <p class="text-gray-600 text-lg">No services found.  Try adjusting your filters.</p>
+            <p class="text-gray-600 text-lg">No services found. Try adjusting your filters.</p>
           </div>
           <div
             v-else-if="layout === 'grid'"
@@ -463,7 +495,7 @@ onBeforeUnmount(() => {
       v-model:showAddModal="showAddModal"
       :categories="categories"
       :filteredCategories="filteredCategories"
-      :tags="tags.map(tag => typeof tag === 'object' ? tag : { name: tag })"
+      :tags="tags.map((tag) => (typeof tag === 'object' ? tag : { name: tag }))"
       :filteredTags="filteredTags"
       @created="submitListing"
     />
@@ -471,7 +503,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Custom chip styling */
 :deep(.p-chip) {
   background: #fef3c7;
   color: #92400e;
@@ -486,7 +517,6 @@ onBeforeUnmount(() => {
   color: #78350f;
 }
 
-/* AutoComplete styling */
 :deep(.p-autocomplete) {
   width: 100%;
 }
