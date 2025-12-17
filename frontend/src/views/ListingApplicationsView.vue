@@ -6,9 +6,7 @@ import Card from 'primevue/card'
 import ProgressSpinner from 'primevue/progressspinner'
 import Tag from 'primevue/tag'
 import Menu from 'primevue/menu'
-import Button from 'primevue/button'
 import Chip from 'primevue/chip'
-import Divider from 'primevue/divider'
 import api from '@/composables/axios'
 
 const route = useRoute()
@@ -27,14 +25,14 @@ const listingId = route.params.id
 // Computed
 const filteredApplications = computed(() => {
   if (activeFilter.value === 'all') return applications.value
-  return applications.value.filter(app => app.status === activeFilter.value)
+  return applications.value.filter((app) => app.status === activeFilter.value)
 })
 
 const stats = computed(() => ({
   total: applications.value.length,
-  pending: applications.value.filter(a => a.status === 'pending').length,
-  accepted: applications.value.filter(a => a.status === 'accepted').length,
-  rejected: applications.value.filter(a => a.status === 'rejected').length
+  pending: applications.value.filter((a) => a.status === 'pending').length,
+  accepted: applications.value.filter((a) => a.status === 'accepted').length,
+  rejected: applications.value.filter((a) => a.status === 'rejected').length,
 }))
 
 // Helper Methods
@@ -49,9 +47,9 @@ const statusButtonClass = (status) => {
 
 const getStatusSeverity = (status) => {
   const severities = {
-    'pending': 'warn',
-    'accepted': 'success',
-    'rejected': 'danger'
+    pending: 'warn',
+    accepted: 'success',
+    rejected: 'danger',
   }
   return severities[status] || 'info'
 }
@@ -69,7 +67,7 @@ const formatDate = (date) => {
   return new Date(date).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric'
+    day: 'numeric',
   })
 }
 
@@ -94,9 +92,7 @@ const fetchApplications = async () => {
   try {
     const response = await api.get(`/seeker/listings/${listingId}/applications`)
     if (response.data.success) {
-      applications.value = Array.isArray(response.data.data?.data)
-        ? response.data.data.data
-        : []
+      applications.value = Array.isArray(response.data.data?.data) ? response.data.data.data : []
     } else {
       error.value = response.data.message || 'Failed to fetch applications'
       applications.value = []
@@ -172,8 +168,8 @@ const getMenuItems = (app) => {
     {
       label: 'View Profile',
       icon: 'pi pi-user',
-      command: () => viewUserProfile(app.user)
-    }
+      command: () => viewUserProfile(app.user),
+    },
   ]
 
   if (app.status === 'pending') {
@@ -183,14 +179,14 @@ const getMenuItems = (app) => {
         label: 'Accept Application',
         icon: 'pi pi-check',
         command: () => handleApplicationAction(app, 'accept'),
-        class: 'text-green-600'
+        class: 'text-green-600',
       },
       {
         label: 'Reject Application',
         icon: 'pi pi-times',
         command: () => handleApplicationAction(app, 'reject'),
-        class: 'text-red-600'
-      }
+        class: 'text-red-600',
+      },
     )
   }
 
@@ -247,31 +243,19 @@ onMounted(() => {
                 class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b border-gray-200"
               >
                 <div class="flex gap-2 flex-wrap">
-                  <button
-                    @click="activeFilter = 'all'"
-                    :class="statusButtonClass('all')"
-                  >
+                  <button @click="activeFilter = 'all'" :class="statusButtonClass('all')">
                     <i class="pi pi-list"></i>
                     All
                   </button>
-                  <button
-                    @click="activeFilter = 'pending'"
-                    :class="statusButtonClass('pending')"
-                  >
+                  <button @click="activeFilter = 'pending'" :class="statusButtonClass('pending')">
                     <i class="pi pi-clock"></i>
                     Pending
                   </button>
-                  <button
-                    @click="activeFilter = 'accepted'"
-                    :class="statusButtonClass('accepted')"
-                  >
+                  <button @click="activeFilter = 'accepted'" :class="statusButtonClass('accepted')">
                     <i class="pi pi-check-circle"></i>
                     Accepted
                   </button>
-                  <button
-                    @click="activeFilter = 'rejected'"
-                    :class="statusButtonClass('rejected')"
-                  >
+                  <button @click="activeFilter = 'rejected'" :class="statusButtonClass('rejected')">
                     <i class="pi pi-times-circle"></i>
                     Rejected
                   </button>
@@ -301,7 +285,11 @@ onMounted(() => {
               <div v-else-if="filteredApplications.length === 0" class="text-center py-12">
                 <i class="pi pi-inbox text-6xl text-gray-300 mb-4 block"></i>
                 <h3 class="text-xl font-semibold text-gray-900 mb-2">
-                  {{ activeFilter === 'all' ? 'No applications yet' : `No ${activeFilter} applications` }}
+                  {{
+                    activeFilter === 'all'
+                      ? 'No applications yet'
+                      : `No ${activeFilter} applications`
+                  }}
                 </h3>
                 <p class="text-gray-600 mb-4">
                   {{
@@ -322,102 +310,101 @@ onMounted(() => {
 
               <!-- Applications List -->
               <div v-else class="space-y-4">
-               <Card
-  v-for="app in filteredApplications"
-  :key="app.id"
-  class="hover:shadow-md transition-shadow border border-gray-200"
-  :class="{ 'opacity-60': actionLoading[app.id] }"
->
-  <template #content>
-    <div class="relative">
-      <!-- Header Row: User Info + Status + Actions -->
-      <div class="flex items-start justify-between gap-4 mb-4">
-        <div class="flex items-start gap-3 flex-1 min-w-0">
-          <div
-            class="w-12 h-12 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-lg flex-shrink-0"
-          >
-            {{ getUserInitials(app.user?.name) }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <h3 class="text-xl font-semibold text-gray-900 mb-1">
-              {{ app.user?.name || 'Unknown User' }}
-            </h3>
-            <p class="text-sm text-gray-500">
-              @{{ app.user?.username || 'unknown' }}
-            </p>
-          </div>
-        </div>
+                <Card
+                  v-for="app in filteredApplications"
+                  :key="app.id"
+                  class="hover:shadow-md transition-shadow border border-gray-200"
+                  :class="{ 'opacity-60': actionLoading[app.id] }"
+                >
+                  <template #content>
+                    <div class="relative">
+                      <!-- Header Row: User Info + Status + Actions -->
+                      <div class="flex items-start justify-between gap-4 mb-4">
+                        <div class="flex items-start gap-3 flex-1 min-w-0">
+                          <div
+                            class="w-12 h-12 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center font-bold text-lg flex-shrink-0"
+                          >
+                            {{ getUserInitials(app.user?.name) }}
+                          </div>
+                          <div class="flex-1 min-w-0">
+                            <h3 class="text-xl font-semibold text-gray-900 mb-1">
+                              {{ app.user?.name || 'Unknown User' }}
+                            </h3>
+                            <p class="text-sm text-gray-500">
+                              @{{ app.user?.username || 'unknown' }}
+                            </p>
+                          </div>
+                        </div>
 
-        <!-- Status Tag + Action Buttons (Right Side) -->
-        <div class="flex items-start gap-2 flex-shrink-0">
-          <Tag
-            :value="app.status"
-            :severity="getStatusSeverity(app.status)"
-            class="uppercase text-xs"
-          />
+                        <!-- Status Tag + Action Buttons (Right Side) -->
+                        <div class="flex items-start gap-2 flex-shrink-0">
+                          <Tag
+                            :value="app.status"
+                            :severity="getStatusSeverity(app.status)"
+                            class="uppercase text-xs"
+                          />
 
-          <!-- Action Buttons Group -->
-    <div v-if="app.status === 'pending'" class="flex items-center gap-2">
-  <button
-    @click="handleApplicationAction(app, 'reject')"
-    :disabled="actionLoading[app.id]"
-    class="p-2.5 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 border border-red-200 hover:border-red-400 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-    title="Reject Application"
-  >
-    <i class="pi pi-times text-base"></i>
-  </button>
-  <button
-    @click="handleApplicationAction(app, 'accept')"
-    :disabled="actionLoading[app.id]"
-    class="p-2.5 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white rounded-lg transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
-    title="Accept Application"
-  >
-    <i class="pi pi-check text-base"></i>
-  </button>
-</div>
+                          <!-- Action Buttons Group -->
+                          <div v-if="app.status === 'pending'" class="flex items-center gap-2">
+                            <button
+                              @click="handleApplicationAction(app, 'reject')"
+                              :disabled="actionLoading[app.id]"
+                              class="p-2.5 bg-red-50 hover:bg-red-100 active:bg-red-200 text-red-600 border border-red-200 hover:border-red-400 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Reject Application"
+                            >
+                              <i class="pi pi-times text-base"></i>
+                            </button>
+                            <button
+                              @click="handleApplicationAction(app, 'accept')"
+                              :disabled="actionLoading[app.id]"
+                              class="p-2.5 bg-green-500 hover:bg-green-600 active:bg-green-700 text-white rounded-lg transition-all shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Accept Application"
+                            >
+                              <i class="pi pi-check text-base"></i>
+                            </button>
+                          </div>
 
+                          <button
+                            @click="toggleMenu($event, app.id)"
+                            :disabled="actionLoading[app.id]"
+                            class="p-2 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="More options"
+                          >
+                            <i class="pi pi-ellipsis-v text-gray-600"></i>
+                          </button>
+                        </div>
+                      </div>
 
+                      <!-- Application Message -->
+                      <div class="bg-gray-50 p-3 rounded-lg mb-3">
+                        <p class="text-sm font-semibold text-gray-700 mb-1">Message:</p>
+                        <p class="text-sm text-gray-600">
+                          {{ app.message || 'No message provided.' }}
+                        </p>
+                      </div>
 
-          <button
-            @click="toggleMenu($event, app.id)"
-            :disabled="actionLoading[app.id]"
-            class="p-2 hover:bg-gray-100 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            title="More options"
-          >
-            <i class="pi pi-ellipsis-v text-gray-600"></i>
-          </button>
-        </div>
-      </div>
+                      <!-- Metadata -->
+                      <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+                        <div class="flex items-center gap-1">
+                          <i class="pi pi-calendar text-primary-500"></i>
+                          <span>{{ getTimeAgo(app.created_at) }}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                          <i class="pi pi-envelope text-primary-500"></i>
+                          <span>{{ app.user?.email }}</span>
+                        </div>
+                      </div>
 
-      <!-- Application Message -->
-      <div class="bg-gray-50 p-3 rounded-lg mb-3">
-        <p class="text-sm font-semibold text-gray-700 mb-1">Message:</p>
-        <p class="text-sm text-gray-600">{{ app.message || 'No message provided.' }}</p>
-      </div>
-
-      <!-- Metadata -->
-      <div class="flex flex-wrap gap-4 text-sm text-gray-600">
-        <div class="flex items-center gap-1">
-          <i class="pi pi-calendar text-primary-500"></i>
-          <span>{{ getTimeAgo(app.created_at) }}</span>
-        </div>
-        <div class="flex items-center gap-1">
-          <i class="pi pi-envelope text-primary-500"></i>
-          <span>{{ app.user?.email }}</span>
-        </div>
-      </div>
-
-      <!-- Loading Overlay -->
-      <div
-        v-if="actionLoading[app.id]"
-        class="absolute inset-0 bg-white/70 flex items-center justify-center rounded-lg"
-      >
-        <ProgressSpinner style="width: 40px; height: 40px" />
-      </div>
-    </div>
-  </template>
-</Card>
-
+                      <!-- Loading Overlay -->
+                      <div
+                        v-if="actionLoading[app.id]"
+                        class="absolute inset-0 bg-white/70 flex items-center justify-center rounded-lg"
+                      >
+                        <ProgressSpinner style="width: 40px; height: 40px" />
+                      </div>
+                    </div>
+                  </template>
+                </Card>
               </div>
             </template>
           </Card>
@@ -427,49 +414,56 @@ onMounted(() => {
         <div class="lg:col-span-1 space-y-6">
           <!-- Statistics Card -->
           <Card class="shadow-lg border-t-4 border-primary-500">
-  <template #title>
-    <div class="flex items-center gap-2 text-gray-900">
-      <i class="pi pi-chart-bar text-primary-500"></i>
-      <span>Statistics</span>
-    </div>
-  </template>
-  <template #content>
-    <div class="space-y-4">
-      <div class="p-4 rounded-lg shadow-md hover:scale-105 transition-transform bg-primary-50">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-sm font-semibold text-primary-900">Total Applications</span>
-          <i class="pi pi-list text-2xl text-primary-600"></i>
-        </div>
-        <p class="text-4xl font-bold text-primary-900">{{ stats.total }}</p>
-      </div>
+            <template #title>
+              <div class="flex items-center gap-2 text-gray-900">
+                <i class="pi pi-chart-bar text-primary-500"></i>
+                <span>Statistics</span>
+              </div>
+            </template>
+            <template #content>
+              <div class="space-y-4">
+                <div
+                  class="p-4 rounded-lg shadow-md hover:scale-105 transition-transform bg-primary-50"
+                >
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-semibold text-primary-900">Total Applications</span>
+                    <i class="pi pi-list text-2xl text-primary-600"></i>
+                  </div>
+                  <p class="text-4xl font-bold text-primary-900">{{ stats.total }}</p>
+                </div>
 
-      <div class="p-4 rounded-lg shadow-md hover:scale-105 transition-transform bg-yellow-50">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-sm font-semibold text-yellow-900">Pending</span>
-          <i class="pi pi-hourglass text-2xl text-yellow-600"></i>
-        </div>
-        <p class="text-4xl font-bold text-yellow-900">{{ stats.pending }}</p>
-      </div>
+                <div
+                  class="p-4 rounded-lg shadow-md hover:scale-105 transition-transform bg-yellow-50"
+                >
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-semibold text-yellow-900">Pending</span>
+                    <i class="pi pi-hourglass text-2xl text-yellow-600"></i>
+                  </div>
+                  <p class="text-4xl font-bold text-yellow-900">{{ stats.pending }}</p>
+                </div>
 
-      <div class="p-4 rounded-lg shadow-md hover:scale-105 transition-transform bg-green-50">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-sm font-semibold text-green-900">Accepted</span>
-          <i class="pi pi-check-circle text-2xl text-green-600"></i>
-        </div>
-        <p class="text-4xl font-bold text-green-900">{{ stats.accepted }}</p>
-      </div>
+                <div
+                  class="p-4 rounded-lg shadow-md hover:scale-105 transition-transform bg-green-50"
+                >
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-semibold text-green-900">Accepted</span>
+                    <i class="pi pi-check-circle text-2xl text-green-600"></i>
+                  </div>
+                  <p class="text-4xl font-bold text-green-900">{{ stats.accepted }}</p>
+                </div>
 
-      <div class="p-4 rounded-lg shadow-md hover:scale-105 transition-transform bg-red-50">
-        <div class="flex justify-between items-center mb-1">
-          <span class="text-sm font-semibold text-red-900">Rejected</span>
-          <i class="pi pi-times-circle text-2xl text-red-600"></i>
-        </div>
-        <p class="text-4xl font-bold text-red-900">{{ stats.rejected }}</p>
-      </div>
-    </div>
-  </template>
-</Card>
-
+                <div
+                  class="p-4 rounded-lg shadow-md hover:scale-105 transition-transform bg-red-50"
+                >
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-sm font-semibold text-red-900">Rejected</span>
+                    <i class="pi pi-times-circle text-2xl text-red-600"></i>
+                  </div>
+                  <p class="text-4xl font-bold text-red-900">{{ stats.rejected }}</p>
+                </div>
+              </div>
+            </template>
+          </Card>
         </div>
       </div>
     </div>
@@ -478,7 +472,7 @@ onMounted(() => {
     <Menu
       v-for="app in applications"
       :key="`menu-${app.id}`"
-      :ref="el => menuRefs[app.id] = el"
+      :ref="(el) => (menuRefs[app.id] = el)"
       :model="getMenuItems(app)"
       :popup="true"
     />

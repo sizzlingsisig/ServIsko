@@ -5,7 +5,7 @@ import Paginator from 'primevue/paginator'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
 import Button from 'primevue/button'
-import FilterSidebar from '@/components/FilterSidebar.vue'
+import ProviderFilterSidebar from '@/components/ProviderFilterSidebar.vue'
 import ProviderCard from '@/components/ProviderCard.vue'
 import Dialog from 'primevue/dialog'
 import api from '@/composables/axios'
@@ -22,18 +22,14 @@ const itemsPerPage = ref(12)
 const filters = reactive({
   search: '',
   location: '',
-  skill: [],
-  category_id: null,
-  min_price: null,
-  max_price: null,
+  skill: [], // array of skill IDs
   sort_by: 'newest',
 })
 
 const providers = ref([])
 
-// Debounce utility
+// debounce utility
 const DEBOUNCE_DELAY = 500
-let searchTimeout = null
 const debounce = (func, delay) => {
   let timeoutId
   const debounced = function (...args) {
@@ -56,13 +52,12 @@ const loadProviders = async () => {
       search: filters.search,
       location: filters.location,
       skill: filters.skill,
-      category_id: filters.category_id,
-      min_price: filters.min_price,
-      max_price: filters.max_price,
       sort_by: filters.sort_by,
       page: currentPage.value,
       per_page: itemsPerPage.value,
     }
+
+    // strip empty params
     Object.keys(params).forEach((key) => {
       if (
         params[key] === null ||
@@ -73,6 +68,7 @@ const loadProviders = async () => {
         delete params[key]
       }
     })
+
     const response = await api.get('/providers', { params })
     if (response.data.success && response.data.data) {
       const paginatedData = response.data.data
@@ -102,7 +98,7 @@ const loadProviders = async () => {
   }
 }
 
-// Watch search separately with debounce
+// watch search with debounce
 watch(
   () => filters.search,
   () => {
@@ -110,16 +106,9 @@ watch(
   },
 )
 
-// Watch all non-search filters with immediate loading
+// watch non-search filters: location, skill, sort_by
 watch(
-  () => [
-    filters.location,
-    filters.skill,
-    filters.category_id,
-    filters.min_price,
-    filters.max_price,
-    filters.sort_by,
-  ],
+  () => [filters.location, filters.skill, filters.sort_by],
   () => {
     debouncedSearchLoad.cancel()
     currentPage.value = 1
@@ -127,7 +116,7 @@ watch(
   },
 )
 
-// Watch pagination separately (no page reset needed)
+// watch pagination
 watch(
   () => [currentPage.value, itemsPerPage.value],
   () => {
@@ -160,7 +149,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="min-h-screen bg-gray-50">
     <!-- Main Search Bar Section (hidden on mobile, visible on sm+) -->
-    <section class="hidden sm:block bg-[#670723] text-white px-2 py-6 sm:px-4 sm:py-8">
+    <section class="hidden sm:block bg-[#6d0019] text-white px-2 py-6 sm:px-4 sm:py-8">
       <div class="max-w-7xl mx-auto">
         <h2 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">Find Service Providers</h2>
         <div class="flex flex-col gap-3 sm:gap-4 md:flex-row">
@@ -212,7 +201,7 @@ onBeforeUnmount(() => {
             class="w-full text-base py-2"
           />
         </IconField>
-        <FilterSidebar :filters="filters" @update="handleFilterChange" />
+        <ProviderFilterSidebar :filters="filters" @update="handleFilterChange" />
         <Button
           label="Apply"
           icon="pi pi-check"
@@ -228,7 +217,7 @@ onBeforeUnmount(() => {
       <div class="flex flex-col gap-6 md:flex-row">
         <!-- Left Sidebar - Filters (hidden on mobile) -->
         <div class="hidden md:block w-full md:w-72 flex-shrink-0 mb-4 md:mb-0">
-          <FilterSidebar :filters="filters" @update="handleFilterChange" />
+          <ProviderFilterSidebar :filters="filters" @update="handleFilterChange" />
         </div>
 
         <!-- Right Content Area -->

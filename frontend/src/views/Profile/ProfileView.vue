@@ -340,7 +340,7 @@ const addLink = async () => {
 
   try {
     flags.loading = true
-    await axios.post('/provider/profile/links', forms.link)
+    await axios.post('/provider/links', forms.link)
 
     toast.add({ severity: 'success', summary: 'Link Added', detail: 'Link added successfully', life: 3000 })
     forms.link = { title: '', url: '' }
@@ -359,7 +359,7 @@ const updateLink = async () => {
 
   try {
     flags.loading = true
-    await axios.put(`/provider/profile/links/${editingLinkId.value}`, forms.link)
+    await axios.put(`/provider/links/${editingLinkId.value}`, forms.link)
 
     toast.add({ severity: 'success', summary: 'Link Updated', detail: 'Link updated successfully', life: 3000 })
     forms.link = { title: '', url: '' }
@@ -379,7 +379,7 @@ const confirmDeleteLink = async () => {
   try {
     flags.loading = true
     const link = provider.links[indexes.linkToDelete]
-    await axios.delete(`/provider/profile/links/${link.id}`)
+    await axios.delete(`/provider/links/${link.id}`)
 
     closeDeleteLinkDialog()
     toast.add({ severity: 'success', summary: 'Link Deleted', detail: 'Link deleted successfully', life: 3000 })

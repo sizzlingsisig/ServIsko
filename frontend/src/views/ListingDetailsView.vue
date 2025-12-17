@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/composables/axios'
 import ApplicationMessageModal from '@/components/ApplicationMessageModal.vue'
+import Dialog from 'primevue/dialog'
+import Textarea from 'primevue/textarea'
+import Button from 'primevue/button'
 import { useAuthStore } from '@/stores/AuthStore'
 
 const authStore = useAuthStore()
@@ -17,9 +20,44 @@ const applying = ref(false)
 const hasApplied = ref(false)
 const isOwner = ref(false)
 
+
 // Modal state for application
 const showApplyModal = ref(false)
 const submittingApplication = ref(false)
+
+// --- Send Message Modal state ---
+const showMessageModal = ref(false)
+const messageText = ref('')
+const messageSending = ref(false)
+const messageError = ref('')
+
+function openMessageModal() {
+  showMessageModal.value = true
+  messageText.value = ''
+  messageError.value = ''
+}
+
+async function sendMessageToProvider() {
+  if (!messageText.value.trim()) return
+  messageSending.value = true
+  messageError.value = ''
+  try {
+    // Get or create conversation with this provider/seeker
+    const recipientId = listing.value?.user_id || listing.value?.seeker_user_id
+    const convResp = await api.get(`/conversations/${recipientId}`)
+    const conversation = convResp.data
+    await api.post(`/conversations/${conversation.id}/messages`, {
+      message_text: messageText.value
+    })
+    showMessageModal.value = false
+    messageText.value = ''
+    // Optionally show a toast here
+  } catch (err) {
+    messageError.value = err.response?.data?.message || 'Failed to send message'
+  } finally {
+    messageSending.value = false
+  }
+}
 
 function openApplyModal() {
   showApplyModal.value = true
@@ -389,8 +427,9 @@ watch([() => authStore.isAuthenticated, () => listing.value?.id], ([isAuth, id])
                   quote.
                 </p>
                 <button
-                v-if="roles?.includes('service-provider')"
+                  v-if="roles?.includes('service-provider')"
                   class="text-[#6d0019] hover:text-[#590015] font-semibold text-xs flex items-center gap-1 transition"
+                  @click="openMessageModal"
                 >
                   <span>Send a message</span>
                   <i class="pi pi-arrow-right text-xs"></i>
@@ -399,7 +438,7 @@ watch([() => authStore.isAuthenticated, () => listing.value?.id], ([isAuth, id])
                   v-else
                   class="text-[#6d0019] font-semibold text-xs flex items-center gap-1 opacity-50 cursor-not-allowed"
                   disabled
-                  title="Only authenticated service providers can contact the provider."
+                  title="Only authenticated service providers can contact the seeker."
                 >
                   <span>Send a message</span>
                   <i class="pi pi-arrow-right text-xs"></i>
@@ -411,4 +450,48 @@ watch([() => authStore.isAuthenticated, () => listing.value?.id], ([isAuth, id])
       </div>
     </div>
   </div>
+  <!-- Send Message Modal -->
+  <Dialog
+    v-model:visible="showMessageModal"
+    :modal="true"
+    :header="`Send Message to ${listing?.owner_name || 'User'}`"
+    class="w-full md:w-1/2"
+  >
+    <div class="space-y-4">
+      <p class="text-sm text-gray-600">Send a message to {{ listing?.owner_name || 'this user' }}</p>
+      <div>
+        <label class="block text-sm font-semibold mb-2">Message *</label>
+        <Textarea
+          v-model="messageText"
+          class="w-full"
+          rows="6"
+          placeholder="Type your message here..."
+          :disabled="messageSending"
+          required
+        />
+      </div>
+      <div
+        v-if="messageError"
+        class="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded text-sm"
+      >
+        {{ messageError }}
+      </div>
+    </div>
+    <template #footer>
+      <Button
+        label="Cancel"
+        @click="showMessageModal = false"
+        class="p-button-secondary"
+        :disabled="messageSending"
+      />
+      <Button
+        label="Send"
+        @click="sendMessageToProvider"
+        class="bg-[#6d0019] text-white"
+        :disabled="!messageText.trim() || messageSending"
+        :loading="messageSending"
+      />
+    </template>
+  </Dialog>
+
 </template>

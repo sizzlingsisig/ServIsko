@@ -5,104 +5,144 @@ import techImage from '@/assets/icons/5.png'
 import writingImage from '@/assets/icons/3.png'
 import tutoringImage from '@/assets/icons/2.png'
 
-/*
-<svg width="1336" height="423" viewBox="0 0 1336 423" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g opacity="0.8">
-<path d="M0.5 318.492V0.5H254.5V194V381L161.5 362L76.5 342L0.5 318.492Z" fill="#F3F3F3"/>
-<path d="M284.5 386V0.5H525.5V414.768L473 410.5L375 400.5L284.5 386Z" fill="#F3F3F3"/>
-<path d="M560 417.567V0.5H794V421.72H747.522H702.5L641 421L594.5 419L560 417.567Z" fill="#F3F3F3"/>
-<path d="M823.027 419.347V0.5H1071.5V400.5L1032.5 405L1004 408L975 411.041L949 413L908 415.5L869.616 417.567L823.027 419.347Z" fill="#F3F3F3"/>
-<path d="M1097.5 397V0.5H1335.5V352.765L1323 355.5L1274 366.5L1227.5 376L1187.5 383L1142.5 390.5L1109 395.5L1097.5 397Z" fill="#F3F3F3"/>
-<path d="M0.5 318.492V0.5H254.5V194V381L161.5 362L76.5 342L0.5 318.492Z" stroke="black"/>
-<path d="M284.5 386V0.5H525.5V414.768L473 410.5L375 400.5L284.5 386Z" stroke="black"/>
-<path d="M560 417.567V0.5H794V421.72H747.522H702.5L641 421L594.5 419L560 417.567Z" stroke="black"/>
-<path d="M823.027 419.347V0.5H1071.5V400.5L1032.5 405L1004 408L975 411.041L949 413L908 415.5L869.616 417.567L823.027 419.347Z" stroke="black"/>
-<path d="M1097.5 397V0.5H1335.5V352.765L1323 355.5L1274 366.5L1227.5 376L1187.5 383L1142.5 390.5L1109 395.5L1097.5 397Z" stroke="black"/>
-</g>
-</svg>
-
-*/
-
 const cards = [
   {
     id: 1,
-    path: 'M0.5 318.492V0.5H254.5V194V381L161.5 362L76.5 342L0.5 318.492Z',
     title: 'Tutoring & Education',
-    subtitle: 'Get peer help with courses, exams, and study skills..',
+    subtitle: 'Get peer help with courses, exams, and study skills.',
     image: tutoringImage,
-    x: 22,
-    y: 40, // aligned top
+    gradient: 'from-blue-500 to-indigo-600',
   },
   {
     id: 2,
-    path: 'M284.5 386V0.5H525.5V414.768L473 410.5L375 400.5L284.5 386Z',
     title: 'Writing',
-    subtitle: 'Polish essays, reports, resumes, and creative work. .',
+    subtitle: 'Polish essays, reports, resumes, and creative work.',
     image: writingImage,
-    x: 298,
-    y: 40, // aligned top
+    gradient: 'from-purple-500 to-pink-600',
   },
   {
     id: 3,
-    path: 'M560 417.567V0.5H794V421.72H747.522H702.5L641 421L594.5 419L560 417.567Z',
     title: 'Beauty and Cosmetics',
     subtitle: 'Book student stylists for hair, makeup, and grooming.',
     image: beautyImage,
-    x: 573,
-    y: 40, // aligned top
+    gradient: 'from-pink-500 to-rose-600',
   },
   {
     id: 4,
-    path: 'M823.027 419.347V0.5H1071.5V400.5L1032.5 405L1004 408L975 411.041L949 413L908 415.5L869.616 417.567L823.027 419.347Z',
     title: 'Programming and Tech',
     subtitle: 'Get coding help, troubleshooting, and basic tech support.',
     image: techImage,
-    x: 843,
-    y: 40, // aligned top
+    gradient: 'from-emerald-500 to-teal-600',
   },
   {
     id: 5,
-    path: 'M1097.5 397V0.5H1335.5V352.765L1323 355.5L1274 366.5L1227.5 376L1187.5 383L1142.5 390.5L1109 395.5L1097.5 397Z',
     title: 'Design and Creatives',
     subtitle: 'Hire students for graphics, layouts, and visual content.',
     image: designImage,
-    x: 1108,
-    y: 40, // aligned top
+    gradient: 'from-amber-500 to-orange-600',
   },
 ]
 </script>
 
 <template>
-  <section class="relative bg-white py-14">
-    <!-- Header -->
-    <div class="text-center mb-12">
-      <h2 class="text-4xl font-bold text-gray-900 mb-3">Popular Listing Categories</h2>
-      <p class="text-gray-600">Take a sneak peek at some of our categories</p>
+  <section class="relative bg-gradient-to-b from-gray-50 to-white py-20 overflow-hidden">
+    <!-- Decorative background blobs -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute -top-24 -left-24 w-96 h-96 bg-blue-100 rounded-full opacity-20 blur-3xl"></div>
+      <div class="absolute top-1/2 -right-24 w-96 h-96 bg-purple-100 rounded-full opacity-20 blur-3xl"></div>
     </div>
 
-    <!-- SVG Cards Container -->
-    <div class="flex justify-center items-center px-4">
-      <svg
-        viewBox="0 0 1336 450"
-        class="w-full max-w-[1336px] h-auto"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <g v-for="card in cards" :key="card.id">
-          <path :d="card.path" fill="white" stroke="#333" stroke-width="1.5" />
+    <!-- Header -->
+    <div class="relative text-center mb-16 px-4">
+      <h2 class="text-5xl font-bold bg-gradient-to-r from-gray-900 pb-2 to-gray-700 bg-clip-text text-transparent mb-4 tracking-tight">
+        Popular Listing Categories
+      </h2>
+      <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+        Take a sneak peek at some of our categories
+      </p>
+    </div>
 
-          <foreignObject :x="card.x" :y="card.y" width="210" height="330">
-            <div xmlns="http://www.w3.org/1999/xhtml" class="flex flex-col items-center">
-              <div class="w-48 h-60 mb-3 overflow-hidden">
-                <img :src="card.image" alt="" class="w-full h-full object-cover" />
-              </div>
-              <h3 class="text-sm font-bold text-[#6d0019] text-center mb-1 leading-tight px-2">
+    <!-- Cards Grid -->
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div
+          v-for="card in cards"
+          :key="card.id"
+          class="group relative h-full"
+        >
+          <!-- Card Container with Curved Bottom -->
+          <div class="relative bg-white rounded-t-2xl overflow-visible shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-3 h-full flex flex-col">
+            <!-- Image Container - Fixed Height -->
+            <div class="relative w-full h-64 overflow-hidden bg-gray-100 flex-shrink-0">
+              <img
+                :src="card.image"
+                :alt="card.title"
+                class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700"
+              />
+              <!-- Gradient Overlay -->
+              <div
+                class="absolute inset-0 bg-gradient-to-t opacity-0 group-hover:opacity-90 transition-opacity duration-500"
+              ></div>
+            </div>
+
+            <!-- Content Area - Fixed Height -->
+            <div class="relative bg-white px-5 pt-5 pb-8 flex-shrink-0" style="height: 140px;">
+              <h3 class="text-base font-bold text-gray-900 mb-2 leading-tight group-hover:text-[#6d0019] transition-colors duration-300 line-clamp-2">
                 {{ card.title }}
               </h3>
-              <p class="text-xs text-gray-600 text-center px-2">{{ card.subtitle }}</p>
+              <p class="text-sm text-gray-600 leading-relaxed line-clamp-3">
+                {{ card.subtitle }}
+              </p>
             </div>
-          </foreignObject>
-        </g>
-      </svg>
+
+            <!-- Curved Bottom SVG -->
+            <div class="absolute bottom-0 left-0 right-0 h-6 bg-white pointer-events-none">
+              <svg
+                viewBox="0 0 200 20"
+                preserveAspectRatio="none"
+                class="absolute bottom-0 w-full h-6"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M0,0 Q50,20 100,15 T200,0 L200,20 L0,20 Z"
+                  fill="white"
+                  class="transition-all duration-500"
+                />
+              </svg>
+            </div>
+
+            <!-- Border -->
+            <div class="absolute inset-0 rounded-t-2xl border-2 border-gray-100 group-hover:border-gray-200 transition-colors duration-300 pointer-events-none"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 </template>
+
+<style scoped>
+/* Smooth animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.group:hover {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Line clamping for consistent text heights */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

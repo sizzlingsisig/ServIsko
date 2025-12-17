@@ -249,10 +249,18 @@ onUnmounted(() => {
               aria-controls="overlay_menu"
             >
               <Avatar
+                v-if="profilePictureUrl"
                 :image="profilePictureUrl"
                 shape="circle"
                 size="normal"
                 class="cursor-pointer ring-2 w-8 h-8 sm:w-10 sm:h-10 ring-text-200 dark:ring-text-700 hover:ring-primary-500 transition-all duration-200"
+              />
+              <Avatar
+                v-else
+                :label="userProfile && userProfile.name ? userProfile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2) : '?'"
+                shape="circle"
+                size="normal"
+                class="cursor-pointer ring-2 w-8 h-8 sm:w-10 sm:h-10 ring-text-200 dark:ring-text-700 hover:ring-primary-500 transition-all duration-200 bg-[#6d0019] text-white font-bold"
               />
             </button>
 

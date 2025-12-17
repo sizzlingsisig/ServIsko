@@ -10,6 +10,7 @@ import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Dropdown from 'primevue/dropdown'
 import AutoComplete from 'primevue/autocomplete'
+import { useAuthStore } from '@/stores/AuthStore'
 const categoryOptions = ref([])
 
 // --- Tag logic (now only tag names are stored in serviceForm.tags) ---
@@ -422,13 +423,15 @@ const toggleBookmark = () => (bookmarked.value = !bookmarked.value)
                       label="Send Message"
                       class="bg-[#6d0019] text-white px-6 py-2 rounded-md hover:bg-[#5a0013] transition"
                       @click="openMessageModal"
-                      v-if="!isOwner && providerProfile && Object.keys(providerProfile).length > 0"
+                      v-if="!isOwner && useAuthStore.isAuthenticated && providerProfile && Object.keys(providerProfile).length > 0"
                     />
                   <Button
+                    v-if="!isOwner && useAuthStore.isAuthenticated"
                     label="Report User"
                     style="background-color: #e5e7eb; color: #374151; border: 2px solid #d1d5db; padding: 0.5rem 1.5rem; border-radius: 0.375rem;"
                   />
                   <button
+                  v-if="!isOwner && useAuthStore.isAuthenticated"
                     @click="toggleBookmark"
                     :class="[
                       'p-3 border-2 rounded-md transition flex items-center gap-2',
